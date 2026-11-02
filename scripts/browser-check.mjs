@@ -1,0 +1,135 @@
+import { chromium } from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+const base = process.env.SITE_URL || 'http://localhost:5173/route-gpx/';
+const browser = await chromium.launch({
+  headless: true,
+  args: ['--no-sandbox'],
+});
+const page = await browser.newPage({
+  viewport: { width: 1440, height: 1000 },
+  acceptDownloads: true,
+});
+const errors = [];
+page.on('pageerror', (e) => errors.push(e.message));
+let geometryPoints = 0;
+page.on('response', async (r) => {
+  if (r.url().includes('/route/v1/driving/') && r.ok()) {
+    const x = await r.json();
+    geometryPoints = x.routes?.[0]?.geometry?.coordinates?.length || 0;
+  }
+});
+await page.goto(base);
+await page.locator('#language').selectOption('en');
+await page.locator('#example').click();
+await page.locator('#download').waitFor({ state: 'visible' });
+await page.waitForFunction(
+  () => !document.querySelector('#download').disabled,
+  {},
+  { timeout: 80000 },
+);
+assert.equal(await page.locator('#points li').count(), 7);
+const status = await page.locator('#status').innerText();
+assert.ok(status.includes('Route ready'), status);
+assert.match(await page.locator('#summary').innerText(), /OSRM|Valhalla/);
+const routeSummary = await page.locator('#summary').innerText();
+await page.locator('#download').scrollIntoViewIfNeeded();
+const [download] = await Promise.all([
+  page.waitForEvent('download'),
+  page.locator('#download').click(),
+]);
+await fs.mkdir('docs', { recursive: true });
+await download.saveAs('docs/example.gpx');
+const xml = await fs.readFile('docs/example.gpx', 'utf8');
+const trackPoints = (xml.match(/<trkpt /g) || []).length;
+assert.ok(trackPoints > 500);
+if (geometryPoints) assert.equal(trackPoints, geometryPoints);
+assert.equal((xml.match(/<wpt /g) || []).length, 7);
+await page.locator('aside').evaluate((el) => {
+  el.scrollTop = 0;
+});
+await page.screenshot({ path: 'docs/screenshot.png' });
+const shared = page.url();
+assert.ok(shared.includes('#v1='));
+await page.locator('#language').selectOption('pt');
+await page.getByRole('heading', { name: 'A estrada é sua.' }).waitFor();
+assert.equal(await page.locator('html').getAttribute('lang'), 'pt-BR');
+assert.match(await page.locator('#download').innerText(), /Baixar/);
+// GPX import must preserve all original geometry, without a network recalculation.
+await page.locator('#import').setInputFiles('docs/example.gpx');
+await page.waitForFunction(() =>
+  document.querySelector('#summary').textContent.includes('Imported GPX'),
+);
+const [again] = await Promise.all([
+  page.waitForEvent('download'),
+  page.locator('#download').click(),
+]);
+const rexml = await fs.readFile(await again.path(), 'utf8');
+assert.equal((rexml.match(/<trkpt /g) || []).length, trackPoints);
+// Native natural-language UI extracts points before searching.
+await page
+  .locator('#description')
+  .fill(
+    'De Metrô Uruguai passando por Postinho do Alto até Grumari. Prefira vias principais.',
+  );
+await page.locator('#parse-description').click();
+assert.equal(await page.locator('#intent-preview input').count(), 4);
+// JSON editor exists alongside visual and text modes.
+await page.locator('.settings').evaluate((el) => {
+  el.open = true;
+});
+await page.locator('.json-settings').evaluate((el) => {
+  el.open = true;
+});
+await page.locator('#export-json').click();
+const state = JSON.parse(await page.locator('#state-json').inputValue());
+assert.equal(state.points.length, 7);
+const mobile = await browser.newPage({
+  viewport: { width: 390, height: 844 },
+  isMobile: true,
+  hasTouch: true,
+});
+await mobile.goto(base);
+await mobile.locator('#language').selectOption('pt');
+await mobile.getByRole('heading', { name: 'A estrada é sua.' }).waitFor();
+assert.ok(
+  await mobile.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth,
+  ),
+);
+await mobile.screenshot({ path: 'docs/mobile.png', fullPage: true });
+const dark = await browser.newPage({
+  viewport: { width: 1280, height: 900 },
+  colorScheme: 'dark',
+});
+await dark.goto(base);
+await dark.screenshot({ path: 'docs/dark.png' });
+assert.deepEqual(errors, []);
+await fs.writeFile(
+  'docs/browser-check.json',
+  JSON.stringify(
+    {
+      base,
+      routeSummary,
+      trackPoints,
+      geometryPoints,
+      waypoints: 7,
+      mobileWidth: 390,
+      english: true,
+      portuguese: true,
+      importPreservesGeometry: true,
+      naturalLanguagePreview: true,
+      pageErrors: errors,
+    },
+    null,
+    2,
+  ) + '\n',
+);
+console.log(
+  JSON.stringify(
+    { routeSummary, trackPoints, geometryPoints, status, errors },
+    null,
+    2,
+  ),
+);
+await browser.close();

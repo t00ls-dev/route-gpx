@@ -1,0 +1,35 @@
+{
+  "name": "route-gpx",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "test:integration": "RUN_OSRM=1 vitest run tests/integration.test.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@playwright/test": "^1.58.0",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.0.0",
+    "jsdom": "^29.0.0",
+    "prettier": "^3.8.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "minimatch": "^11.0.4"
+  }
+}
