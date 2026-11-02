@@ -11,7 +11,8 @@
     "test:integration": "RUN_OSRM=1 vitest run tests/integration.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "leaflet": "^1.9.4"

@@ -2,6 +2,23 @@ export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
   Help: 'Ajuda',
+  'Average speed': 'Velocidade média',
+  'Use router estimate': 'Usar estimativa do roteador',
+  'Enter an average speed greater than zero.':
+    'Informe uma velocidade média maior que zero.',
+  'Distance units': 'Unidades de distância',
+  'Calculate route': 'Calcular rota',
+  '↶ Undo': '↶ Desfazer',
+  'Change undone.': 'Alteração desfeita.',
+  'Set on map': 'Definir no mapa',
+  'Set your start.': 'Defina a origem.',
+  'Set your destination.': 'Defina o destino.',
+  'Set all stops.': 'Defina todas as paradas.',
+  'Enter a place, or paste coordinates.':
+    'Digite um lugar ou cole coordenadas.',
+  'Enter a place or valid coordinates.':
+    'Informe um lugar ou coordenadas válidas.',
+
   'Round trip added. Check stops on divided roads.':
     'Ida e volta adicionada. Confira os pontos em vias de pistas separadas.',
   'Copy the link from your address bar.': 'Copie o link na barra de endereços.',
@@ -197,6 +214,16 @@ const pt: Record<string, string> = {
   Via: 'Passagem',
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
+  [/^At (.*?) (km\/h|mph) · no stops$/, (n, u) => `A ${n} ${u} · sem paradas`],
+  [/^Location of point (\d+)$/, (n) => `Local do ponto ${n}`],
+  [/^Search point (\d+)$/, (n) => `Buscar ponto ${n}`],
+  [/^Results for point (\d+)$/, (n) => `Resultados do ponto ${n}`],
+  [
+    /^Set (Start|Destination|Stop \d+) on the map$/,
+    (p) =>
+      `Defina ${p === 'Start' ? 'o início' : p === 'Destination' ? 'o destino' : 'a ' + t(p).toLowerCase()} no mapa`,
+  ],
+
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
   [/^Finding “(.*?)”…$/, (p) => `Buscando “${p}”…`],

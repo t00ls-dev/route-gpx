@@ -52,26 +52,51 @@
             ><button id="roundtrip" type="button">↶ Round trip</button>
           </div>
         </section>
-        <form id="search-form">
-          <label for="search">Place or coordinates</label>
-          <div class="input-action">
-            <input
-              id="search"
-              placeholder="Address or lat, lon"
-              autocomplete="off"
-            /><button type="submit">Search</button>
-          </div>
-        </form>
-        <div id="results" aria-label="Address results"></div>
-        <label class="check"
-          ><input id="prefer" type="checkbox" checked /><span
-            >Prefer main roads</span
-          ></label
-        >
-        <section id="summary" aria-label="Route summary"></section>
+        <div class="route-action">
+          <button id="calculate" class="primary" type="button" disabled>
+            Calculate route</button
+          ><button id="undo" type="button" disabled>↶ Undo</button>
+        </div>
         <p id="status" role="status" aria-live="polite">
           Set your start and destination.
         </p>
+        <div class="route-options">
+          <label class="check"
+            ><input id="prefer" type="checkbox" checked /><span
+              >Prefer main roads</span
+            ></label
+          >
+          <label class="unit-control"
+            ><span class="sr-only">Distance units</span
+            ><select id="units" aria-label="Distance units">
+              <option value="metric">km</option>
+              <option value="imperial">mi</option>
+            </select></label
+          >
+        </div>
+        <details class="speed-options">
+          <summary>Average speed</summary>
+          <div class="speed-field">
+            <input
+              id="average-speed"
+              type="number"
+              min="0.1"
+              step="any"
+              inputmode="decimal"
+              placeholder="60"
+              aria-label="Average speed"
+            /><span id="speed-unit">km/h</span
+            ><button
+              id="reset-speed"
+              type="button"
+              aria-label="Use router estimate"
+              title="Use router estimate"
+            >
+              ×
+            </button>
+          </div>
+        </details>
+        <section id="summary" aria-label="Route summary"></section>
         <div class="export-actions">
           <button id="download" class="primary" disabled type="button">
             ↓ Download GPX</button

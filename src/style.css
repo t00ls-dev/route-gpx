@@ -649,3 +649,136 @@ footer a {
 .settings[open] {
   margin-top: 8px;
 }
+/* Every point edits a location; names are no longer disguised as location fields. */
+#points li {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+  padding: 10px;
+  gap: 8px;
+}
+#points li.selected {
+  padding: 9px;
+}
+.point-number {
+  margin-top: 22px;
+  min-height: 44px;
+  width: 32px;
+}
+.point-fields {
+  grid-column: 2;
+}
+.point-fields label {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 18px;
+  margin: 0 0 6px;
+}
+.point-location-form {
+  display: flex;
+  gap: 5px;
+}
+.point-fields .point-location-form input {
+  display: block !important;
+  width: 0;
+  flex: 1;
+  background: #fff;
+  border: 1px solid #b4c2cb;
+  border-radius: 6px;
+  padding: 10px !important;
+  min-height: 44px !important;
+  font-size: 13px;
+}
+.point-location-form > button {
+  font-size: 12px;
+  padding: 8px;
+  min-height: 44px;
+}
+.point-actions {
+  grid-column: 2;
+  justify-content: flex-end;
+  gap: 5px;
+}
+.point-actions button {
+  min-height: 36px;
+  width: 32px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 14px;
+}
+.point-actions button:first-child {
+  width: auto;
+  margin-right: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #145e49;
+}
+#points li:not(.selected) .point-actions {
+  display: none;
+}
+#points {
+  max-height: 360px;
+}
+.route-action {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.route-action button {
+  min-height: 46px;
+}
+.point-results {
+  display: grid;
+  gap: 5px;
+}
+.point-results > button {
+  font-size: 12px;
+  text-align: left;
+  justify-content: flex-start;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+@media (min-width: 760px) {
+  #points {
+    max-height: 440px;
+  }
+}
+.route-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.unit-control select {
+  min-height: 40px;
+  padding: 8px;
+  font-size: 13px;
+}
+.speed-options {
+  margin-bottom: 12px;
+}
+.speed-options summary {
+  font-size: 13px;
+  color: #145e49;
+  min-height: 36px;
+  line-height: 36px;
+}
+.speed-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 260px;
+  padding-bottom: 10px;
+}
+.speed-field input {
+  flex: 1;
+  width: 0;
+}
+.speed-field span {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.speed-field button {
+  font-size: 20px;
+  min-width: 44px;
+}

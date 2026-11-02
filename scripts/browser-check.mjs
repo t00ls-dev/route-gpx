@@ -97,6 +97,21 @@ const mobile = await browser.newPage({
   isMobile: true,
   hasTouch: true,
 });
+// Exercise the exact reported failure with real routing, not just the example.
+await mobile.goto(base);
+await mobile.locator('#language').selectOption('en');
+await mobile.locator('#location-0').fill('-22.930929, -43.238286');
+await mobile.locator('#location-1').fill('-23.050160, -43.535240');
+await mobile.locator('#location-1').press('Tab');
+await mobile.waitForFunction(
+  () => !document.querySelector('#download').disabled,
+  {},
+  { timeout: 80000 },
+);
+assert.equal(await mobile.locator('.leaflet-marker-icon').count(), 2);
+await mobile.locator('#undo').click();
+assert.equal(await mobile.locator('#location-1').inputValue(), '');
+assert.equal(await mobile.locator('#download').isDisabled(), true);
 await mobile.goto(shared);
 await mobile.locator('#language').selectOption('pt');
 await mobile.getByRole('heading', { name: 'Criar rota' }).waitFor();
@@ -110,6 +125,8 @@ await mobile.waitForFunction(
   {},
   { timeout: 80000 },
 );
+await mobile.locator('#language').selectOption('en');
+await mobile.getByRole('heading', { name: 'Plan your route' }).waitFor();
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: 'docs/mobile.png', fullPage: true });
 const dark = await browser.newPage({
@@ -146,6 +163,9 @@ await fs.writeFile(
       geometryPoints,
       waypoints: 7,
       mobileWidth: 390,
+      mobileScreenshotLanguage: 'en',
+      manualPointEntry: true,
+      undo: true,
       english: true,
       portuguese: true,
       importPreservesGeometry: true,

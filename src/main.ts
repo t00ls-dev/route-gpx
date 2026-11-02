@@ -1,3 +1,6 @@
+import { speedToKmh, speedFromKmh, travelTimeSeconds } from './travel-time';
+import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
+import { UndoHistory } from './history';
 import { setLanguage, t, observeTranslations, type Language } from './i18n';
 import { parseDescription, intentPoints } from './description';
 import L from 'leaflet';
@@ -17,6 +20,7 @@ import {
   parseCoordinates,
   serverUrl,
   type Coord,
+  type Point,
   type Route,
   type State,
 } from './core';
@@ -33,9 +37,7 @@ let state: State = defaults(),
   selected = 0,
   current: Route | null = null,
   revision = 0,
-  timer: ReturnType<typeof setTimeout>,
-  searchTimer: ReturnType<typeof setTimeout>,
-  searchRevision = 0;
+  timer: ReturnType<typeof setTimeout>;
 function status(message: string, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
@@ -45,6 +47,11 @@ try {
 } catch {
   status('This route link is invalid. Start a new route below.', true);
 }
+const undoHistory = new UndoHistory(state);
+let drafts = new WeakMap<Point, string>();
+const dirty = new Set<Point>();
+const lookupVersions = new WeakMap<Point, number>();
+const routeCache = new Map<string, Route>();
 const map = L.map('map', { zoomControl: false }).setView([-22.96, -43.36], 11);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -64,22 +71,95 @@ function fit() {
     map.fitBounds(L.latLngBounds(pts), { padding: [45, 70], maxZoom: 15 });
 }
 function syncUrl() {
+  undoHistory.record(state);
   const hash = encodeState(state);
+  $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
   history.replaceState(null, '', hash);
   $<HTMLAnchorElement>('help').href =
     './help.html?lang=' + (state.language ?? 'en') + hash;
 }
 function settings() {
+  $<HTMLInputElement>('average-speed').value = state.averageSpeedKmh
+    ? String(
+        Number(speedFromKmh(state.averageSpeedKmh, state.units).toFixed(2)),
+      )
+    : '';
+  $('speed-unit').textContent = state.units === 'imperial' ? 'mph' : 'km/h';
+  $<HTMLSelectElement>('units').value = state.units ?? 'metric';
   for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
     $<HTMLInputElement>(key).value = state[key];
   $<HTMLInputElement>('route-name').value = state.name;
   $<HTMLInputElement>('prefer').checked = state.prefer;
 }
+function pointLabel(i: number): string {
+  return i === 0
+    ? 'Start'
+    : i === state.points.length - 1
+      ? 'Destination'
+      : `Stop ${i}`;
+}
+function selectPoint(i: number, showMap = false) {
+  selected = i;
+  updateSelection();
+  renderMarkers();
+  if (showMap) {
+    $('map').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (state.points[i].coord) map.panTo(state.points[i].coord!);
+  }
+}
+function updateSelection() {
+  $('points')
+    .querySelectorAll('li')
+    .forEach((row, i) => {
+      row.classList.toggle('selected', i === selected);
+      row
+        .querySelector('button')
+        ?.setAttribute('aria-pressed', String(i === selected));
+    });
+  $('map-note').textContent = `Set ${pointLabel(selected)} on the map`;
+  $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
+  $<HTMLButtonElement>('calculate').disabled =
+    state.points.some((p) => !p.coord) || dirty.size > 0;
+}
+function setPoint(
+  point: Point,
+  index: number,
+  coord: Coord,
+  name?: string,
+  preserveEditor = false,
+) {
+  point.coord = coord;
+  if (name) point.name = name;
+  drafts.delete(point);
+  dirty.delete(point);
+  const next = state.points.findIndex((p, i) => i > index && !p.coord);
+  if (next >= 0) selected = next;
+  changed(preserveEditor);
+  if (preserveEditor) {
+    const input = $<HTMLInputElement>(`location-${index}`);
+    input.value = pointValue(point);
+    input.removeAttribute('aria-invalid');
+    $(`point-results-${index}`).replaceChildren();
+  }
+}
+function pointValue(point: Point): string {
+  return (
+    drafts.get(point) ??
+    (point.coord
+      ? /^(Start|Destination|Stop \d+|Point \d+|Return to start)$/.test(
+          point.name,
+        )
+        ? point.coord.map((n) => n.toFixed(6)).join(', ')
+        : point.name
+      : '')
+  );
+}
 function renderPoints() {
   const list = $('points');
+  const scroll = list.scrollTop;
   list.replaceChildren();
   $('point-count').textContent = `${state.points.length} points`;
-  state.points.forEach((p, i) => {
+  state.points.forEach((point, i) => {
     const row = document.createElement('li');
     row.className = i === selected ? 'selected' : '';
     const choose = text(
@@ -88,57 +168,155 @@ function renderPoints() {
       'point-number',
     ) as HTMLButtonElement;
     choose.type = 'button';
-    choose.title = 'Select this point on the map';
     choose.setAttribute('aria-label', `Select point ${i + 1}`);
     choose.setAttribute('aria-pressed', String(i === selected));
-    choose.onclick = () => {
-      selected = i;
-      renderPoints();
-      if (p.coord) map.panTo(p.coord);
-    };
+    choose.title = 'Set on map';
+    choose.onclick = () => selectPoint(i, true);
     const fields = document.createElement('div');
     fields.className = 'point-fields';
-    const name = document.createElement('input');
-    name.value = t(p.name);
-    name.maxLength = 240;
-    name.setAttribute('aria-label', `Name of point ${i + 1}`);
-    name.onchange = () => {
-      p.name = name.value.trim() || `Point ${i + 1}`;
-      syncUrl();
-    };
-    const coordinate = document.createElement('input');
-    coordinate.value = p.coord
-      ? p.coord.map((n) => n.toFixed(6)).join(', ')
-      : '';
-    coordinate.placeholder =
-      i === 0
-        ? 'Choose your start'
-        : i === state.points.length - 1
-          ? 'Choose your destination'
-          : 'Choose a stop';
-    coordinate.setAttribute('aria-label', `Coordinates of point ${i + 1}`);
-    coordinate.onfocus = () => {
+    const label = text('label', pointLabel(i));
+    label.setAttribute('for', `location-${i}`);
+    const form = document.createElement('form');
+    form.className = 'point-location-form';
+    const input = document.createElement('input');
+    input.id = `location-${i}`;
+    input.value = pointValue(point);
+    input.placeholder = 'Address or lat, lon';
+    input.autocomplete = 'off';
+    input.setAttribute('aria-label', `Location of point ${i + 1}`);
+    const search = text('button', 'Search') as HTMLButtonElement;
+    search.type = 'submit';
+    search.setAttribute('aria-label', `Search point ${i + 1}`);
+    const results = document.createElement('div');
+    results.id = `point-results-${i}`;
+    results.className = 'point-results';
+    results.setAttribute('aria-label', `Results for point ${i + 1}`);
+    let coordinateTimer: ReturnType<typeof setTimeout>;
+    let addressTimer: ReturnType<typeof setTimeout>;
+    function commitCoordinates() {
+      if (state.points[i] !== point || !input.isConnected) return false;
+      const c = parseCoordinates(input.value);
+      if (!c) return false;
+      clearTimeout(coordinateTimer);
+      if (
+        !dirty.has(point) &&
+        point.coord &&
+        point.coord[0] === c[0] &&
+        point.coord[1] === c[1]
+      )
+        return true;
+      setPoint(point, i, c, pointLabel(i), true);
+      return true;
+    }
+    input.onfocus = () => selectPoint(i);
+    input.oninput = () => {
+      drafts.set(point, input.value);
+      dirty.add(point);
       selected = i;
+      revision++;
+      clearTimeout(timer);
+      current = null;
+      line.clearLayers();
+      $('summary').replaceChildren();
+      $<HTMLButtonElement>('download').disabled = true;
+      results.replaceChildren();
+      input.removeAttribute('aria-invalid');
+      updateSelection();
+      renderMarkers();
+      clearTimeout(coordinateTimer);
+      if (parseCoordinates(input.value))
+        coordinateTimer = setTimeout(commitCoordinates, 600);
+      status('Enter a place, or paste coordinates.');
     };
-    coordinate.onchange = () => {
-      const c = parseCoordinates(coordinate.value);
-      if (!c) {
-        coordinate.setAttribute('aria-invalid', 'true');
+    input.onchange = () => {
+      commitCoordinates();
+    };
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      if (commitCoordinates()) return;
+      const q = input.value.trim();
+      if (q.length < 3) {
+        input.setAttribute('aria-invalid', 'true');
+        status('Enter a place or valid coordinates.', true);
+        return;
+      }
+      if (/^[\s(+-]*\d/.test(q) && /[,;]/.test(q)) {
+        input.setAttribute('aria-invalid', 'true');
         status(
           'Invalid coordinates. Use latitude, longitude (for example: -22.90, -43.18).',
           true,
         );
         return;
       }
-      p.coord = c;
-      selected = i;
-      changed();
+      const version = (lookupVersions.get(point) ?? 0) + 1;
+      lookupVersions.set(point, version);
+      search.disabled = true;
+      status('Searching…');
+      results.replaceChildren();
+      clearTimeout(addressTimer);
+      addressTimer = setTimeout(() => {
+        void searchAddress(q, state.nominatim)
+          .then((matches) => {
+            if (
+              version !== lookupVersions.get(point) ||
+              state.points[i] !== point ||
+              input.value.trim() !== q
+            )
+              return;
+            if (!matches.length) {
+              status(
+                'No address found. Try a nearby street, city, or coordinates.',
+                true,
+              );
+              return;
+            }
+            matches.forEach((r) => {
+              const b = text('button', r.display_name) as HTMLButtonElement;
+              b.type = 'button';
+              b.onclick = () => {
+                const c = parseCoordinates(`${r.lat},${r.lon}`);
+                if (!c) {
+                  status('Search returned invalid coordinates.', true);
+                  return;
+                }
+                setPoint(
+                  point,
+                  i,
+                  c,
+                  r.display_name.split(',').slice(0, 2).join(',').slice(0, 240),
+                  true,
+                );
+                map.panTo(c);
+              };
+              results.append(b);
+            });
+            status('Choose a place.');
+          })
+          .catch(() => {
+            if (version === lookupVersions.get(point))
+              status(
+                'Address search unavailable. Try again later or paste coordinates.',
+                true,
+              );
+          })
+          .finally(() => {
+            search.disabled = false;
+          });
+      }, 500);
     };
-    fields.append(name, coordinate);
+    form.append(input, search);
+    fields.append(label, form, results);
     const actions = document.createElement('div');
     actions.className = 'point-actions';
-    const move = (label: string, delta: number) => {
-      const b = text('button', label) as HTMLButtonElement;
+    const onMap = text('button', 'Set on map') as HTMLButtonElement;
+    onMap.type = 'button';
+    onMap.onclick = () => selectPoint(i, true);
+    actions.append(onMap);
+    for (const [symbol, delta] of [
+      ['↑', -1],
+      ['↓', 1],
+    ] as const) {
+      const b = text('button', symbol) as HTMLButtonElement;
       b.type = 'button';
       b.setAttribute(
         'aria-label',
@@ -153,24 +331,31 @@ function renderPoints() {
         selected = i + delta;
         changed();
       };
-      return b;
-    };
+      actions.append(b);
+    }
     const remove = text('button', '×') as HTMLButtonElement;
     remove.type = 'button';
     remove.setAttribute('aria-label', `Remove point ${i + 1}`);
     remove.disabled = state.points.length <= 2;
     remove.onclick = () => {
+      dirty.delete(point);
       state.points.splice(i, 1);
       selected = Math.min(selected, state.points.length - 1);
       changed();
     };
-    actions.append(move('↑', -1), move('↓', 1), remove);
+    actions.append(remove);
     row.append(choose, fields, actions);
     list.append(row);
   });
+  list.scrollTop = scroll;
+  renderMarkers();
+  updateSelection();
+  $<HTMLButtonElement>('add').disabled = state.points.length >= 50;
+}
+function renderMarkers() {
   markers.clearLayers();
   state.points.forEach((p, i) => {
-    if (!p.coord) return;
+    if (!p.coord || dirty.has(p)) return;
     const m = L.marker(p.coord, {
       draggable: true,
       icon: L.divIcon({
@@ -180,25 +365,23 @@ function renderPoints() {
         iconAnchor: [15, 36],
       }),
     }).addTo(markers);
-    m.bindTooltip(p.name ? text('span', p.name) : `Point ${i + 1}`);
-    m.on('click', () => {
-      selected = i;
-      renderPoints();
-    });
+    m.bindTooltip(text('span', t(p.name)));
+    m.on('click', () => selectPoint(i));
     m.on('dragend', () => {
       const c = m.getLatLng();
-      p.coord = [c.lat, c.lng];
       selected = i;
-      changed();
+      setPoint(p, i, [c.lat, c.lng]);
     });
   });
-  $('map-note').textContent = `Place point ${selected + 1} on the map`;
-  $<HTMLButtonElement>('add').disabled = state.points.length >= 50;
 }
 function renderRoute(route: Route) {
+  routeCache.set(encodeState(state), route);
+  if (routeCache.size > 50) routeCache.delete(routeCache.keys().next().value!);
   const locale = state.language === 'pt' ? 'pt-BR' : 'en';
-  const minutes =
-    route.duration === null ? null : Math.round(route.duration / 60);
+  const duration = state.averageSpeedKmh
+    ? travelTimeSeconds(route.distance, state.averageSpeedKmh)
+    : route.duration;
+  const minutes = duration === null ? null : Math.round(duration / 60);
   line.clearLayers();
   route.segments.forEach((seg) => {
     L.polyline(seg, { color: '#fff', weight: 8, opacity: 0.9 }).addTo(line);
@@ -209,10 +392,7 @@ function renderRoute(route: Route) {
   const stats = document.createElement('div');
   stats.className = 'stats';
   stats.append(
-    text(
-      'strong',
-      `${(route.distance / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })} km`,
-    ),
+    text('strong', distanceLabel(route.distance, state.units, locale)),
     text(
       'strong',
       minutes === null
@@ -230,6 +410,19 @@ function renderRoute(route: Route) {
       'hint',
     ),
   );
+  if (state.averageSpeedKmh) {
+    const speed = speedFromKmh(
+      state.averageSpeedKmh,
+      state.units,
+    ).toLocaleString(locale, { maximumFractionDigits: 1 });
+    summary.append(
+      text(
+        'p',
+        `At ${speed} ${state.units === 'imperial' ? 'mph' : 'km/h'} · no stops`,
+        'hint',
+      ),
+    );
+  }
   const chips = document.createElement('div');
   chips.className = 'chips';
   const refs = highways(route.steps);
@@ -256,7 +449,7 @@ function renderRoute(route: Route) {
     .forEach((s) => {
       const li = text(
         'li',
-        `${s.ref ? `${s.ref} · ` : ''}${t(s.name)} — ${(s.distance / 1000).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km`,
+        `${s.ref ? `${s.ref} · ` : ''}${t(s.name)} — ${distanceLabel(s.distance, state.units, locale, 2)}`,
       );
       if (state.prefer && localSections([s]).length)
         li.className = 'local-road';
@@ -277,26 +470,35 @@ function renderRoute(route: Route) {
       summary.append(
         text(
           'p',
-          `Check road positions: ${far.map((p) => `${p.index + 1} (${Math.round(p.distance)} m)`).join(', ')}`,
+          `Check road positions: ${far.map((p) => `${p.index + 1} (${shortDistanceLabel(p.distance, state.units)})`).join(', ')}`,
           'warning',
         ),
       );
   }
   $<HTMLButtonElement>('download').disabled = false;
 }
-function changed() {
+function changed(preserveEditor = false) {
   revision++;
-  searchRevision++;
+
   current = null;
   $<HTMLButtonElement>('download').disabled = true;
   clearTimeout(timer);
   syncUrl();
-  renderPoints();
+  if (preserveEditor) {
+    updateSelection();
+    renderMarkers();
+  } else renderPoints();
   settings();
   line.clearLayers();
   $('summary').replaceChildren();
-  if (state.points.some((p) => !p.coord)) {
-    status('Set all points.');
+  if (state.points.some((p) => !p.coord) || dirty.size) {
+    status(
+      !state.points[0].coord
+        ? 'Set your start.'
+        : !state.points.at(-1)!.coord
+          ? 'Set your destination.'
+          : 'Set all stops.',
+    );
     return;
   }
   status('Updating…');
@@ -304,14 +506,18 @@ function changed() {
   const snapshot = structuredClone(state);
   timer = setTimeout(() => {
     status('Calculating…');
+    $<HTMLButtonElement>('calculate').disabled = true;
     void calculate(snapshot, () => version === revision)
       .then((route) => {
         if (version !== revision) return;
         current = route;
         renderRoute(route);
         status('Route ready.');
+        updateSelection();
+        fit();
       })
       .catch((e) => {
+        if (version === revision) updateSelection();
         if (version === revision)
           status(
             e instanceof Error
@@ -323,10 +529,58 @@ function changed() {
   }, 900);
 }
 map.on('click', (e: L.LeafletMouseEvent) => {
-  state.points[selected].coord = [e.latlng.lat, e.latlng.lng];
-  if (selected === 0 && !state.points.at(-1)!.coord)
-    selected = state.points.length - 1;
+  setPoint(state.points[selected], selected, [e.latlng.lat, e.latlng.lng]);
+});
+$('calculate').onclick = () => {
+  if (dirty.size || state.points.some((p) => !p.coord)) {
+    status('Set your start and destination.', true);
+    return;
+  }
   changed();
+};
+$('undo').onclick = () => {
+  if (dirty.size) {
+    dirty.clear();
+    drafts = new WeakMap();
+    changed();
+    status('Change undone.');
+    return;
+  }
+  const previous = undoHistory.undo();
+  if (!previous) return;
+  state = previous;
+  const restoredLanguage = state.language ?? 'en';
+  setLanguage(restoredLanguage);
+  $<HTMLSelectElement>('language').value = restoredLanguage;
+  drafts = new WeakMap();
+  dirty.clear();
+  selected = Math.max(
+    0,
+    state.points.findIndex((p) => !p.coord),
+  );
+  const cached = routeCache.get(encodeState(state));
+  changed();
+  if (cached) {
+    clearTimeout(timer);
+    current = cached;
+    renderRoute(cached);
+    fit();
+  }
+  status('Change undone.');
+};
+window.addEventListener('keydown', (e) => {
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    e.key.toLowerCase() === 'z' &&
+    !e.shiftKey &&
+    !(
+      e.target instanceof Element &&
+      e.target.closest('input,textarea,[contenteditable]')
+    )
+  ) {
+    e.preventDefault();
+    $('undo').click();
+  }
 });
 $('add').onclick = () => {
   if (state.points.length >= 50) return;
@@ -353,6 +607,8 @@ $('roundtrip').onclick = () => {
   status('Round trip added. Check stops on divided roads.');
 };
 $('example').onclick = () => {
+  dirty.clear();
+  drafts = new WeakMap();
   state.points = structuredClone(examplePoints);
   state.name = 'Uruguai → Alto da Boa Vista → Grumari';
   selected = 0;
@@ -360,6 +616,13 @@ $('example').onclick = () => {
   fit();
 };
 $('fit').onclick = fit;
+$<HTMLSelectElement>('units').onchange = () => {
+  state.units = $<HTMLSelectElement>('units').value as DistanceUnits;
+  settings();
+  syncUrl();
+  if (current) renderRoute(current);
+};
+
 $<HTMLInputElement>('prefer').onchange = () => {
   state.prefer = $<HTMLInputElement>('prefer').checked;
   syncUrl();
@@ -378,82 +641,6 @@ $('save-settings').onclick = () => {
 $<HTMLInputElement>('route-name').onchange = () => {
   state.name = $<HTMLInputElement>('route-name').value.trim();
   syncUrl();
-};
-$('search-form').onsubmit = (e) => {
-  e.preventDefault();
-  clearTimeout(searchTimer);
-  const q = $<HTMLInputElement>('search').value.trim();
-  const target = state.points[selected];
-  const targetIndex = selected;
-  const version = ++searchRevision;
-  $('results').replaceChildren();
-  const c = parseCoordinates(q);
-  if (c) {
-    target.coord = c;
-    changed();
-    map.panTo(c);
-    return;
-  }
-  if (/^[\s(+-]*\d/.test(q) && /[,;]/.test(q)) {
-    status(
-      'Invalid coordinates. Use latitude (-90 to 90), longitude (-180 to 180).',
-      true,
-    );
-    return;
-  }
-  if (q.length < 3) {
-    status(
-      'Enter at least three characters or a latitude, longitude pair.',
-      true,
-    );
-    return;
-  }
-  status('Searching…');
-  searchTimer = setTimeout(() => {
-    void searchAddress(q, state.nominatim)
-      .then((results) => {
-        if (version !== searchRevision) return;
-        const box = $('results');
-        box.replaceChildren();
-        if (!results.length) {
-          status(
-            'No address found. Try a nearby street, city, or coordinates.',
-          );
-          return;
-        }
-        results.forEach((r) => {
-          const b = text('button', r.display_name) as HTMLButtonElement;
-          b.type = 'button';
-          b.onclick = () => {
-            if (state.points[targetIndex] !== target) return;
-            const coord: Coord = [Number(r.lat), Number(r.lon)];
-            if (!parseCoordinates(coord.join(','))) {
-              status('Search returned invalid coordinates.', true);
-              return;
-            }
-            target.coord = coord;
-            target.name = r.display_name
-              .split(',')
-              .slice(0, 2)
-              .join(',')
-              .slice(0, 240);
-            selected = targetIndex;
-            box.replaceChildren();
-            changed();
-            map.setView(coord, 14);
-          };
-          box.append(b);
-        });
-        status('Choose a place.');
-      })
-      .catch(() => {
-        if (version === searchRevision)
-          status(
-            'Address search unavailable. Try again later or paste coordinates.',
-            true,
-          );
-      });
-  }, 500);
 };
 $('download').onclick = () => {
   if (!current) return;
@@ -490,6 +677,8 @@ $<HTMLInputElement>('import').onchange = () => {
       const imported = importGpx(xml);
       revision++;
       clearTimeout(timer);
+      dirty.clear();
+      drafts = new WeakMap();
       state.points = imported.points;
       state.name = imported.name;
       selected = 0;
@@ -592,6 +781,8 @@ $('parse-description').onclick = () => {
           p.coord = c;
         }
         if (revision !== version) return;
+        dirty.clear();
+        drafts = new WeakMap();
         state.points = points;
         state.prefer = intent.prefer;
         selected = 0;
@@ -647,4 +838,34 @@ $<HTMLSelectElement>('language').onchange = () => {
   renderPoints();
   if (current) renderRoute(current);
   syncUrl();
+};
+
+$<HTMLInputElement>('average-speed').oninput = () => {
+  const input = $<HTMLInputElement>('average-speed');
+  const raw = input.value.trim();
+  if (!raw) {
+    delete state.averageSpeedKmh;
+    input.removeAttribute('aria-invalid');
+  } else {
+    const speed = speedToKmh(Number(raw), state.units);
+    if (!Number.isFinite(speed) || speed <= 0 || speed > 500) {
+      input.setAttribute('aria-invalid', 'true');
+      status('Enter an average speed greater than zero.', true);
+      return;
+    }
+    input.removeAttribute('aria-invalid');
+    state.averageSpeedKmh = speed;
+  }
+  if (current) renderRoute(current);
+};
+$<HTMLInputElement>('average-speed').onchange = () => {
+  if (!$<HTMLInputElement>('average-speed').hasAttribute('aria-invalid'))
+    syncUrl();
+};
+$('reset-speed').onclick = () => {
+  delete state.averageSpeedKmh;
+  settings();
+  $<HTMLInputElement>('average-speed').removeAttribute('aria-invalid');
+  syncUrl();
+  if (current) renderRoute(current);
 };

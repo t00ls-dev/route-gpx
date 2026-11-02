@@ -14,12 +14,16 @@ A interface é clara e tem contraste forte, mesmo se o sistema preferir tema esc
 
 ## Como usar
 
-1. Defina origem, destino e paradas clicando no mapa, buscando um endereço ou colando `latitude, longitude`.
-2. Arraste marcadores, reordene pelas setas, adicione ou remova pontos. A rota recalcula automaticamente com uma pequena espera.
+1. Digite endereço ou `latitude, longitude` diretamente nos campos **Início** e **Destino**. Coordenadas são aplicadas automaticamente. Para um endereço, toque em **Buscar** ou Enter e escolha um resultado. Também é possível clicar duas vezes no mapa.
+2. Arraste marcadores, reordene pelas setas, adicione ou remova pontos. A rota recalcula automaticamente após uma pequena espera; **Calcular rota** permite repetir o cálculo.
 3. Confira distância, duração, referências de rodovias e lista de vias. A preferência por vias principais avisa sobre possíveis trechos locais; não garante exclusão de vias locais. Adicione pontos nas vias desejadas.
 4. Baixe o GPX 1.1 com todos os pontos da geometria dentro de `trk/trkseg`, pontos nomeados em `wpt`, nome e data. Abra no [gpx.studio](https://gpx.studio/) ou outro aplicativo.
 
 O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**, com chegada na Avenida Estado da Guanabara junto à praia. O ponto do Postinho fica na Rua da Boa Vista, fora do pátio. A rota sobe a Avenida Edison Passos e desce pelas Furnas. [GPX de exemplo](docs/example.gpx).
+
+**Desfazer** recupera até 50 alterações nesta aba, incluindo pontos movidos, removidos ou reordenados. Ctrl+Z / ⌘Z funciona fora dos campos de texto. O seletor **km / mi** troca quilômetros por milhas, independentemente do idioma. A escolha fica no link e não altera as coordenadas do GPX.
+
+**Velocidade média** calcula o tempo pela distância e a velocidade escolhida em km/h ou mph. Limpe o campo para voltar à estimativa do roteador. A conta não inclui paradas nem trânsito.
 
 ## Descrever uma rota
 
@@ -44,6 +48,7 @@ npm install && npm run dev
 npm run lint
 npm run format:check
 npm test
+npm run test:browser
 npm run build
 ```
 
@@ -53,7 +58,9 @@ Abra a URL `/route-gpx/` indicada pelo Vite. O teste de rede é opcional e fica 
 npm run test:integration
 ```
 
-Ele verifica uma rota de cerca de 169 km pelas BR-493 e BR-101. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
+Os testes de navegador verificam a entrada manual de pontos, cliques no mapa, endereços, desfazer e unidades no computador e no celular. Eles usam respostas de teste e não consultam servidores públicos. Instale o Chromium com `npx playwright install chromium` antes de rodar localmente.
+
+O teste de integração verifica uma rota de cerca de 169 km pelas BR-493 e BR-101. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
 
 ## Servidores e limites
 

@@ -4,6 +4,8 @@ export interface Point {
   coord: Coord | null;
 }
 export interface State {
+  averageSpeedKmh?: number;
+  units?: 'metric' | 'imperial';
   language?: 'en' | 'pt';
   version: 1;
   points: Point[];
@@ -31,6 +33,7 @@ export interface Route {
 }
 export const defaults = (): State => ({
   version: 1,
+  units: 'metric',
   points: [
     { name: 'Start', coord: null },
     { name: 'Destination', coord: null },
@@ -98,6 +101,12 @@ export function decodeState(hash: string): State {
     new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0))),
   ) as State;
   if (
+    (x.averageSpeedKmh !== undefined &&
+      (typeof x.averageSpeedKmh !== 'number' ||
+        !Number.isFinite(x.averageSpeedKmh) ||
+        x.averageSpeedKmh <= 0 ||
+        x.averageSpeedKmh > 500)) ||
+    (x.units !== undefined && !['metric', 'imperial'].includes(x.units)) ||
     (x.language !== undefined && !['en', 'pt'].includes(x.language)) ||
     x.version !== 1 ||
     !Array.isArray(x.points) ||
