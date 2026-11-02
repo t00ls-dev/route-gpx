@@ -8,7 +8,7 @@
 
 A small, static application: HTML, strict TypeScript, Vite and Leaflet. No backend, API keys, account, cookies, analytics, paid APIs or remote AI. English and Brazilian Portuguese are built in; choose the language in the header. The initial language follows your browser, and shared links remember your selection.
 
-The interface uses a high-contrast light theme, including when the system prefers a dark system preference. Detailed instructions and privacy information live on the separate [Help page](https://t00ls-dev.github.io/route-gpx/help.html), keeping route creation compact on mobile.
+The interface uses a high-contrast light theme, even when the system prefers dark mode. Detailed instructions and privacy information live on the separate [Help page](https://t00ls-dev.github.io/route-gpx/help.html), keeping route creation compact on mobile.
 
 ## Plan a trip
 
@@ -17,7 +17,7 @@ The interface uses a high-contrast light theme, including when the system prefer
 3. Review distance, estimated driving time, highway references and the road list. Add stops on the roads you want. Changes recalculate after a short delay.
 4. Download GPX. The export is GPX 1.1, with every full-resolution geometry point inside `trk/trkseg`, named `wpt` points, trip name and creation date. Multiple geometry segments remain separate. The filename comes from the endpoints. Open it in [gpx.studio](https://gpx.studio/) or your preferred GPX app.
 
-**Prefer major highways** is a review aid, not a strict road exclusion. OSRM does not offer a universal “only major highways” option. The app flags possible local sections of at least 500 m when no road reference is returned; classification is a heuristic and can include major avenues, unnamed roads and access roads. Street names are preserved in their original language. References come from router steps, not fabricated classifications. The Valhalla fallback requests higher highway preference. Travel times exclude stops and are not a live traffic forecast.
+**Prefer main roads** is a review aid, not a strict road exclusion. OSRM does not offer a universal “only major highways” option. The app flags possible local sections of at least 500 m when no road reference is returned; classification is a heuristic and can include major avenues, unnamed roads and access roads. Street names are preserved in their original language. References come from router steps, not fabricated classifications. The Valhalla fallback requests higher highway preference. Travel times exclude stops and are not a live traffic forecast.
 
 ### Describe your route
 
@@ -31,7 +31,7 @@ Or in Portuguese:
 
 The on-device parser supports `From A via B to C`, `Start at A through B end at C`, `De A passando por B até C`, arrows, and one place per line. `and` / `e` separate stops; edit the preview when a place itself contains these words. Coordinates also work. **Review** extracts an editable list without network searches. **Create route** resolves the places sequentially. Specify a city or country in the optional search-area field to reduce ambiguity. The built-in example landmarks are resolved locally.
 
-This is a deterministic parser, not an LLM. It does not understand arbitrary conversational instructions or solve elevation, scenic-road, safety, road-closure or “never use local roads” constraints. Place matching uses the first geocoding result; check every marker before exporting. For full control, use the point editor or **Settings → Advanced: route state as JSON**. The JSON editor loads and applies the same validated state used by shareable links.
+This is a deterministic parser, not an LLM. It does not understand arbitrary conversational instructions or solve elevation, scenic-road, safety, road-closure or “never use local roads” constraints. Place matching uses the first geocoding result; check every marker before exporting. For full control, use the point editor or **Settings → Advanced: JSON**. The JSON editor loads and applies the same validated state used by shareable links.
 
 ### Example route
 
