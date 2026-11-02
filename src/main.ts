@@ -196,6 +196,9 @@ function renderPoints() {
   $<HTMLButtonElement>('add').disabled = state.points.length >= 50;
 }
 function renderRoute(route: Route) {
+  const locale = state.language === 'pt' ? 'pt-BR' : 'en';
+  const minutes =
+    route.duration === null ? null : Math.round(route.duration / 60);
   line.clearLayers();
   route.segments.forEach((seg) => {
     L.polyline(seg, { color: '#fff', weight: 8, opacity: 0.9 }).addTo(line);
@@ -208,20 +211,22 @@ function renderRoute(route: Route) {
   stats.append(
     text(
       'strong',
-      `${(route.distance / 1000).toLocaleString('en', { maximumFractionDigits: 1 })} km`,
+      `${(route.distance / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })} km`,
     ),
     text(
       'strong',
-      route.duration === null
+      minutes === null
         ? '—'
-        : `${Math.floor(Math.round(route.duration / 60) / 60)}h ${Math.round(route.duration / 60) % 60}m`,
+        : minutes < 60
+          ? `${minutes} min`
+          : `${Math.floor(minutes / 60)}h ${minutes % 60} min`,
     ),
   );
   summary.append(
     stats,
     text(
       'p',
-      `${route.provider} · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString('en')} points`,
+      `${route.provider} · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString(locale)} points`,
       'hint',
     ),
   );
@@ -251,7 +256,7 @@ function renderRoute(route: Route) {
     .forEach((s) => {
       const li = text(
         'li',
-        `${s.ref ? `${s.ref} · ` : ''}${s.name} — ${(s.distance / 1000).toFixed(2)} km`,
+        `${s.ref ? `${s.ref} · ` : ''}${t(s.name)} — ${(s.distance / 1000).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km`,
       );
       if (state.prefer && localSections([s]).length)
         li.className = 'local-road';
@@ -272,7 +277,7 @@ function renderRoute(route: Route) {
       summary.append(
         text(
           'p',
-          `Some points were snapped more than 100 m to a drivable road: ${far.map((p) => `${p.index + 1} (${Math.round(p.distance)} m)`).join(', ')}. Move them closer to your intended road.`,
+          `Check road positions: ${far.map((p) => `${p.index + 1} (${Math.round(p.distance)} m)`).join(', ')}`,
           'warning',
         ),
       );
@@ -345,9 +350,7 @@ $('roundtrip').onclick = () => {
   state.points.push(...structuredClone(state.points.slice(0, -1).reverse()));
   state.points.at(-1)!.name = 'Return to start';
   changed();
-  status(
-    'Round trip added. Each direction will be routed along drivable streets. Check stops on divided roads for unwanted detours.',
-  );
+  status('Round trip added. Check stops on divided roads.');
 };
 $('example').onclick = () => {
   state.points = structuredClone(examplePoints);
@@ -472,11 +475,7 @@ $('share').onclick = () => {
   void navigator.clipboard
     .writeText(location.href)
     .then(() => status('Link copied.'))
-    .catch(() =>
-      status(
-        'Copy the URL from your browser’s address bar to share this route.',
-      ),
-    );
+    .catch(() => status('Copy the link from your address bar.'));
 };
 $<HTMLInputElement>('import').onchange = () => {
   const file = $<HTMLInputElement>('import').files?.[0];
@@ -579,9 +578,7 @@ $('parse-description').onclick = () => {
             p.coord = [...known.coord];
             continue;
           }
-          status(
-            `Finding “${p.name}”… (public search, at most one request per second)`,
-          );
+          status(`Finding “${p.name}”…`);
           const results = await searchAddress(
             [p.name, area.value.trim()].filter(Boolean).join(', '),
             state.nominatim,
@@ -648,5 +645,6 @@ $<HTMLSelectElement>('language').onchange = () => {
   $<HTMLAnchorElement>('help').href =
     './help.html?lang=' + lang + encodeState(state);
   renderPoints();
+  if (current) renderRoute(current);
   syncUrl();
 };

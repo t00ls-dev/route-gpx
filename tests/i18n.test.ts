@@ -8,21 +8,31 @@ it('translates native UI labels and dynamic messages in both directions', () => 
   setLanguage('pt');
   expect(t('↓ Download GPX')).toBe('↓ Baixar GPX');
   expect(t('7 points')).toBe('7 pontos');
-  expect(t('Click the map to place point 3')).toContain('ponto 3');
+  expect(t('Place point 3 on the map')).toContain('ponto 3');
   setLanguage('en');
   expect(t('↓ Download GPX')).toBe('↓ Download GPX');
 });
 it('switches existing content and placeholders without overwriting typed place names', () => {
   document.body.innerHTML =
-    '<h1>Take the scenic route.</h1><input placeholder="My road trip" value="Postinho do Alto">';
+    '<h1>Plan your route</h1><input placeholder="My road trip" value="Postinho do Alto">';
   setLanguage('pt');
   translateDocument();
-  expect(document.querySelector('h1')?.textContent).toBe('A estrada é sua.');
+  expect(document.querySelector('h1')?.textContent).toBe('Criar rota');
   expect(document.querySelector('input')?.value).toBe('Postinho do Alto');
   expect(document.querySelector('input')?.placeholder).toBe('Minha viagem');
   setLanguage('en');
-  expect(document.querySelector('h1')?.textContent).toBe(
-    'Take the scenic route.',
-  );
+  expect(document.querySelector('h1')?.textContent).toBe('Plan your route');
   expect(document.querySelector('input')?.placeholder).toBe('My road trip');
+});
+
+it('translates generated stop names and short status messages', () => {
+  setLanguage('pt');
+  expect(t('Stop 2')).toBe('Parada 2');
+  expect(t('Return to start')).toBe('Volta ao início');
+  expect(t('Finding “Grumari”…')).toBe('Buscando “Grumari”…');
+  expect(t('Check road positions: 2 (150 m)')).toBe(
+    'Confira os pontos nas vias: 2 (150 m)',
+  );
+  setLanguage('en');
+  expect(t('Stop 2')).toBe('Stop 2');
 });

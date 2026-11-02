@@ -2,6 +2,15 @@ export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
   Help: 'Ajuda',
+  'Round trip added. Check stops on divided roads.':
+    'Ida e volta adicionada. Confira os pontos em vias de pistas separadas.',
+  'Copy the link from your address bar.': 'Copie o link na barra de endereços.',
+  'Return to start': 'Volta ao início',
+  'Unnamed road': 'Via sem nome',
+  'Zoom in': 'Aproximar',
+  'Zoom out': 'Afastar',
+  'Place your start on the map': 'Posicione a origem no mapa',
+
   'Plan your route': 'Criar rota',
   'Try example': 'Ver exemplo',
   'Describe a route': 'Descrever uma rota',
@@ -29,10 +38,10 @@ const pt: Record<string, string> = {
   'Create route': 'Criar rota',
   'Places found. Check the markers.': 'Lugares encontrados. Confira os pontos.',
   'GPX imported. Edits recalculate the route.':
-    'GPX importado. Editar recalcula a rota.',
+    'GPX importado. Alterações recalculam a rota.',
   'Import GPX': 'Importar GPX',
-  'From Uruguai via Postinho do Alto to Grumari':
-    'De Uruguai passando por Postinho do Alto até Grumari',
+  'From Metrô Uruguai via Postinho do Alto to Grumari':
+    'De Metrô Uruguai passando por Postinho do Alto até Grumari',
 
   'Your road, point by point.': 'Seu caminho, ponto a ponto.',
   'Open source ↗': 'Código aberto ↗',
@@ -188,6 +197,11 @@ const pt: Record<string, string> = {
   Via: 'Passagem',
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
+  [/^Stop (\d+)$/, (n) => `Parada ${n}`],
+  [/^Point (\d+)$/, (n) => `Ponto ${n}`],
+  [/^Finding “(.*?)”…$/, (p) => `Buscando “${p}”…`],
+  [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],
+
   [/^(.*?) · (.*?) points$/, (p, n) => `${p} · ${n} pontos`],
   [/^Place point (\d+) on the map$/, (n) => `Posicione o ponto ${n} no mapa`],
   [/^(\d+) road sections to review$/, (n) => `${n} trechos para conferir`],

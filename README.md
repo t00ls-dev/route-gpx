@@ -1,10 +1,12 @@
 # route-gpx
 
-**Your road, point by point.** Plan a driving trip, choose the roads you want, and download every turn as a GPX track.
+Create driving routes and download the complete road geometry as GPX.
 
 [Open the app](https://t00ls-dev.github.io/route-gpx/) · [Português](README.pt-BR.md) · [MIT license](LICENSE)
 
 ![route-gpx with the Tijuca to Grumari driving route](docs/screenshot.png)
+
+[Mobile view](docs/mobile.png)
 
 A small, static application: HTML, strict TypeScript, Vite and Leaflet. No backend, API keys, account, cookies, analytics, paid APIs or remote AI. English and Brazilian Portuguese are built in; choose the language in the header. The initial language follows your browser, and shared links remember your selection.
 
@@ -21,7 +23,7 @@ The interface uses a high-contrast light theme, even when the system prefers dar
 
 ### Describe your route
 
-Use the text box alongside the visual editor:
+Open **Describe a route**:
 
 > From Metrô Uruguai via Alto da Boa Vista via Postinho do Alto via Estrada das Furnas via Barra da Tijuca via Prainha to Grumari. Prefer main roads.
 
@@ -35,9 +37,9 @@ This is a deterministic parser, not an LLM. It does not understand arbitrary con
 
 ### Example route
 
-The visible example follows **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**. Stops sit on the road, including Rua da Boa Vista outside the Postinho, not inside its forecourt or in the middle of a tunnel. The route climbs Avenida Edison Passos, descends Estrada das Furnas, then follows the main avenues toward Grumari. The endpoint is on Avenida Estado da Guanabara at the beach. Router data can change over time; inspect the result.
+The visible example follows **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**. Stops sit on drivable roads, including Rua da Boa Vista outside the Postinho. The route climbs Avenida Edison Passos, descends Estrada das Furnas, then follows the main avenues toward Grumari. The endpoint is on Avenida Estado da Guanabara at the beach. Router data can change over time; inspect the result.
 
-An exported sample is included at [docs/example.gpx](docs/example.gpx). The original BR-493 / BR-101 journey is retained only as an optional integration regression test.
+An exported sample is included at [docs/example.gpx](docs/example.gpx). A separate BR-493 / BR-101 case is included as an optional integration test.
 
 ### Import and share
 
@@ -77,7 +79,7 @@ npm run test:integration
 
 That explicitly calls the public OSRM once with the BR-493 / BR-101 highway regression case. It checks both references, a plausible distance near 169 km and full geometry.
 
-A browser acceptance script verifies a real OSRM route, GPX download/reimport, both UI languages, text preview, JSON access, mobile width and a dark system preference:
+A browser acceptance script verifies a real OSRM route, GPX download/reimport, both UI languages, text preview, JSON access, mobile layout, help links and light-theme contrast when the system prefers dark mode:
 
 ```sh
 npx playwright install chromium

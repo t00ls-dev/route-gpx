@@ -8,7 +8,7 @@ const browser = await chromium.launch({
   args: ['--no-sandbox'],
 });
 const page = await browser.newPage({
-  viewport: { width: 1440, height: 1000 },
+  viewport: { width: 1440, height: 1120 },
   acceptDownloads: true,
 });
 const errors = [];
@@ -34,22 +34,26 @@ const status = await page.locator('#status').innerText();
 assert.ok(status.includes('Route ready'), status);
 assert.match(await page.locator('#summary').innerText(), /OSRM|Valhalla/);
 const routeSummary = await page.locator('#summary').innerText();
+await fs.mkdir('docs', { recursive: true });
+await page.locator('aside').evaluate((el) => {
+  el.scrollTop = 0;
+});
+await page.screenshot({ path: 'docs/screenshot.png' });
+await page.locator('#language').selectOption('pt');
+await page.getByRole('heading', { name: 'Criar rota' }).waitFor();
+await page.screenshot({ path: 'docs/screenshot.pt-BR.png' });
+await page.locator('#language').selectOption('en');
 await page.locator('#download').scrollIntoViewIfNeeded();
 const [download] = await Promise.all([
   page.waitForEvent('download'),
   page.locator('#download').click(),
 ]);
-await fs.mkdir('docs', { recursive: true });
 await download.saveAs('docs/example.gpx');
 const xml = await fs.readFile('docs/example.gpx', 'utf8');
 const trackPoints = (xml.match(/<trkpt /g) || []).length;
 assert.ok(trackPoints > 500);
 if (geometryPoints) assert.equal(trackPoints, geometryPoints);
 assert.equal((xml.match(/<wpt /g) || []).length, 7);
-await page.locator('aside').evaluate((el) => {
-  el.scrollTop = 0;
-});
-await page.screenshot({ path: 'docs/screenshot.png' });
 const shared = page.url();
 assert.ok(shared.includes('#v1='));
 await page.locator('#language').selectOption('pt');
@@ -93,7 +97,7 @@ const mobile = await browser.newPage({
   isMobile: true,
   hasTouch: true,
 });
-await mobile.goto(base);
+await mobile.goto(shared);
 await mobile.locator('#language').selectOption('pt');
 await mobile.getByRole('heading', { name: 'Criar rota' }).waitFor();
 assert.ok(
@@ -101,6 +105,12 @@ assert.ok(
     () => document.documentElement.scrollWidth <= window.innerWidth,
   ),
 );
+await mobile.waitForFunction(
+  () => !document.querySelector('#download').disabled,
+  {},
+  { timeout: 80000 },
+);
+await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: 'docs/mobile.png', fullPage: true });
 const dark = await browser.newPage({
   viewport: { width: 1280, height: 900 },

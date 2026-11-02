@@ -1,10 +1,12 @@
 # route-gpx
 
-**Seu caminho, ponto a ponto.** Planeje viagens de carro pelas vias desejadas e baixe a geometria completa em GPX.
+Crie rotas de carro e baixe o traçado completo pelas ruas em GPX.
 
 [Abrir o site](https://t00ls-dev.github.io/route-gpx/) · [English](README.md) · [Licença MIT](LICENSE)
 
-![Rota de Tijuca a Grumari no route-gpx](docs/screenshot.png)
+![Rota de Tijuca a Grumari no route-gpx](docs/screenshot.pt-BR.png)
+
+[Versão para celular](docs/mobile.png)
 
 Site estático em HTML, TypeScript strict, Vite e Leaflet. Sem backend, chave de API, cadastro, cookies ou analytics. Inglês e português do Brasil são nativos; selecione o idioma no cabeçalho.
 
@@ -19,13 +21,13 @@ A interface é clara e tem contraste forte, mesmo se o sistema preferir tema esc
 
 O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**, com chegada na Avenida Estado da Guanabara junto à praia. O ponto do Postinho fica na Rua da Boa Vista, fora do pátio. A rota sobe a Avenida Edison Passos e desce pelas Furnas. [GPX de exemplo](docs/example.gpx).
 
-## Descrição em linguagem simples e controle manual
+## Descrever uma rota
 
 > De Metrô Uruguai passando por Alto da Boa Vista passando por Postinho do Alto passando por Estrada das Furnas passando por Barra da Tijuca passando por Prainha até Grumari. Prefira vias principais.
 
 Também aceita `From A via B to C`, setas e um local por linha. **Revisar** exibe lugares editáveis, sem consultar serviços. Só após **Criar rota** os endereços são buscados, em sequência. Confira os marcadores: a resolução usa o primeiro resultado. Uma região de busca opcional ajuda a distinguir lugares com nomes iguais.
 
-O interpretador roda no navegador e reconhece estruturas explícitas; não é uma IA geral. Instruções vagas, restrições de elevação e pedidos de segurança, trânsito ou exclusão total de vias locais não são resolvidos automaticamente. O editor de pontos permanece disponível. Há também um editor JSON em **Configurações → Avançado**.
+O interpretador funciona no navegador e reconhece instruções estruturadas. Não é uma IA geral. Instruções vagas, restrições de elevação e pedidos de segurança, trânsito ou exclusão total de vias locais não são resolvidos automaticamente. O editor de pontos permanece disponível. Há também um editor JSON em **Configurações → Avançado: JSON**.
 
 ## Importar, compartilhar e ida e volta
 
@@ -51,7 +53,7 @@ Abra a URL `/route-gpx/` indicada pelo Vite. O teste de rede é opcional e fica 
 npm run test:integration
 ```
 
-Ele verifica a rota original de cerca de 169 km pelas BR-493 e BR-101. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
+Ele verifica uma rota de cerca de 169 km pelas BR-493 e BR-101. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
 
 ## Servidores e limites
 
