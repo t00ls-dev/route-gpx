@@ -43,7 +43,7 @@ This is a deterministic parser, not an LLM. It does not understand arbitrary con
 
 The visible example follows **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**. Stops sit on drivable roads, including Rua da Boa Vista outside the Postinho. The route climbs Avenida Edison Passos, descends Estrada das Furnas, then follows the main avenues toward Grumari. The endpoint is on Avenida Estado da Guanabara at the beach. Router data can change over time; inspect the result.
 
-An exported sample is included at [docs/example.gpx](docs/example.gpx). A separate BR-493 / BR-101 case is included as an optional integration test.
+An exported sample is included at [docs/example.gpx](docs/example.gpx). The optional integration test uses this same example.
 
 ### Import and share
 
@@ -84,7 +84,7 @@ Network integration is skipped by default:
 npm run test:integration
 ```
 
-That explicitly calls the public OSRM once with the BR-493 / BR-101 highway regression case. It checks both references, a plausible distance near 169 km and full geometry.
+That explicitly calls public OSRM once with **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**. It checks the main road names, a distance near **42 km**, full geometry and all seven stops snapped within 100 m. The example follows the main urban roads and beach access roads.
 
 A browser acceptance script verifies a real OSRM route, GPX download/reimport, both UI languages, text preview, JSON access, mobile layout, help links and light-theme contrast when the system prefers dark mode:
 

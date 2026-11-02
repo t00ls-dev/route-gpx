@@ -60,7 +60,7 @@ npm run test:integration
 
 Os testes de navegador verificam a entrada manual de pontos, cliques no mapa, endereços, desfazer e unidades no computador e no celular. Eles usam respostas de teste e não consultam servidores públicos. Instale o Chromium com `npx playwright install chromium` antes de rodar localmente.
 
-O teste de integração verifica uma rota de cerca de 169 km pelas BR-493 e BR-101. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
+O teste de integração verifica o mesmo exemplo **Metrô Uruguai → Alto da Boa Vista → Postinho → Furnas → Barra → Prainha → Grumari**, com cerca de **42 km**, geometria completa e as vias principais. O trajeto segue as principais vias urbanas e os acessos às praias. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
 
 ## Servidores e limites
 
