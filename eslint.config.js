@@ -11,5 +11,15 @@ export default ts.config(
   },
   js.configs.recommended,
   ...ts.configs.recommended,
-  { files: ['**/*.js'], languageOptions: { globals: { process: 'readonly' } } },
+  {
+    files: ['**/*.js', '**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
+      },
+    },
+  },
 );
