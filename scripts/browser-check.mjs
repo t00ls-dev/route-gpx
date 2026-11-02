@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -52,7 +53,7 @@ await page.screenshot({ path: 'docs/screenshot.png' });
 const shared = page.url();
 assert.ok(shared.includes('#v1='));
 await page.locator('#language').selectOption('pt');
-await page.getByRole('heading', { name: 'A estrada é sua.' }).waitFor();
+await page.getByRole('heading', { name: 'Criar rota' }).waitFor();
 assert.equal(await page.locator('html').getAttribute('lang'), 'pt-BR');
 assert.match(await page.locator('#download').innerText(), /Baixar/);
 // GPX import must preserve all original geometry, without a network recalculation.
@@ -67,6 +68,9 @@ const [again] = await Promise.all([
 const rexml = await fs.readFile(await again.path(), 'utf8');
 assert.equal((rexml.match(/<trkpt /g) || []).length, trackPoints);
 // Native natural-language UI extracts points before searching.
+await page.locator('.description-panel').evaluate((el) => {
+  el.open = true;
+});
 await page
   .locator('#description')
   .fill(
@@ -91,7 +95,7 @@ const mobile = await browser.newPage({
 });
 await mobile.goto(base);
 await mobile.locator('#language').selectOption('pt');
-await mobile.getByRole('heading', { name: 'A estrada é sua.' }).waitFor();
+await mobile.getByRole('heading', { name: 'Criar rota' }).waitFor();
 assert.ok(
   await mobile.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -103,7 +107,24 @@ const dark = await browser.newPage({
   colorScheme: 'dark',
 });
 await dark.goto(base);
+assert.equal(
+  await dark.evaluate(
+    () => getComputedStyle(document.documentElement).colorScheme,
+  ),
+  'light',
+);
 await dark.screenshot({ path: 'docs/dark.png' });
+const help = await browser.newPage();
+await help.goto(
+  new URL(await page.locator('#help').getAttribute('href'), base).href,
+);
+assert.equal(
+  new URL(await help.locator('#back').getAttribute('href'), base).hash,
+  new URL(page.url()).hash,
+);
+await help.getByRole('heading', { name: 'Ajuda', exact: true }).waitFor();
+await help.locator('#language').selectOption('en');
+await help.getByRole('heading', { name: 'Help', exact: true }).waitFor();
 assert.deepEqual(errors, []);
 await fs.writeFile(
   'docs/browser-check.json',

@@ -8,6 +8,8 @@
 
 Site estático em HTML, TypeScript strict, Vite e Leaflet. Sem backend, chave de API, cadastro, cookies ou analytics. Inglês e português do Brasil são nativos; selecione o idioma no cabeçalho.
 
+A interface é clara e tem contraste forte, mesmo se o sistema preferir tema escuro. Instruções e privacidade ficam na página separada de [Ajuda](https://t00ls-dev.github.io/route-gpx/help.html?lang=pt), deixando a criação mais compacta no celular.
+
 ## Como usar
 
 1. Defina origem, destino e paradas clicando no mapa, buscando um endereço ou colando `latitude, longitude`.
@@ -21,7 +23,7 @@ O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Est
 
 > De Metrô Uruguai passando por Alto da Boa Vista passando por Postinho do Alto passando por Estrada das Furnas passando por Barra da Tijuca passando por Prainha até Grumari. Prefira vias principais.
 
-Também aceita `From A via B to C`, setas e um local por linha. **Revisar descrição da rota** exibe lugares editáveis, sem consultar serviços. Só após **Buscar lugares e gerar rota** os endereços são buscados, em sequência. Confira os marcadores: a resolução usa o primeiro resultado. Uma região de busca opcional ajuda a distinguir lugares com nomes iguais.
+Também aceita `From A via B to C`, setas e um local por linha. **Revisar** exibe lugares editáveis, sem consultar serviços. Só após **Criar rota** os endereços são buscados, em sequência. Confira os marcadores: a resolução usa o primeiro resultado. Uma região de busca opcional ajuda a distinguir lugares com nomes iguais.
 
 O interpretador roda no navegador e reconhece estruturas explícitas; não é uma IA geral. Instruções vagas, restrições de elevação e pedidos de segurança, trânsito ou exclusão total de vias locais não são resolvidos automaticamente. O editor de pontos permanece disponível. Há também um editor JSON em **Configurações → Avançado**.
 
@@ -53,7 +55,7 @@ Ele verifica a rota original de cerca de 169 km pelas BR-493 e BR-101. Os testes
 
 ## Servidores e limites
 
-OSRM é o padrão; Valhalla é tentado automaticamente após uma falha. Altere as URLs base em **Configurações e privacidade**. O site espera HTTPS e CORS adequado para servidores remotos. O nome do repositório está configurado no `base` do Vite; o deploy no GitHub Pages é automático após CI bem-sucedida.
+OSRM é o padrão; Valhalla é tentado automaticamente após uma falha. Altere as URLs base em **Configurações**. O site espera HTTPS e CORS adequado para servidores remotos. O nome do repositório está configurado no `base` do Vite; o deploy no GitHub Pages é automático após CI bem-sucedida.
 
 As buscas Nominatim só acontecem por ação explícita, com debounce, cache em memória e ao menos 1,1 s entre requisições. **Não há autocompletar**: a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) o proíbe. O limite de 1 requisição por segundo vale para o conjunto de usuários da aplicação; um site estático não consegue impor esse limite entre dispositivos diferentes. Antes de ampliar o uso, configure uma instância própria. Os serviços públicos têm capacidade e disponibilidade limitadas. Os mapas respeitam a [política de tiles](https://operations.osmfoundation.org/policies/tiles/) e não oferecem downloads em massa.
 

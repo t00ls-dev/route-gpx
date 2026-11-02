@@ -1,6 +1,6 @@
 {
   "base": "http://localhost:5173/route-gpx/",
-  "routeSummary": "42 km\n0h 49m\n\nOSRM · full geometry · 1,296 points\n\nNo highway references returned\n\nHighway preference is a review aid. OSRM cannot guarantee a highway-only route; add stops on the roads you want.\n\n12 possible local-road sections of 500 m or more. Check the road list and adjust your stops. Access roads and ramps may be included.\n\nRoads used (29 sections)",
+  "routeSummary": "42 km\n0h 49m\n\nOSRM · 1,296 points\n\n12 road sections to review\n\nRoads (29)",
   "trackPoints": 1296,
   "geometryPoints": 1296,
   "waypoints": 7,

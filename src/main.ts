@@ -64,7 +64,10 @@ function fit() {
     map.fitBounds(L.latLngBounds(pts), { padding: [45, 70], maxZoom: 15 });
 }
 function syncUrl() {
-  history.replaceState(null, '', encodeState(state));
+  const hash = encodeState(state);
+  history.replaceState(null, '', hash);
+  $<HTMLAnchorElement>('help').href =
+    './help.html?lang=' + (state.language ?? 'en') + hash;
 }
 function settings() {
   for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
@@ -189,7 +192,7 @@ function renderPoints() {
       changed();
     });
   });
-  $('map-note').textContent = `Click the map to place point ${selected + 1}`;
+  $('map-note').textContent = `Place point ${selected + 1} on the map`;
   $<HTMLButtonElement>('add').disabled = state.points.length >= 50;
 }
 function renderRoute(route: Route) {
@@ -218,7 +221,7 @@ function renderRoute(route: Route) {
     stats,
     text(
       'p',
-      `${route.provider} · full geometry · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString('en')} points`,
+      `${route.provider} · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString('en')} points`,
       'hint',
     ),
   );
@@ -226,32 +229,12 @@ function renderRoute(route: Route) {
   chips.className = 'chips';
   const refs = highways(route.steps);
   refs.forEach((ref) => chips.append(text('span', ref)));
-  if (!refs.length)
-    chips.append(
-      text(
-        'span',
-        route.steps.length
-          ? 'No highway references returned'
-          : 'Road references unavailable for imported tracks',
-      ),
-    );
   summary.append(chips);
   if (state.prefer) {
-    summary.append(
-      text(
-        'p',
-        'Highway preference is a review aid. OSRM cannot guarantee a highway-only route; add stops on the roads you want.',
-        'hint',
-      ),
-    );
     const local = localSections(route.steps);
     if (local.length)
       summary.append(
-        text(
-          'p',
-          `${local.length} possible local-road sections of 500 m or more. Check the road list and adjust your stops. Access roads and ramps may be included.`,
-          'warning',
-        ),
+        text('p', `${local.length} road sections to review`, 'warning'),
       );
   }
   const roads = document.createElement('details');
@@ -259,7 +242,7 @@ function renderRoute(route: Route) {
   roads.append(
     text(
       'summary',
-      `Roads used (${route.steps.filter((s) => s.distance > 0).length} sections)`,
+      `Roads (${route.steps.filter((s) => s.distance > 0).length})`,
     ),
   );
   const ul = document.createElement('ul');
@@ -308,20 +291,20 @@ function changed() {
   line.clearLayers();
   $('summary').replaceChildren();
   if (state.points.some((p) => !p.coord)) {
-    status('Place all points to calculate a driving route.');
+    status('Set all points.');
     return;
   }
-  status('Route updated. Waiting briefly before recalculating…');
+  status('Updating…');
   const version = revision;
   const snapshot = structuredClone(state);
   timer = setTimeout(() => {
-    status('Finding your route along the streets…');
+    status('Calculating…');
     void calculate(snapshot, () => version === revision)
       .then((route) => {
         if (version !== revision) return;
         current = route;
         renderRoute(route);
-        status('Route ready. Review the roads, then download your GPX.');
+        status('Route ready.');
       })
       .catch((e) => {
         if (version === revision)
@@ -422,7 +405,7 @@ $('search-form').onsubmit = (e) => {
     );
     return;
   }
-  status('Searching for this address…');
+  status('Searching…');
   searchTimer = setTimeout(() => {
     void searchAddress(q, state.nominatim)
       .then((results) => {
@@ -458,7 +441,7 @@ $('search-form').onsubmit = (e) => {
           };
           box.append(b);
         });
-        status('Choose an address result.');
+        status('Choose a place.');
       })
       .catch(() => {
         if (version === searchRevision)
@@ -482,15 +465,13 @@ $('download').onclick = () => {
   a.download = filename(state.points);
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  status('GPX downloaded with every geometry point and your stops.');
+  status('GPX downloaded.');
 };
 $('share').onclick = () => {
   syncUrl();
   void navigator.clipboard
     .writeText(location.href)
-    .then(() =>
-      status('Route link copied. It contains the points and settings.'),
-    )
+    .then(() => status('Link copied.'))
     .catch(() =>
       status(
         'Copy the URL from your browser’s address bar to share this route.',
@@ -519,9 +500,7 @@ $<HTMLInputElement>('import').onchange = () => {
       settings();
       renderRoute(current);
       fit();
-      status(
-        'Original GPX geometry preserved. Editing a point recalculates the track on streets. Shared links contain control points; they recalculate the route.',
-      );
+      status('GPX imported. Edits recalculate the route.');
     })
     .catch((e) => status((e as Error).message, true))
     .finally(() => {
@@ -575,10 +554,7 @@ $('parse-description').onclick = () => {
     area.maxLength = 160;
     label.append(area);
     box.append(label);
-    const build = text(
-      'button',
-      'Find places & build route',
-    ) as HTMLButtonElement;
+    const build = text('button', 'Create route') as HTMLButtonElement;
     build.type = 'button';
     box.append(build);
     build.onclick = () => {
@@ -624,16 +600,14 @@ $('parse-description').onclick = () => {
         selected = 0;
         changed();
         fit();
-        status(
-          'Places resolved using the first search match. Review every marker; routing starts automatically.',
-        );
+        status('Places found. Check the markers.');
       })()
         .catch((e) => status((e as Error).message, true))
         .finally(() => {
           build.disabled = false;
         });
     };
-    status('Review the places below. No address search has been sent yet.');
+    status('Review the places.');
   } catch (e) {
     status((e as Error).message, true);
   }
@@ -663,12 +637,16 @@ const initialLanguage: Language =
 state.language = initialLanguage;
 $<HTMLSelectElement>('language').value = initialLanguage;
 setLanguage(initialLanguage);
+$<HTMLAnchorElement>('help').href =
+  './help.html?lang=' + initialLanguage + encodeState(state);
 renderPoints();
 observeTranslations();
 $<HTMLSelectElement>('language').onchange = () => {
   const lang = $<HTMLSelectElement>('language').value as Language;
   state.language = lang;
   setLanguage(lang);
+  $<HTMLAnchorElement>('help').href =
+    './help.html?lang=' + lang + encodeState(state);
   renderPoints();
   syncUrl();
 };

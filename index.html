@@ -2,125 +2,76 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Plan a driving route, choose your highways and download the complete track as GPX. Open source, free, no account needed."
+      content="Create full driving GPX tracks. Simple, free, open source."
     />
-    <meta name="theme-color" content="#164c45" />
-    <title>route-gpx · Your road, point by point</title>
+    <meta name="theme-color" content="#ffffff" />
+    <title>route-gpx</title>
   </head>
   <body>
     <header>
-      <a class="brand" href="#" aria-label="route-gpx home"
-        ><span class="brand-symbol">↝</span> route<span>gpx</span></a
-      ><span class="tagline">Your road, point by point.</span
+      <a class="brand" href="#">route<span>gpx</span></a
       ><label class="language-control"
         ><span class="sr-only">Language / Idioma</span
         ><select id="language" aria-label="Language / Idioma">
           <option value="en">English</option>
           <option value="pt">Português</option>
         </select></label
-      ><a
-        class="source"
-        href="https://github.com/t00ls-dev/route-gpx"
-        target="_blank"
-        rel="noreferrer"
-        >Open source ↗</a
-      >
+      ><a id="help" href="./help.html">Help</a>
     </header>
     <main>
       <aside aria-label="Plan your route">
-        <div class="panel-heading">
-          <span class="eyebrow">MAKE YOUR NEXT MOVE</span>
-          <h1>Take the scenic route.</h1>
-          <p>
-            Choose the roads you love.<br />Take every turn with you in GPX.
-          </p>
+        <div class="section-line page-heading">
+          <h1>Plan your route</h1>
+          <button id="example" type="button">Try example</button>
         </div>
-        <div class="toolbar">
-          <button id="example" type="button">↗ Try Tijuca → Grumari</button
-          ><label class="file-button"
-            >↑ Import GPX<input
-              id="import"
-              type="file"
-              accept=".gpx,application/gpx+xml,application/xml,text/xml"
-          /></label>
-        </div>
-        <section class="description-panel" aria-label="Describe your route">
-          <div class="section-line">
-            <h2>Describe your route</h2>
-            <span class="local-badge">ON YOUR DEVICE</span>
-          </div>
-          <p class="hint">
-            Use English or Portuguese. Start with “From”, add “via” stops, and
-            finish with “to”. Or list one place per line.
-          </p>
-          <label for="description">Where would you like to go?</label>
-          <textarea
+        <details class="description-panel">
+          <summary>Describe a route</summary>
+          <label for="description" class="sr-only"
+            >Where would you like to go?</label
+          ><textarea
             id="description"
-            rows="4"
+            rows="3"
             maxlength="4000"
-            placeholder="From Metrô Uruguai via Alto da Boa Vista via Postinho do Alto via Estrada das Furnas via Barra da Tijuca via Prainha to Grumari. Prefer main roads."
-          ></textarea>
-          <button id="parse-description" type="button">
-            ↝ Review described route
-          </button>
+            placeholder="From Uruguai via Postinho do Alto to Grumari"
+          ></textarea
+          ><button id="parse-description" type="button">Review</button>
           <div id="intent-preview"></div>
-          <p class="hint">
-            Local text parser, not an AI service. Review the extracted places.
-            Road and direction requests are guided by stops, not guaranteed.
-          </p>
-        </section>
+        </details>
         <section aria-label="Route points">
           <div class="section-line">
-            <h2>Your itinerary</h2>
+            <h2>Points</h2>
             <span id="point-count"></span>
           </div>
-          <p class="hint">
-            Select a point. Click the map, search an address, or paste lat, lon.
-          </p>
           <ol id="points"></ol>
-          <button id="add" class="add-button" type="button">
-            ＋ Add a stop
-          </button>
           <div class="inline-actions">
-            <button id="reverse" type="button">⇅ Reverse route</button
+            <button id="add" type="button">＋ Stop</button
+            ><button id="reverse" type="button">⇅ Reverse</button
             ><button id="roundtrip" type="button">↶ Round trip</button>
           </div>
         </section>
         <form id="search-form">
-          <label for="search"
-            >Address or coordinates for the selected point</label
-          >
+          <label for="search">Place or coordinates</label>
           <div class="input-action">
             <input
               id="search"
-              placeholder="e.g. -22.6917362, -43.4589026"
+              placeholder="Address or lat, lon"
               autocomplete="off"
             /><button type="submit">Search</button>
           </div>
-          <p class="hint">Addresses are searched only when you press Search.</p>
         </form>
         <div id="results" aria-label="Address results"></div>
         <label class="check"
           ><input id="prefer" type="checkbox" checked /><span
-            ><strong>Prefer major highways</strong
-            ><small
-              >Review the roads and guide your route with stops.</small
-            ></span
+            >Prefer main roads</span
           ></label
         >
-        <section id="summary" aria-label="Route summary">
-          <div class="empty-state">
-            ⌁
-            <p>
-              From the first point to the last turn.<br />Set your start and
-              destination to begin.
-            </p>
-          </div>
-        </section>
-        <p id="status" role="status" aria-live="polite">Ready when you are.</p>
+        <section id="summary" aria-label="Route summary"></section>
+        <p id="status" role="status" aria-live="polite">
+          Set your start and destination.
+        </p>
         <div class="export-actions">
           <button id="download" class="primary" disabled type="button">
             ↓ Download GPX</button
@@ -128,65 +79,55 @@
             Copy link
           </button>
         </div>
-        <details class="settings">
-          <summary>Settings & privacy</summary>
-          <label for="route-name">Trip name</label
-          ><input
-            id="route-name"
-            maxlength="160"
-            placeholder="My road trip"
-          /><label for="osrm">OSRM server</label
-          ><input id="osrm" type="url" /><label for="valhalla"
-            >Valhalla fallback</label
-          ><input id="valhalla" type="url" /><label for="nominatim"
-            >Nominatim server</label
-          ><input id="nominatim" type="url" /><button
-            id="save-settings"
-            type="button"
-          >
-            Apply settings
-          </button>
-          <p>
-            No cookies or analytics. Points are stored in the link. Coordinates,
-            searches and the map area are sent to your selected services. Avoid
-            sharing links containing private locations.
-          </p>
-          <p>
-            Public, shared servers: limited capacity and best-effort
-            availability. Requests are spaced out. No address autocomplete or
-            map downloads.
-          </p>
+        <div class="secondary-actions">
+          <label class="file-button"
+            >Import GPX<input
+              id="import"
+              type="file"
+              accept=".gpx,application/gpx+xml,application/xml,text/xml"
+          /></label>
+          <details class="settings">
+            <summary>Settings</summary>
+            <label for="route-name">Trip name</label
+            ><input
+              id="route-name"
+              maxlength="160"
+              placeholder="My road trip"
+            /><label for="osrm">OSRM server</label
+            ><input id="osrm" type="url" /><label for="valhalla"
+              >Valhalla fallback</label
+            ><input id="valhalla" type="url" /><label for="nominatim"
+              >Nominatim server</label
+            ><input id="nominatim" type="url" /><button
+              id="save-settings"
+              type="button"
+            >
+              Apply settings
+            </button>
+            <details class="json-settings">
+              <summary>Advanced: JSON</summary>
+              <label for="state-json" class="sr-only"
+                >Points and settings (latitude, longitude)</label
+              ><textarea id="state-json" rows="8" spellcheck="false"></textarea
+              ><button id="export-json" type="button">Load current state</button
+              ><button id="apply-json" type="button">Apply JSON</button>
+            </details>
+          </details>
+        </div>
+        <footer>
+          <span>Public, shared servers.</span>
           <a
-            href="https://operations.osmfoundation.org/policies/nominatim/"
+            href="https://github.com/t00ls-dev/route-gpx"
             target="_blank"
             rel="noreferrer"
-            >Nominatim usage policy ↗</a
+            >GitHub ↗</a
           >
-          <details class="json-settings">
-            <summary>Advanced: route state as JSON</summary>
-            <label for="state-json"
-              >Points and settings (latitude, longitude)</label
-            ><textarea id="state-json" rows="8" spellcheck="false"></textarea
-            ><button id="export-json" type="button">Load current state</button
-            ><button id="apply-json" type="button">Apply JSON</button>
-          </details>
-        </details>
-        <footer>
-          Made for the open road.
-          <a href="https://github.com/t00ls-dev/route-gpx/blob/main/LICENSE"
-            >MIT</a
-          ><br />Data © OpenStreetMap · OSRM · Valhalla · Leaflet · Nominatim
         </footer>
       </aside>
       <section class="map-container" aria-label="Interactive map">
         <div id="map"></div>
-        <div class="map-note">
-          <span class="live-dot"></span
-          ><span id="map-note">Click the map to place a point</span>
-        </div>
-        <button id="fit" class="fit-button" type="button">
-          ◎ Fit entire route
-        </button>
+        <div class="map-note" id="map-note">Place your start on the map</div>
+        <button id="fit" class="fit-button" type="button">◎ Fit route</button>
       </section>
     </main>
     <script type="module" src="/src/main.ts"></script>

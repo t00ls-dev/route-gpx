@@ -19,6 +19,7 @@ export default ts.config(
         console: 'readonly',
         document: 'readonly',
         window: 'readonly',
+        getComputedStyle: 'readonly',
       },
     },
   },

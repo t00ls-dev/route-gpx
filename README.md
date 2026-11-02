@@ -8,9 +8,11 @@
 
 A small, static application: HTML, strict TypeScript, Vite and Leaflet. No backend, API keys, account, cookies, analytics, paid APIs or remote AI. English and Brazilian Portuguese are built in; choose the language in the header. The initial language follows your browser, and shared links remember your selection.
 
+The interface uses a high-contrast light theme, including when the system prefers a dark system preference. Detailed instructions and privacy information live on the separate [Help page](https://t00ls-dev.github.io/route-gpx/help.html), keeping route creation compact on mobile.
+
 ## Plan a trip
 
-1. Choose **Try Tijuca → Grumari**, or set your start and destination by clicking the map, pasting `latitude, longitude`, or searching an address.
+1. Choose **Try example**, or set your start and destination by clicking the map, pasting `latitude, longitude`, or searching an address.
 2. Select a numbered point to move it on the map, drag a marker, add stops, reorder with the arrows, remove points or reverse the itinerary. **Round trip** adds a return itinerary, routed along legal driving directions. On divided roads, review the return stops: the nearest carriageway can cause detours.
 3. Review distance, estimated driving time, highway references and the road list. Add stops on the roads you want. Changes recalculate after a short delay.
 4. Download GPX. The export is GPX 1.1, with every full-resolution geometry point inside `trk/trkseg`, named `wpt` points, trip name and creation date. Multiple geometry segments remain separate. The filename comes from the endpoints. Open it in [gpx.studio](https://gpx.studio/) or your preferred GPX app.
@@ -27,7 +29,7 @@ Or in Portuguese:
 
 > De Metrô Uruguai passando por Alto da Boa Vista passando por Postinho do Alto passando por Estrada das Furnas passando por Barra da Tijuca passando por Prainha até Grumari. Prefira vias principais.
 
-The on-device parser supports `From A via B to C`, `Start at A through B end at C`, `De A passando por B até C`, arrows, and one place per line. `and` / `e` separate stops; edit the preview when a place itself contains these words. Coordinates also work. **Review described route** extracts an editable list without network searches. **Find places & build route** resolves the places sequentially. Specify a city or country in the optional search-area field to reduce ambiguity. The built-in example landmarks are resolved locally.
+The on-device parser supports `From A via B to C`, `Start at A through B end at C`, `De A passando por B até C`, arrows, and one place per line. `and` / `e` separate stops; edit the preview when a place itself contains these words. Coordinates also work. **Review** extracts an editable list without network searches. **Create route** resolves the places sequentially. Specify a city or country in the optional search-area field to reduce ambiguity. The built-in example landmarks are resolved locally.
 
 This is a deterministic parser, not an LLM. It does not understand arbitrary conversational instructions or solve elevation, scenic-road, safety, road-closure or “never use local roads” constraints. Place matching uses the first geocoding result; check every marker before exporting. For full control, use the point editor or **Settings → Advanced: route state as JSON**. The JSON editor loads and applies the same validated state used by shareable links.
 
@@ -75,7 +77,7 @@ npm run test:integration
 
 That explicitly calls the public OSRM once with the BR-493 / BR-101 highway regression case. It checks both references, a plausible distance near 169 km and full geometry.
 
-A browser acceptance script verifies a real OSRM route, GPX download/reimport, both UI languages, text preview, JSON access, mobile width and dark mode:
+A browser acceptance script verifies a real OSRM route, GPX download/reimport, both UI languages, text preview, JSON access, mobile width and a dark system preference:
 
 ```sh
 npx playwright install chromium
@@ -96,7 +98,7 @@ It makes a real routing request and updates the screenshots, example GPX and bro
 
 ## Change or host a routing server
 
-Open **Settings & privacy**, change the base URLs for OSRM, Valhalla or Nominatim, and press **Apply settings**. Use a base URL without `/route/v1/driving`, `/route` or `/search`; the app adds the endpoint. Settings are stored in the route link. Public HTTPS Pages requires an HTTPS server (localhost is accepted for local development); your server must allow browser cross-origin requests. OSRM must use the driving/car profile.
+Open **Settings**, change the base URLs for OSRM, Valhalla or Nominatim, and press **Apply settings**. Use a base URL without `/route/v1/driving`, `/route` or `/search`; the app adds the endpoint. Settings are stored in the route link. Public HTTPS Pages requires an HTTPS server (localhost is accepted for local development); your server must allow browser cross-origin requests. OSRM must use the driving/car profile.
 
 For your own OSRM, follow the [official OSRM quick start](https://github.com/Project-OSRM/osrm-backend#quick-start). Example with Docker and a regional Geofabrik extract (disk/RAM needs depend on region size; a small extract is easier to start with):
 

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>route-gpx · Help</title>
+  </head>
+  <body class="help-page">
+    <header>
+      <a class="brand" href="./index.html">route<span>gpx</span></a
+      ><label class="language-control"
+        ><span class="sr-only">Language / Idioma</span
+        ><select id="language" aria-label="Language / Idioma">
+          <option value="en">English</option>
+          <option value="pt">Português</option>
+        </select></label
+      ><a id="back" href="./index.html">Back to map</a>
+    </header>
+    <main>
+      <article lang="en" id="help-en">
+        <h1>Help</h1>
+        <h2>Create a route</h2>
+        <p>
+          Select a numbered point. Click the map, paste latitude and longitude,
+          or search for a place. Set your destination the same way. Drag markers
+          to adjust. Use the arrows to reorder points, or × to remove a stop.
+          The route recalculates automatically.
+        </p>
+        <h2>Describe a route</h2>
+        <p>
+          Open “Describe a route”. Use English or Portuguese, explicit places,
+          and a start and destination. Review the extracted names before
+          creating the route. The search uses the first match; check every
+          marker.
+        </p>
+        <pre>
+From Metrô Uruguai via Postinho do Alto to Grumari
+De Metrô Uruguai passando por Postinho do Alto até Grumari</pre>
+        <p>
+          One place per line and coordinate pairs also work. Add “Prefer main
+          roads” to your description. This is an on-device text parser, not a
+          general AI: vague scenic, elevation or safety requests need manual
+          adjustment.
+        </p>
+        <h2>Choose main roads</h2>
+        <p>
+          Add stops directly on the roads you want. The road list shows the
+          router’s names and references. “Prefer main roads” flags possible
+          local sections longer than 500 m; it does not exclude all local roads.
+          Major avenues without a reference may also be flagged. Access roads
+          can be necessary.
+        </p>
+        <h2>GPX, import and sharing</h2>
+        <p>
+          Download GPX exports the complete road geometry and your stops. Import
+          preserves the original geometry until you edit a point. Shared links
+          store points and settings, then recalculate against current road data;
+          they do not embed an imported track.
+        </p>
+        <p>
+          Round trip adds the return itinerary. On divided roads, check that
+          stops fall on the intended carriageway. Estimated times exclude stops
+          and live traffic.
+        </p>
+        <h2>Settings and JSON</h2>
+        <p>
+          Change server base URLs in Settings. Use HTTPS and servers that allow
+          browser requests (CORS). The advanced JSON editor gives you the same
+          points and options used by route links. Hosting your own OSRM is
+          documented in the README.
+        </p>
+        <h2>Public services and privacy</h2>
+        <p>
+          The default servers are public and shared, with limited capacity.
+          Searches happen only on request, never as address autocomplete.
+          Nominatim requests are spaced at least 1.1 seconds apart; its
+          one-request-per-second limit applies across all users. Use your own
+          service before scaling. Routing changes are debounced and serialized;
+          OSRM falls back to Valhalla.
+        </p>
+        <p>
+          No cookies, accounts or analytics. Coordinates, searches and visible
+          map tiles are sent to the selected services. Links include your
+          locations. The browser stores only a search timestamp to coordinate
+          tabs. Do not enter confidential addresses.
+        </p>
+        <p>
+          <a href="https://operations.osmfoundation.org/policies/nominatim/"
+            >Nominatim policy</a
+          >
+          ·
+          <a href="https://operations.osmfoundation.org/policies/tiles/"
+            >Tile policy</a
+          >
+        </p>
+        <h2>Open source</h2>
+        <p>
+          <a href="https://github.com/t00ls-dev/route-gpx"
+            >Code, full documentation and issues</a
+          >. MIT license. Map data ©
+          <a href="https://www.openstreetmap.org/copyright"
+            >OpenStreetMap contributors</a
+          >. Built with Leaflet, OSRM, Valhalla and Nominatim.
+        </p>
+      </article>
+      <article lang="pt-BR" id="help-pt" hidden>
+        <h1>Ajuda</h1>
+        <h2>Criar uma rota</h2>
+        <p>
+          Selecione um ponto numerado. Clique no mapa, cole latitude e longitude
+          ou busque um lugar. Defina o destino da mesma forma. Arraste os
+          marcadores para ajustar. Use as setas para reordenar ou × para remover
+          uma parada. A rota recalcula automaticamente.
+        </p>
+        <h2>Descrever uma rota</h2>
+        <p>
+          Abra “Descrever uma rota”. Use inglês ou português, lugares
+          específicos, origem e destino. Revise os nomes extraídos antes de
+          criar. A busca usa o primeiro resultado; confira cada marcador.
+        </p>
+        <pre>
+De Metrô Uruguai passando por Postinho do Alto até Grumari
+From Metrô Uruguai via Postinho do Alto to Grumari</pre>
+        <p>
+          Também aceita um lugar por linha e pares de coordenadas. Acrescente
+          “Prefira vias principais” à descrição. É um interpretador local, sem
+          IA geral: pedidos vagos de paisagem, elevação ou segurança precisam de
+          ajuste manual.
+        </p>
+        <h2>Escolher vias principais</h2>
+        <p>
+          Adicione paradas diretamente nas vias desejadas. A lista mostra os
+          nomes e referências retornados pelo roteador. “Preferir vias
+          principais” sinaliza possíveis trechos locais com mais de 500 m; não
+          exclui todas as vias locais. Avenidas principais sem referência também
+          podem ser sinalizadas. Vias de acesso podem ser necessárias.
+        </p>
+        <h2>GPX, importação e links</h2>
+        <p>
+          Baixar GPX exporta a geometria completa pelas ruas e suas paradas.
+          Importar preserva a geometria original até você editar um ponto. Links
+          compartilhados guardam pontos e opções e recalculam com os dados
+          atuais; não incluem a geometria original de um arquivo importado.
+        </p>
+        <p>
+          Ida e volta adiciona o retorno ao itinerário. Em vias de pistas
+          separadas, confira se os pontos estão na pista desejada. As durações
+          não incluem paradas nem trânsito em tempo real.
+        </p>
+        <h2>Configurações e JSON</h2>
+        <p>
+          Altere as URLs base dos servidores nas Configurações. Use HTTPS e
+          servidores que permitam requisições do navegador (CORS). O editor JSON
+          avançado usa os mesmos pontos e opções dos links de rota. O README
+          explica como hospedar seu próprio OSRM.
+        </p>
+        <h2>Serviços públicos e privacidade</h2>
+        <p>
+          Os servidores padrão são públicos, compartilhados e têm capacidade
+          limitada. Buscas são explícitas, sem autocompletar. As consultas
+          Nominatim têm ao menos 1,1 s entre requisições; o limite de uma
+          requisição por segundo vale para todos os usuários. Use uma instância
+          própria antes de ampliar o uso. O roteamento tem debounce e fila; o
+          Valhalla é usado se o OSRM falhar.
+        </p>
+        <p>
+          Sem cookies, cadastro ou analytics. Coordenadas, buscas e área visível
+          do mapa são enviados aos serviços escolhidos. Links incluem seus
+          locais. O navegador guarda apenas um horário de busca para coordenar
+          abas. Não informe endereços confidenciais.
+        </p>
+        <p>
+          <a href="https://operations.osmfoundation.org/policies/nominatim/"
+            >Política do Nominatim</a
+          >
+          ·
+          <a href="https://operations.osmfoundation.org/policies/tiles/"
+            >Política de tiles</a
+          >
+        </p>
+        <h2>Código aberto</h2>
+        <p>
+          <a href="https://github.com/t00ls-dev/route-gpx"
+            >Código, documentação completa e problemas</a
+          >. Licença MIT. Dados ©
+          <a href="https://www.openstreetmap.org/copyright"
+            >OpenStreetMap e colaboradores</a
+          >. Feito com Leaflet, OSRM, Valhalla e Nominatim.
+        </p>
+      </article>
+    </main>
+    <script type="module" src="/src/help.ts"></script>
+  </body>
+</html>

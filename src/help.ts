@@ -1,0 +1,19 @@
+import './style.css';
+const select = document.getElementById('language') as HTMLSelectElement;
+function apply() {
+  const lang = select.value === 'pt' ? 'pt' : 'en';
+  document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+  document.getElementById('help-en')!.hidden = lang !== 'en';
+  document.getElementById('help-pt')!.hidden = lang !== 'pt';
+  document.getElementById('back')!.textContent =
+    lang === 'pt' ? 'Voltar ao mapa' : 'Back to map';
+  document.title = lang === 'pt' ? 'route-gpx · Ajuda' : 'route-gpx · Help';
+  (document.getElementById('back') as HTMLAnchorElement).href =
+    './index.html' + location.hash;
+  history.replaceState(null, '', `?lang=${lang}` + location.hash);
+}
+select.value =
+  new URLSearchParams(location.search).get('lang') ??
+  (navigator.language.startsWith('pt') ? 'pt' : 'en');
+select.onchange = apply;
+apply();

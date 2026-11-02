@@ -1,9 +1,42 @@
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
+  Help: 'Ajuda',
+  'Plan your route': 'Criar rota',
+  'Try example': 'Ver exemplo',
+  'Describe a route': 'Descrever uma rota',
+  Review: 'Revisar',
+  Points: 'Pontos',
+  '＋ Stop': '＋ Parada',
+  '⇅ Reverse': '⇅ Inverter',
+  'Place or coordinates': 'Lugar ou coordenadas',
+  'Address or lat, lon': 'Endereço ou lat, lon',
+  'Prefer main roads': 'Preferir vias principais',
+  Settings: 'Configurações',
+  'Advanced: JSON': 'Avançado: JSON',
+  'Public, shared servers.': 'Servidores públicos e compartilhados.',
+  '◎ Fit route': '◎ Ver rota',
+  'Set your start and destination.': 'Defina a origem e o destino.',
+  'Set all points.': 'Defina todos os pontos.',
+  'Updating…': 'Atualizando…',
+  'Calculating…': 'Calculando…',
+  'Route ready.': 'Rota pronta.',
+  'Searching…': 'Buscando…',
+  'Choose a place.': 'Escolha um lugar.',
+  'GPX downloaded.': 'GPX baixado.',
+  'Link copied.': 'Link copiado.',
+  'Review the places.': 'Confira os lugares.',
+  'Create route': 'Criar rota',
+  'Places found. Check the markers.': 'Lugares encontrados. Confira os pontos.',
+  'GPX imported. Edits recalculate the route.':
+    'GPX importado. Editar recalcula a rota.',
+  'Import GPX': 'Importar GPX',
+  'From Uruguai via Postinho do Alto to Grumari':
+    'De Uruguai passando por Postinho do Alto até Grumari',
+
   'Your road, point by point.': 'Seu caminho, ponto a ponto.',
   'Open source ↗': 'Código aberto ↗',
-  'Plan your route': 'Planejar rota',
+
   'MAKE YOUR NEXT MOVE': 'PLANEJE A PRÓXIMA VIAGEM',
   'Take the scenic route.': 'A estrada é sua.',
   'Choose the roads you love.': 'Escolha por onde passar.',
@@ -155,6 +188,11 @@ const pt: Record<string, string> = {
   Via: 'Passagem',
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
+  [/^(.*?) · (.*?) points$/, (p, n) => `${p} · ${n} pontos`],
+  [/^Place point (\d+) on the map$/, (n) => `Posicione o ponto ${n} no mapa`],
+  [/^(\d+) road sections to review$/, (n) => `${n} trechos para conferir`],
+  [/^Roads \((\d+)\)$/, (n) => `Vias (${n})`],
+
   [/^(\d+) points$/, (n) => `${n} pontos`],
   [
     /^Click the map to place point (\d+)$/,
