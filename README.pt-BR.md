@@ -1,6 +1,6 @@
 # route-gpx
 
-Crie rotas de carro e baixe o traçado completo pelas ruas em GPX.
+Crie rotas e baixe o traçado completo pelas ruas em GPX.
 
 [Abrir o site](https://t00ls-dev.github.io/route-gpx/) · [English](README.md) · [Licença MIT](LICENSE)
 

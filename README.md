@@ -1,10 +1,10 @@
 # route-gpx
 
-Create driving routes and download the complete road geometry as GPX.
+Create routes and download the complete road geometry as GPX.
 
 [Open the app](https://t00ls-dev.github.io/route-gpx/) · [Português](README.pt-BR.md) · [MIT license](LICENSE)
 
-![route-gpx with the Tijuca to Grumari driving route](docs/screenshot.png)
+![route-gpx with the Tijuca to Grumari route](docs/screenshot.png)
 
 [Mobile view](docs/mobile.png)
 

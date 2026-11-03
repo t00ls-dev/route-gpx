@@ -13,10 +13,10 @@ test('SEO metadata stays localized and excludes private route state', async ({
     canonical,
   );
   await page.locator('#language').selectOption('pt');
-  await expect(page).toHaveTitle(/Rotas de carro/);
+  await expect(page).toHaveTitle(/Planejador de rotas/);
   await expect(page.locator('meta[name=description]')).toHaveAttribute(
     'content',
-    /Crie rotas de carro/,
+    /Crie rotas pelas ruas/,
   );
   await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute(
     'content',
@@ -34,7 +34,7 @@ test('SEO metadata stays localized and excludes private route state', async ({
     canonical,
   );
   await page.locator('#language').selectOption('en');
-  await expect(page).toHaveTitle(/Driving Route Planner/);
+  await expect(page).toHaveTitle(/Route Planner/);
   const schema = JSON.parse(
     await page.locator('script[type="application/ld+json"]').innerText(),
   );

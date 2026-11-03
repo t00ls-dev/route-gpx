@@ -1,8 +1,8 @@
 {
   "id": "/route-gpx/",
-  "name": "route-gpx — Driving Route Planner",
+  "name": "route-gpx — Route Planner",
   "short_name": "route-gpx",
-  "description": "Plan driving routes and export complete GPX tracks. Free and open source.",
+  "description": "Plan routes and export complete GPX tracks. Free and open source.",
   "lang": "en",
   "start_url": "/route-gpx/",
   "scope": "/route-gpx/",
