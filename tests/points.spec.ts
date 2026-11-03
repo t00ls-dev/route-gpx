@@ -357,13 +357,11 @@ test('route backups restore deleted routes and skip existing names', async ({
     .click();
   await expect(page.locator('#saved-count')).toHaveText('(0)');
   for (let i = 0; i < 2; i++) {
-    await page
-      .locator('#restore-routes')
-      .setInputFiles({
-        name: 'backup.json',
-        mimeType: 'application/json',
-        buffer: backup,
-      });
+    await page.locator('#restore-routes').setInputFiles({
+      name: 'backup.json',
+      mimeType: 'application/json',
+      buffer: backup,
+    });
     await expect(page.locator('#saved-count')).toHaveText('(1)');
     await expect(page.locator('#restore-routes')).toHaveValue('');
   }
