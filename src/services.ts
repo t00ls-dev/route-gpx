@@ -1,3 +1,4 @@
+import type { View } from './default-view';
 import {
   type Coord,
   type Route,
@@ -227,4 +228,68 @@ export async function searchAddress(
       ? navigator.locks.request('route-gpx-nominatim', request)
       : request();
   });
+}
+
+// One attempt per tab session, including failures. Only the coarse result lives in memory.
+export const defaultRegionUrl = 'https://ipwho.is/';
+let regionAttempt: Promise<View | null> | undefined;
+export function regionUrl(value: string): string {
+  const url = new URL(serverUrl(value));
+  if (url.protocol !== 'https:')
+    throw new Error('Region service requires HTTPS.');
+  return url.href;
+}
+export function approximateRegion(
+  enabled: boolean,
+  endpoint: string,
+): Promise<View | null> {
+  if (!enabled) return Promise.resolve(null);
+  if (regionAttempt) return regionAttempt;
+  regionAttempt = (async () => {
+    try {
+      if (sessionStorage.getItem('region-attempted')) return null;
+      sessionStorage.setItem('region-attempted', 'true');
+    } catch {
+      /* Memory still limits attempts if storage is blocked. */
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    try {
+      const url = new URL(regionUrl(endpoint));
+      url.searchParams.set('fields', 'success,latitude,longitude,city,region');
+      const response = await fetch(url.href, {
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (
+        data.success !== true ||
+        ![data.city, data.region].some(
+          (name) => typeof name === 'string' && name.trim().length > 0,
+        ) ||
+        typeof data.latitude !== 'number' ||
+        !Number.isFinite(data.latitude) ||
+        Math.abs(data.latitude) > 90 ||
+        typeof data.longitude !== 'number' ||
+        !Number.isFinite(data.longitude) ||
+        Math.abs(data.longitude) > 180
+      )
+        return null;
+      return {
+        center: [
+          Math.round(data.latitude * 10) / 10,
+          Math.round(data.longitude * 10) / 10,
+        ] as Coord,
+        zoom: 10,
+      };
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  })();
+  return regionAttempt;
 }
