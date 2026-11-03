@@ -293,3 +293,74 @@ export function approximateRegion(
   })();
   return regionAttempt;
 }
+
+export const defaultPhotonUrl = 'https://photon.komoot.io';
+const photonQueue = new RequestQueue(1000);
+const photonCache = new Map<string, SearchResult[]>();
+/** Serialized, cancellable search-as-you-type. Bias is deliberately city-scale. */
+export async function photonSearch(
+  query: string,
+  base: string,
+  center: Coord,
+  signal: AbortSignal,
+): Promise<SearchResult[]> {
+  const bias = center.map((n) => Math.round(n * 10) / 10);
+  const key = JSON.stringify([base, query.trim().toLowerCase(), bias]);
+  if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+  if (photonCache.has(key)) return photonCache.get(key)!;
+  return photonQueue.run(async () => {
+    signal.throwIfAborted();
+    if (photonCache.has(key)) return photonCache.get(key)!;
+    const url = new URL(`${serverUrl(base)}/api/`);
+    url.search = new URLSearchParams({
+      q: query.trim(),
+      limit: '5',
+      lat: String(bias[0]),
+      lon: String(bias[1]),
+    }).toString();
+    const response = await fetch(url, {
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+      signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
+    });
+    if (!response.ok) throw new Error('Photon unavailable');
+    const data = await response.json();
+    if (!Array.isArray(data?.features))
+      throw new Error('Invalid Photon response');
+    const results: SearchResult[] = [];
+    for (const feature of data.features.slice(0, 5)) {
+      const coords = feature?.geometry?.coordinates;
+      const p = feature?.properties;
+      if (
+        feature?.geometry?.type !== 'Point' ||
+        !Array.isArray(coords) ||
+        coords.length < 2 ||
+        !coords
+          .slice(0, 2)
+          .every((n: unknown) => typeof n === 'number' && Number.isFinite(n)) ||
+        Math.abs(coords[0]) > 180 ||
+        Math.abs(coords[1]) > 90 ||
+        !p ||
+        typeof p.name !== 'string'
+      )
+        continue;
+      const name = [
+        ...new Set(
+          [p.name, p.street, p.city, p.state, p.country].filter(
+            (v) => typeof v === 'string' && v,
+          ),
+        ),
+      ].join(', ');
+      results.push({
+        display_name: name,
+        lat: String(coords[1]),
+        lon: String(coords[0]),
+      });
+    }
+    signal.throwIfAborted();
+    photonCache.set(key, results);
+    if (photonCache.size > 100)
+      photonCache.delete(photonCache.keys().next().value!);
+    return results;
+  });
+}
