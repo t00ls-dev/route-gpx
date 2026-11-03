@@ -1,4 +1,14 @@
-import { speedToKmh, speedFromKmh, travelTimeSeconds } from './travel-time';
+import {
+  speedToKmh,
+  speedFromKmh,
+  travelTimeSeconds,
+  isValidAverageSpeedKmh,
+  speedInputBounds,
+  speedInputValue,
+  AVERAGE_SPEED_ERROR,
+  MIN_AVERAGE_SPEED_KMH,
+  MAX_AVERAGE_SPEED_KMH,
+} from './travel-time';
 import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
 import { UndoHistory } from './history';
 import { setLanguage, t, observeTranslations, type Language } from './i18n';
@@ -79,11 +89,19 @@ function syncUrl() {
     './help.html?lang=' + (state.language ?? 'en') + hash;
 }
 function settings() {
-  $<HTMLInputElement>('average-speed').value = state.averageSpeedKmh
-    ? String(
-        Number(speedFromKmh(state.averageSpeedKmh, state.units).toFixed(2)),
-      )
+  const input = $<HTMLInputElement>('average-speed');
+  const bounds = speedInputBounds(state.units);
+  input.min = String(bounds.min);
+  input.max = String(bounds.max);
+  input.value = state.averageSpeedKmh
+    ? speedInputValue(state.averageSpeedKmh, state.units)
     : '';
+  input.removeAttribute('aria-invalid');
+  const locale = state.language === 'pt' ? 'pt-BR' : 'en';
+  $('speed-range').textContent =
+    state.units === 'imperial'
+      ? `≈ ${bounds.min.toLocaleString(locale, { maximumFractionDigits: 2 })}–${bounds.max.toLocaleString(locale, { maximumFractionDigits: 2 })} mph (1–200 km/h)`
+      : '1–200 km/h';
   $('speed-unit').textContent = state.units === 'imperial' ? 'mph' : 'km/h';
   $<HTMLSelectElement>('units').value = state.units ?? 'metric';
   for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
@@ -700,6 +718,7 @@ window.addEventListener('hashchange', () => {
     state = decodeState(location.hash);
     const lang = state.language ?? 'en';
     setLanguage(lang);
+    settings();
     $<HTMLSelectElement>('language').value = lang;
     selected = 0;
     changed();
@@ -833,6 +852,7 @@ $<HTMLSelectElement>('language').onchange = () => {
   const lang = $<HTMLSelectElement>('language').value as Language;
   state.language = lang;
   setLanguage(lang);
+  settings();
   $<HTMLAnchorElement>('help').href =
     './help.html?lang=' + lang + encodeState(state);
   renderPoints();
@@ -848,15 +868,19 @@ $<HTMLInputElement>('average-speed').oninput = () => {
     input.removeAttribute('aria-invalid');
   } else {
     const speed = speedToKmh(Number(raw), state.units);
-    if (!Number.isFinite(speed) || speed <= 0 || speed > 500) {
+    if (!isValidAverageSpeedKmh(speed)) {
       input.setAttribute('aria-invalid', 'true');
-      status('Enter an average speed greater than zero.', true);
+      status(AVERAGE_SPEED_ERROR, true);
       return;
     }
     input.removeAttribute('aria-invalid');
-    state.averageSpeedKmh = speed;
+    state.averageSpeedKmh = Math.max(
+      MIN_AVERAGE_SPEED_KMH,
+      Math.min(MAX_AVERAGE_SPEED_KMH, speed),
+    );
   }
   if (current) renderRoute(current);
+  status(current ? 'Route ready.' : 'Set your start and destination.');
 };
 $<HTMLInputElement>('average-speed').onchange = () => {
   if (!$<HTMLInputElement>('average-speed').hasAttribute('aria-invalid'))
@@ -868,4 +892,5 @@ $('reset-speed').onclick = () => {
   $<HTMLInputElement>('average-speed').removeAttribute('aria-invalid');
   syncUrl();
   if (current) renderRoute(current);
+  status(current ? 'Route ready.' : 'Set your start and destination.');
 };

@@ -23,7 +23,7 @@ The interface uses a high-contrast light theme, even when the system prefers dar
 
 Use **Undo** to restore moved, removed or reordered points (up to 50 changes per tab). Ctrl+Z / ⌘Z works outside text fields. The **km / mi** selector switches distances independently of the interface language; links preserve this choice and GPX coordinates remain unchanged.
 
-**Average speed** optionally estimates travel time from distance and your chosen km/h or mph. Clear it to restore the router estimate. This planning calculation excludes stops and traffic.
+**Average speed** optionally estimates travel time from distance and your chosen speed from 1 to 200 km/h (converted automatically for mph). Clear it to restore the router estimate. This planning calculation excludes stops and traffic.
 
 ### Describe your route
 

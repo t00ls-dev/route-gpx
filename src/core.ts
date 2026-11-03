@@ -1,3 +1,4 @@
+import { isValidAverageSpeedKmh, AVERAGE_SPEED_ERROR } from './travel-time';
 export type Coord = [number, number]; // latitude, longitude
 export interface Point {
   name: string;
@@ -101,11 +102,11 @@ export function decodeState(hash: string): State {
     new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0))),
   ) as State;
   if (
-    (x.averageSpeedKmh !== undefined &&
-      (typeof x.averageSpeedKmh !== 'number' ||
-        !Number.isFinite(x.averageSpeedKmh) ||
-        x.averageSpeedKmh <= 0 ||
-        x.averageSpeedKmh > 500)) ||
+    x.averageSpeedKmh !== undefined &&
+    !isValidAverageSpeedKmh(x.averageSpeedKmh)
+  )
+    throw new Error(AVERAGE_SPEED_ERROR);
+  if (
     (x.units !== undefined && !['metric', 'imperial'].includes(x.units)) ||
     (x.language !== undefined && !['en', 'pt'].includes(x.language)) ||
     x.version !== 1 ||

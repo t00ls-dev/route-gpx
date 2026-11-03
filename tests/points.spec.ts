@@ -213,3 +213,63 @@ test('average speed estimates trip time, converts with units, and resets to rout
   await page.locator('#reset-speed').click();
   await expect(page.locator('#summary')).toContainText('49 min');
 });
+
+test('average speed is limited to 1–200 km/h with equivalent mph bounds', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.locator('.speed-options').evaluate((el) => {
+    (el as HTMLDetailsElement).open = true;
+  });
+  await page.locator('#average-speed').fill('500');
+  await expect(page.locator('#status')).toHaveClass('error');
+  await page.locator('#average-speed').fill('200');
+  await expect(page.locator('#status')).not.toHaveClass('error');
+  await page.locator('#reset-speed').click();
+  await fillPair(page);
+  await page.locator('.speed-options').evaluate((el) => {
+    (el as HTMLDetailsElement).open = true;
+  });
+  await expect(page.locator('#average-speed')).toHaveAttribute('min', '1');
+  await expect(page.locator('#average-speed')).toHaveAttribute('max', '200');
+  await expect(page.locator('#speed-range')).toHaveText('1–200 km/h');
+  for (const value of ['0.5', '201', '500']) {
+    await page.locator('#average-speed').fill(value);
+    await expect(page.locator('#average-speed')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    await expect(page.locator('#status')).toContainText(
+      'between 1 and 200 km/h',
+    );
+  }
+  await page.locator('#average-speed').fill('200');
+  await page.locator('#average-speed').press('Tab');
+  await expect(page.locator('#average-speed')).not.toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  await expect(page.locator('#status')).not.toHaveClass('error');
+  await page.locator('#units').selectOption('imperial');
+  await expect(page.locator('#average-speed')).toHaveValue('124.27');
+  expect(
+    Number(await page.locator('#average-speed').getAttribute('max')),
+  ).toBeCloseTo(124.274238);
+  await page.locator('#average-speed').fill('125');
+  await expect(page.locator('#average-speed')).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  await page.locator('#units').selectOption('metric');
+  await page.locator('#average-speed').fill('1');
+  await page.locator('#average-speed').press('Tab');
+  await page.locator('#units').selectOption('imperial');
+  expect(
+    Number(await page.locator('#average-speed').inputValue()),
+  ).toBeGreaterThanOrEqual(1 / 1.609344);
+  await page.locator('#average-speed').press('Enter');
+  await expect(page.locator('#average-speed')).not.toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+});

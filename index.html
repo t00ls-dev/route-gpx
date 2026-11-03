@@ -80,11 +80,13 @@
             <input
               id="average-speed"
               type="number"
-              min="0.1"
+              min="1"
+              max="200"
               step="any"
               inputmode="decimal"
               placeholder="60"
               aria-label="Average speed"
+              aria-describedby="speed-range"
             /><span id="speed-unit">km/h</span
             ><button
               id="reset-speed"
@@ -95,6 +97,7 @@
               ×
             </button>
           </div>
+          <p id="speed-range" class="hint">1–200 km/h</p>
         </details>
         <section id="summary" aria-label="Route summary"></section>
         <div class="export-actions">
