@@ -935,3 +935,205 @@ footer a {
 .library-actions .file-button {
   font-size: 12px;
 }
+
+/* The map fills the viewport; route controls scroll independently. */
+.planner {
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+.planner header {
+  position: fixed;
+  z-index: 600;
+  top: env(safe-area-inset-top, 0px);
+  left: env(safe-area-inset-left, 0px);
+  right: env(safe-area-inset-right, 0px);
+  width: max-content;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0 0 8px 0;
+}
+.planner main {
+  display: block;
+  height: 100%;
+}
+.planner .map-container {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  border: 0;
+}
+.planner aside {
+  position: absolute;
+  z-index: 550;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px max(12px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -3px 16px #18382a25;
+}
+.planner [hidden] {
+  display: none !important;
+}
+#panel-toggle {
+  position: absolute;
+  z-index: 560;
+  bottom: 48dvh;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 140px;
+  flex-direction: column;
+  border-radius: 12px 12px 0 0;
+}
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--muted);
+}
+.panel-closed #panel-toggle {
+  bottom: env(safe-area-inset-bottom, 0px);
+}
+.planner .map-note {
+  top: calc(65px + env(safe-area-inset-top, 0px));
+}
+.map-tools {
+  position: absolute;
+  z-index: 450;
+  left: max(12px, env(safe-area-inset-left));
+  top: calc(105px + env(safe-area-inset-top, 0px));
+  display: grid;
+  gap: 8px;
+}
+.location-card {
+  position: absolute;
+  z-index: 580;
+  top: calc(62px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  right: 12px;
+  max-width: 360px;
+  max-height: calc(100dvh - 90px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 2px 14px #18382a40;
+}
+.location-card p {
+  line-height: 1.5;
+}
+#close-location {
+  float: right;
+  min-width: 44px;
+}
+.planner .fit-button {
+  bottom: calc(48dvh + 60px);
+  min-height: 44px;
+}
+.planner .leaflet-bottom {
+  bottom: calc(48dvh + 5px);
+}
+.panel-closed .fit-button {
+  bottom: calc(60px + env(safe-area-inset-bottom));
+}
+.panel-closed .leaflet-bottom {
+  bottom: calc(48px + env(safe-area-inset-bottom));
+}
+.leaflet-control-zoom a {
+  min-width: 44px;
+  min-height: 44px;
+  line-height: 44px !important;
+}
+.point-actions button,
+.point-number {
+  min-width: 44px;
+  min-height: 44px;
+}
+#points li {
+  grid-template-columns: 44px minmax(0, 1fr);
+}
+@media (min-width: 760px) {
+  .planner aside {
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    right: auto;
+    width: 360px;
+    height: auto;
+    border-top: 0;
+  }
+  .planner .map-container {
+    left: 360px;
+    width: calc(100% - 360px);
+  }
+  .planner.panel-closed .map-container {
+    left: 0;
+    width: 100%;
+  }
+  #panel-toggle,
+  .panel-closed #panel-toggle {
+    left: 372px;
+    top: 12px;
+    bottom: auto;
+    transform: none;
+    border-radius: 7px;
+  }
+  .panel-closed #panel-toggle {
+    left: auto;
+    right: 12px;
+  }
+  .sheet-handle {
+    display: none;
+  }
+  .planner .map-note {
+    top: 65px;
+  }
+  .map-tools {
+    left: auto;
+    right: max(12px, env(safe-area-inset-right));
+    top: 12px;
+  }
+  .panel-closed .map-tools {
+    top: 65px;
+  }
+  .planner .fit-button {
+    bottom: 25px;
+  }
+  .planner .leaflet-bottom {
+    bottom: 0;
+  }
+}
+.planner.map-fullscreen .map-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  z-index: 1000;
+}
+.map-fullscreen .map-tools {
+  top: max(12px, env(safe-area-inset-top));
+}
+.map-fullscreen .fit-button {
+  bottom: 30px;
+}
+.map-fullscreen .leaflet-bottom {
+  bottom: env(safe-area-inset-bottom);
+}
+
+.planner button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.planner .language-control select {
+  min-height: 44px;
+}
+.planner .leaflet-right {
+  right: env(safe-area-inset-right, 0px);
+}

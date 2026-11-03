@@ -383,3 +383,7 @@ test('download still works if persistent browser storage is unavailable', async 
   await expect(page.locator('#status')).toContainText('Could not save locally');
   await expect(page.locator('#download')).toBeEnabled();
 });
+
+test.beforeEach(async ({ page }) => {
+  await page.route('https://ipwho.is/**', (r) => r.fulfill({ status: 503 }));
+});

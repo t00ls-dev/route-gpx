@@ -75,3 +75,7 @@ test('manifest and icon files resolve inside the GitHub Pages project scope', as
     (await request.get(new URL('sitemap.xml', base).href)).ok(),
   ).toBeTruthy();
 });
+
+test.beforeEach(async ({ page }) => {
+  await page.route('https://ipwho.is/**', (r) => r.fulfill({ status: 503 }));
+});

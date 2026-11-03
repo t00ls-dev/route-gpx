@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#ffffff" />
     <title>route-gpx — Route Planner &amp; GPX Export</title>
     <meta
@@ -73,7 +76,7 @@
       }
     </script>
   </head>
-  <body>
+  <body class="planner">
     <noscript
       ><p>
         route-gpx needs JavaScript to calculate routes and export GPX.
@@ -99,7 +102,16 @@
       ><a id="help" href="./help.html">Help</a>
     </header>
     <main>
-      <aside aria-label="Plan your route">
+      <button
+        id="panel-toggle"
+        type="button"
+        aria-controls="route-panel"
+        aria-expanded="true"
+      >
+        <span class="sheet-handle" aria-hidden="true"></span
+        ><span>Route panel</span>
+      </button>
+      <aside id="route-panel" aria-label="Plan your route">
         <div class="section-line page-heading">
           <h1>Plan your route</h1>
           <button id="example" type="button">Try example</button>
@@ -214,12 +226,19 @@
               >Valhalla fallback</label
             ><input id="valhalla" type="url" /><label for="nominatim"
               >Nominatim server</label
-            ><input id="nominatim" type="url" /><button
-              id="save-settings"
-              type="button"
+            ><input id="nominatim" type="url" />
+            <label class="check"
+              ><input id="detect-region" type="checkbox" checked /><span
+                >Detect region by IP</span
+              ></label
             >
-              Apply settings
-            </button>
+            <label for="region-url">IP region service</label
+            ><input id="region-url" type="url" />
+            <p class="hint">
+              The region service receives your IP address. Only an approximate
+              city view is used.
+            </p>
+            <button id="save-settings" type="button">Apply settings</button>
             <details class="json-settings">
               <summary>Advanced: JSON</summary>
               <label for="state-json" class="sr-only"
@@ -243,6 +262,36 @@
       <section class="map-container" aria-label="Interactive map">
         <div id="map"></div>
         <div class="map-note" id="map-note">Place your start on the map</div>
+        <div class="map-tools">
+          <button id="locate" type="button">
+            <span aria-hidden="true">⌖</span><span>Use my location</span>
+          </button>
+          <button id="fullscreen" type="button">Full screen</button>
+        </div>
+        <section
+          id="location-card"
+          class="location-card"
+          aria-label="Your location"
+          hidden
+        >
+          <button id="close-location" type="button" aria-label="Close location">
+            ×
+          </button>
+          <p>
+            Your exact location is used only to center the map and never leaves
+            your device.
+          </p>
+          <p id="location-status" role="status"></p>
+          <button id="confirm-location" type="button">Continue</button>
+          <div id="location-actions" hidden>
+            <p>
+              Route points are rounded to about 100 m before sharing or routing.
+              Check the point on the map.
+            </p>
+            <button id="location-start" type="button">Set as start</button>
+            <button id="location-stop" type="button">Add as stop</button>
+          </div>
+        </section>
         <button id="fit" class="fit-button" type="button">◎ Fit route</button>
       </section>
     </main>

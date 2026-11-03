@@ -2,6 +2,36 @@ import { updateSeo } from './seo';
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
+  'Route panel': 'Painel da rota',
+  'Detect region by IP': 'Detectar região pelo IP',
+  'IP region service': 'Serviço de região por IP',
+  'The region service receives your IP address. Only an approximate city view is used.':
+    'O serviço de região recebe seu endereço IP. Apenas uma vista aproximada da cidade é usada.',
+  'Use my location': 'Usar minha localização',
+  'Full screen': 'Tela cheia',
+  'Your location': 'Sua localização',
+  'Close location': 'Fechar localização',
+  'Your exact location is used only to center the map and never leaves your device.':
+    'Sua localização exata é usada só para centralizar o mapa e nunca sai do seu aparelho',
+  Continue: 'Continuar',
+  'Route points are rounded to about 100 m before sharing or routing. Check the point on the map.':
+    'Os pontos da rota são arredondados para cerca de 100 m antes de compartilhar ou calcular. Confira o ponto no mapa.',
+  'Set as start': 'Definir como início',
+  'Add as stop': 'Adicionar como parada',
+  'Location requires HTTPS. Open the secure site or choose a point on the map.':
+    'A localização exige HTTPS. Abra o site seguro ou escolha um ponto no mapa.',
+  'This browser does not support location. Choose a point on the map.':
+    'Este navegador não oferece localização. Escolha um ponto no mapa.',
+  'Finding your location…': 'Buscando sua localização…',
+  'Location found. Your route has not changed.':
+    'Localização encontrada. Sua rota não foi alterada.',
+  'Location permission denied. Allow location in your browser site settings, then try again. You can still plan routes without GPS.':
+    'Permissão de localização negada. Libere a localização nas configurações deste site no navegador e tente novamente. Você pode continuar planejando rotas sem GPS.',
+  'Location timed out. Move to an open area and try again, or choose a point on the map.':
+    'O tempo para localizar esgotou. Vá para uma área aberta e tente novamente, ou escolha um ponto no mapa.',
+  'Location unavailable. Check your device location settings or choose a point on the map.':
+    'Localização indisponível. Confira as configurações de localização do aparelho ou escolha um ponto no mapa.',
+  'Use an HTTPS service URL.': 'Use uma URL de serviço HTTPS.',
   Help: 'Ajuda',
   'Save route': 'Salvar rota',
   'Update saved route': 'Atualizar rota',

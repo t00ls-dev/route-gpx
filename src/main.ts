@@ -40,6 +40,8 @@ import {
   type State,
 } from './core';
 import { calculate, searchAddress } from './services';
+import { setupMapView } from './map-view';
+import { defaultView } from './default-view';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const text = (tag: string, value: string, className = '') => {
@@ -70,7 +72,14 @@ const routeCache = new Map<string, Route>();
 let savedEntries: SavedRoute[] = [];
 let libraryRevision = 0;
 let savingRoute = false;
-const map = L.map('map', { zoomControl: false }).setView([-22.96, -43.36], 11);
+const localView = defaultView(
+  Intl.DateTimeFormat().resolvedOptions().timeZone,
+  navigator.languages,
+);
+const map = L.map('map', { zoomControl: false }).setView(
+  localView.center,
+  localView.zoom,
+);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -85,8 +94,18 @@ function fit() {
   const pts =
     current?.segments.flat() ??
     state.points.flatMap((p) => (p.coord ? [p.coord] : []));
-  if (pts.length)
-    map.fitBounds(L.latLngBounds(pts), { padding: [45, 70], maxZoom: 15 });
+  if (pts.length) {
+    const panel = $('route-panel');
+    const bottom =
+      matchMedia('(max-width: 759px)').matches && !panel.hidden
+        ? panel.getBoundingClientRect().height + 55
+        : 70;
+    map.fitBounds(L.latLngBounds(pts), {
+      paddingTopLeft: [45, 105],
+      paddingBottomRight: [45, bottom],
+      maxZoom: 15,
+    });
+  }
 }
 function syncUrl() {
   updateSaveButton();
@@ -760,10 +779,8 @@ window.addEventListener('hashchange', () => {
 });
 settings();
 renderPoints();
-if (state.points.every((p) => p.coord)) {
-  changed();
-  fit();
-}
+if (state.points.every((p) => p.coord)) changed();
+fit();
 
 $('export-json').onclick = () => {
   $<HTMLTextAreaElement>('state-json').value = JSON.stringify(state, null, 2);
@@ -996,3 +1013,18 @@ $<HTMLInputElement>('restore-routes').onchange = () => {
 };
 void refreshSavedRoutes();
 updateSaveButton();
+
+setupMapView(map, {
+  hasRoute: () => state.points.some((p) => p.coord !== null),
+  addPoint: (coord, asStart) => {
+    if (asStart) setPoint(state.points[0], 0, coord, 'Start');
+    else if (state.points.length < 50) {
+      state.points.splice(state.points.length - 1, 0, {
+        name: `Stop ${state.points.length - 1}`,
+        coord,
+      });
+      selected = state.points.length - 2;
+      changed();
+    }
+  },
+});
