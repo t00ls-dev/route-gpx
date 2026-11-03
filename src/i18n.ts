@@ -1,3 +1,4 @@
+import { updateSeo } from './seo';
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
@@ -329,10 +330,7 @@ export function translateDocument(root: Document | Element = document): void {
 export function setLanguage(lang: Language): void {
   language = lang;
   document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
-  document.title =
-    lang === 'pt'
-      ? 'route-gpx · Seu caminho, ponto a ponto'
-      : 'route-gpx · Your road, point by point';
+  updateSeo(lang);
   translateDocument();
 }
 export function observeTranslations(): void {

@@ -1,0 +1,40 @@
+{
+  "id": "/route-gpx/",
+  "name": "route-gpx — Driving Route Planner",
+  "short_name": "route-gpx",
+  "description": "Plan driving routes and export complete GPX tracks. Free, open source, in English and Portuguese.",
+  "lang": "en",
+  "start_url": "/route-gpx/",
+  "scope": "/route-gpx/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#126447",
+  "categories": ["navigation", "travel", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Help",
+      "url": "/route-gpx/help.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

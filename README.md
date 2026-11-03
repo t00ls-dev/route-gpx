@@ -132,6 +132,10 @@ For production, pin a released image, keep routing data updated, and put an HTTP
 
 The repository uses `base: '/route-gpx/'` in Vite. GitHub Actions runs lint, formatting, unit tests and production build on pushes to `main` and all pull requests. Only successful `main` builds deploy through `actions/deploy-pages` to the `github-pages` environment. Pages uses the **GitHub Actions** source. No build secrets are needed. If you fork under a different repository name, update Vite's base and the documentation URLs.
 
+## Identity and discovery
+
+The app includes a route mark, favicons, Apple and maskable app icons, a web app manifest, canonical URLs, localized metadata, Open Graph/Twitter sharing cards, application structured data and a sitemap. See [brand assets and hosting notes](docs/BRAND.md). Installation support depends on the browser; maps and routing still require an internet connection.
+
 ## Credits and license
 
 - Map and routing data: [© OpenStreetMap contributors, ODbL](https://www.openstreetmap.org/copyright).

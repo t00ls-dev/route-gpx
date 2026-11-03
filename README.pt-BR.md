@@ -72,6 +72,10 @@ Tudo executa no navegador, mas coordenadas, pesquisas e área visível do mapa s
 
 [Como hospedar seu próprio OSRM com Docker](README.md#change-or-host-a-routing-server), incluindo preparação de dados, MLD, HTTPS e CORS.
 
+## Identidade e descoberta
+
+O site inclui símbolo da marca, favicons, ícones para Apple e Android, manifest, URLs canônicas, metadados traduzidos, imagem de compartilhamento, dados estruturados e sitemap. Veja os [arquivos de identidade e observações de hospedagem](docs/BRAND.md). A instalação depende do navegador; mapas e roteamento precisam de conexão à internet.
+
 ## Créditos
 
 Dados © [OpenStreetMap e colaboradores](https://www.openstreetmap.org/copyright), mapa [Leaflet](https://leafletjs.com/), roteamento [OSRM](https://project-osrm.org/) e [Valhalla](https://valhalla.github.io/valhalla/), busca [Nominatim](https://nominatim.org/). Código do aplicativo sob MIT; dados e dependências mantêm suas próprias licenças. [Relatar problema ou contatar o mantenedor](https://github.com/t00ls-dev/route-gpx/issues).

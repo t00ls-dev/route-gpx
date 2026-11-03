@@ -3,16 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>route-gpx — Driving Route Planner &amp; GPX Export</title>
     <meta
       name="description"
-      content="Create full driving GPX tracks. Simple, free, open source."
+      content="Plan driving routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
     />
-    <meta name="theme-color" content="#ffffff" />
-    <title>route-gpx</title>
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="application-name" content="route-gpx" />
+    <link rel="canonical" href="https://t00ls-dev.github.io/route-gpx/" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="route-gpx" />
+    <meta
+      property="og:title"
+      content="route-gpx — Driving Route Planner &amp; GPX Export"
+    />
+    <meta
+      property="og:description"
+      content="Plan driving routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
+    />
+    <meta property="og:url" content="https://t00ls-dev.github.io/route-gpx/" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:image"
+      content="https://t00ls-dev.github.io/route-gpx/social-card.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="route-gpx — Choose your roads. Download every turn."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="route-gpx — Driving Route Planner &amp; GPX Export"
+    />
+    <meta
+      name="twitter:description"
+      content="Plan driving routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
+    />
+    <meta
+      name="twitter:image"
+      content="https://t00ls-dev.github.io/route-gpx/social-card.png"
+    />
+    <meta name="twitter:image:alt" content="route-gpx driving route planner" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "route-gpx",
+        "url": "https://t00ls-dev.github.io/route-gpx/",
+        "description": "Plan driving routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript and an internet connection.",
+        "inLanguage": ["en", "pt-BR"],
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "license": "https://github.com/t00ls-dev/route-gpx/blob/main/LICENSE",
+        "image": "https://t00ls-dev.github.io/route-gpx/social-card.png",
+        "softwareHelp": {
+          "@type": "WebPage",
+          "url": "https://t00ls-dev.github.io/route-gpx/help.html"
+        }
+      }
+    </script>
   </head>
   <body>
+    <noscript
+      ><p>
+        route-gpx needs JavaScript to calculate routes and export GPX.
+        <a href="./help.html">Help</a>
+      </p></noscript
+    >
     <header>
-      <a class="brand" href="#">route<span>gpx</span></a
+      <a aria-label="route-gpx" class="brand" href="#"
+        ><img
+          class="brand-icon"
+          src="/icons/icon.svg"
+          width="28"
+          height="28"
+          alt=""
+          aria-hidden="true"
+        />route<span>-gpx</span></a
       ><label class="language-control"
         ><span class="sr-only">Language / Idioma</span
         ><select id="language" aria-label="Language / Idioma">

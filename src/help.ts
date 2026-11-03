@@ -1,3 +1,4 @@
+import { updateSeo } from './seo';
 import './style.css';
 const select = document.getElementById('language') as HTMLSelectElement;
 function apply() {
@@ -7,7 +8,7 @@ function apply() {
   document.getElementById('help-pt')!.hidden = lang !== 'pt';
   document.getElementById('back')!.textContent =
     lang === 'pt' ? 'Voltar ao mapa' : 'Back to map';
-  document.title = lang === 'pt' ? 'route-gpx · Ajuda' : 'route-gpx · Help';
+  updateSeo(lang, 'help');
   (document.getElementById('back') as HTMLAnchorElement).href =
     './index.html' + location.hash;
   history.replaceState(null, '', `?lang=${lang}` + location.hash);

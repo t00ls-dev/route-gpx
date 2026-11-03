@@ -1,0 +1,4 @@
+# Only an origin-root robots.txt controls crawlers. This file is portable to root/custom-domain hosting.
+User-agent: *
+Allow: /
+Sitemap: https://t00ls-dev.github.io/route-gpx/sitemap.xml

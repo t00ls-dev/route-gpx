@@ -16,6 +16,8 @@ export default ts.config(
     languageOptions: {
       globals: {
         process: 'readonly',
+        Buffer: 'readonly',
+        Image: 'readonly',
         console: 'readonly',
         document: 'readonly',
         window: 'readonly',
