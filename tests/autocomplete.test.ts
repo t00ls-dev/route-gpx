@@ -50,3 +50,28 @@ it('debounces, aborts the previous request and rejects a late response after new
   expect(list.children).toHaveLength(0);
   expect(failed).not.toHaveBeenCalled();
 });
+
+it('keeps incomplete coordinate input local while still suggesting numbered street addresses', async () => {
+  vi.useFakeTimers();
+  document.body.innerHTML = '<input><div id="list"></div>';
+  const input = document.querySelector('input')!;
+  vi.mocked(photonSearch).mockResolvedValue([]);
+  addressAutocomplete(input, document.getElementById('list')!, {
+    base: () => 'https://example.org',
+    center: () => [0, 0],
+    valid: () => true,
+    choose: vi.fn(),
+    failed: vi.fn(),
+  });
+  input.focus();
+  for (const value of ['-22.930929', '-22.930929,', '-22.930929, -43.238286']) {
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    await vi.advanceTimersByTimeAsync(400);
+  }
+  expect(photonSearch).not.toHaveBeenCalled();
+  input.value = '123 Main Street';
+  input.dispatchEvent(new Event('input'));
+  await vi.advanceTimersByTimeAsync(300);
+  expect(photonSearch).toHaveBeenCalledTimes(1);
+});

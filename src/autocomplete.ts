@@ -39,6 +39,7 @@ export function addressAutocomplete(
     if (
       query.length < 3 ||
       parseCoordinates(query) ||
+      /^[\s()+\d.,;-]+$/.test(query) ||
       (/^[\s(+-]*\d/.test(query) && /[,;]/.test(query))
     )
       return;
