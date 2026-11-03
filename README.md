@@ -46,6 +46,18 @@ Address suggestions use [Photon](https://github.com/komoot/photon#demo-server) a
 
 Change service base URLs in **Settings**. Remote services need HTTPS and must allow browser cross-origin requests. For self-hosting, consult the [OSRM documentation](https://github.com/Project-OSRM/osrm-backend#quick-start) and [Nominatim documentation](https://nominatim.org/release-docs/latest/admin/Installation/).
 
+Map layers (Layers button) are loaded only when active; satellite Labels are optional and initially enabled. The selection and satellite edition are device preferences, outside route links and saved routes. The active tile provider receives your IP address and visible-area tile requests; labels send additional visible-area requests to EOX. No tile prefetching, offline storage or service worker is added. Zoom beyond native resolution enlarges existing tiles; it adds no detail.
+
+| Layer                             | Source and terms                                                                                                                      | Native zoom |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Standard                          | [OpenStreetMap](https://operations.osmfoundation.org/policies/tiles/), ODbL data and attribution-required tiles                       | 19          |
+| Topographic                       | [OpenTopoMap](https://opentopomap.org/about#verwendung), OSM/SRTM, CC BY-SA 3.0; embedding permitted with attribution                 | 17          |
+| Satellite                         | [EOxCloudless 2025](https://cloudless.eox.at/documentation/license), Sentinel-2 mosaic, CC BY-NC-SA 4.0; non-commercial projects only | 14          |
+| Satellite alternative in Settings | [EOxCloudless 2016](https://cloudless.eox.at/documentation/faq), CC BY 4.0; also permits commercial embedded use                      | 14          |
+| Labels                            | [EOX::Maps bright overlay](https://maps.eox.at/), OSM data/ODbL; embedding permitted with OSM, EOX and MapServer credits              | 14          |
+
+These services have no availability guarantee; follow fair use, retain attribution, and contact providers before scaling. EOX publishes no numeric quota and may throttle spikes. Its newer public mosaics prohibit commercial production use; choose 2016 for that use. Satellite is a regional, approximately 10 m mosaic, not street-level or live imagery. Esri World Imagery was evaluated and excluded: its [linked terms summary](https://goto.arcgis.com/termsofuse/viewsummary) requires Esri software or an ArcGIS subscription, incompatible with this account-free setup. The imagery licenses do not change the application's MIT code license; map screenshots retain the respective imagery terms and credits.
+
 ## Local development
 
 Use Node.js **22.12 or newer**:
@@ -85,7 +97,7 @@ GitHub Actions runs checks on pull requests and pushes to `main`. Successful bui
 
 ## Credits and license
 
-Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
 Application code is licensed under [MIT](LICENSE). Data and dependencies retain their own licenses. No affiliation with the public service operators.
 

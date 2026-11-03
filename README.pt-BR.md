@@ -46,6 +46,18 @@ As sugestões usam [Photon](https://github.com/komoot/photon#demo-server) em `ht
 
 Altere as URLs base dos serviços em **Configurações**. Serviços remotos precisam de HTTPS e devem permitir requisições entre origens no navegador. Para hospedagem própria, consulte a [documentação do OSRM](https://github.com/Project-OSRM/osrm-backend#quick-start) e a [documentação do Nominatim](https://nominatim.org/release-docs/latest/admin/Installation/).
 
+As camadas (botão Camadas do mapa) só são carregadas quando ativas; os Rótulos do satélite são opcionais e começam ligados. A escolha e a edição do satélite são preferências do aparelho, fora dos links e das rotas salvas. O provedor da camada ativa recebe seu IP e requisições de tiles da área visível; os rótulos enviam requisições adicionais da área visível à EOX. Não foi adicionado pré-carregamento, armazenamento offline nem service worker. Zoom acima da resolução nativa amplia os tiles existentes; não acrescenta detalhes.
+
+| Camada                                   | Fonte e termos                                                                                                                           | Zoom nativo |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Padrão                                   | [OpenStreetMap](https://operations.osmfoundation.org/policies/tiles/), dados ODbL e tiles com atribuição obrigatória                     | 19          |
+| Topográfico                              | [OpenTopoMap](https://opentopomap.org/about#verwendung), OSM/SRTM, CC BY-SA 3.0; incorporação permitida com atribuição                   | 17          |
+| Satélite                                 | [EOxCloudless 2025](https://cloudless.eox.at/documentation/license), mosaico Sentinel-2, CC BY-NC-SA 4.0; apenas projetos não comerciais | 14          |
+| Alternativa de satélite em Configurações | [EOxCloudless 2016](https://cloudless.eox.at/documentation/faq), CC BY 4.0; permite também uso comercial incorporado                     | 14          |
+| Rótulos                                  | [Sobreposição clara EOX::Maps](https://maps.eox.at/), dados OSM/ODbL; incorporação permitida com créditos OSM, EOX e MapServer           | 14          |
+
+Esses serviços não garantem disponibilidade; respeite o uso justo, mantenha a atribuição e contate os provedores antes de ampliar o uso. A EOX não publica cota numérica e pode limitar picos. Seus mosaicos públicos mais novos proíbem uso comercial em produção; escolha 2016 para esse uso. O satélite é um mosaico regional de aproximadamente 10 m, não uma imagem em nível de rua nem ao vivo. Esri World Imagery foi avaliado e excluído: o [resumo de termos vinculado à camada](https://goto.arcgis.com/termsofuse/viewsummary) exige software Esri ou assinatura ArcGIS, incompatível com esta configuração sem conta. As licenças das imagens não mudam a licença MIT do código; capturas do mapa mantêm os termos e créditos das imagens respectivas.
+
 ## Desenvolvimento local
 
 Use Node.js **22.12 ou superior**:
@@ -85,7 +97,7 @@ O GitHub Actions executa verificações em pull requests e pushes para `main`. B
 
 ## Créditos e licença
 
-Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Região por IP pelo [ipwho.is](https://ipwhois.io/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
+Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Região por IP pelo [ipwho.is](https://ipwhois.io/). Mapas adicionais por [OpenTopoMap](https://opentopomap.org/about) e [EOX](https://maps.eox.at/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
 
 O código do aplicativo é licenciado sob [MIT](LICENSE). Dados e dependências mantêm suas próprias licenças. Sem afiliação com os operadores dos serviços públicos.
 
