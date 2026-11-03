@@ -1165,3 +1165,66 @@ footer a {
 .export-actions {
   flex-wrap: wrap;
 }
+
+.layer-control {
+  position: absolute;
+  z-index: 480;
+  top: calc(105px + env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right));
+}
+#layers-menu {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  display: grid;
+  width: min(210px, calc(100vw - 24px));
+  max-height: min(156px, calc(52dvh - 222px));
+  overflow-y: auto;
+  padding: 8px;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 2px 14px #18382a40;
+}
+#layers-menu [aria-checked='true'] {
+  background: var(--soft);
+  outline: 2px solid var(--green);
+  outline-offset: -3px;
+}
+#label-option {
+  margin: 4px;
+}
+[data-map-layer='satellite'] .route-line {
+  stroke: #b61f64;
+}
+[data-map-layer='satellite'] .route-casing {
+  stroke: #fff;
+}
+[data-map-layer='topographic'] .route-line {
+  stroke: #174cbd;
+}
+[data-map-layer='satellite'] .route-marker span {
+  background: #164e8a;
+  border-color: #fff;
+}
+@media (min-width: 760px) {
+  .layer-control {
+    top: 120px;
+    right: max(12px, env(safe-area-inset-right));
+  }
+  #layers-menu {
+    max-height: min(340px, calc(100dvh - 260px));
+  }
+  .panel-closed .layer-control {
+    top: 173px;
+  }
+}
+.map-fullscreen .layer-control {
+  top: calc(105px + env(safe-area-inset-top));
+}
+@media (min-width: 760px) {
+  .map-fullscreen .layer-control {
+    top: calc(120px + env(safe-area-inset-top));
+  }
+}

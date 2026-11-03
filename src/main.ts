@@ -46,6 +46,7 @@ import { setupPointMenu } from './point-menu';
 import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
+import { setupMapLayers } from './map-layers';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const text = (tag: string, value: string, className = '') => {
@@ -93,12 +94,6 @@ const map = L.map('map', { zoomControl: false }).setView(
   localView.zoom,
 );
 L.control.zoom({ position: 'bottomright' }).addTo(map);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution:
-    '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  keepBuffer: 1,
-}).addTo(map);
 const markers = L.layerGroup().addTo(map),
   line = L.featureGroup().addTo(map);
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
@@ -1144,3 +1139,5 @@ setupMapView(map, {
     }
   },
 });
+
+setupMapLayers(map);

@@ -234,6 +234,11 @@
                 >Detect region by IP</span
               ></label
             >
+            <label for="satellite-vintage">Satellite imagery</label
+            ><select id="satellite-vintage" aria-label="Satellite imagery">
+              <option value="2025">EOX 2025 · CC BY-NC-SA 4.0</option>
+              <option value="2016">EOX 2016 · CC BY 4.0</option>
+            </select>
             <label for="photon">Photon server</label
             ><input id="photon" type="url" /><label for="region-url"
               >IP region service</label
@@ -266,6 +271,65 @@
       <section class="map-container" aria-label="Interactive map">
         <div id="map"></div>
         <div class="map-note" id="map-note">Place your start on the map</div>
+        <div class="layer-control">
+          <button
+            id="layers-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="layers-menu"
+            aria-haspopup="menu"
+          >
+            <svg
+              aria-hidden="true"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="m3 7 9-5 9 5-9 5Z M3 12l9 5 9-5 M3 17l9 5 9-5" /></svg
+            ><span>Map layers</span>
+          </button>
+          <div id="layers-menu" role="menu" aria-label="Map layers" hidden>
+            <button
+              type="button"
+              role="menuitemradio"
+              data-layer="standard"
+              aria-checked="true"
+            >
+              Standard
+            </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              data-layer="topographic"
+              aria-checked="false"
+            >
+              Topographic
+            </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              data-layer="satellite"
+              aria-checked="false"
+            >
+              Satellite
+            </button>
+            <label id="label-option" class="check" hidden
+              ><input
+                id="map-labels"
+                role="menuitemcheckbox"
+                type="checkbox"
+                checked
+              /><span>Labels</span></label
+            >
+            <p id="satellite-license" class="hint" hidden>
+              2025 imagery is for non-commercial use. For commercial use, choose
+              EOX 2016 in Settings.
+            </p>
+          </div>
+        </div>
         <div class="map-tools">
           <button id="locate" type="button">
             <span aria-hidden="true">⌖</span><span>Use my location</span>

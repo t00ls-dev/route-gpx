@@ -2,6 +2,14 @@ import { updateSeo } from './seo';
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
+  'Map layers': 'Camadas do mapa',
+  Standard: 'Padrão',
+  Topographic: 'Topográfico',
+  Satellite: 'Satélite',
+  Labels: 'Rótulos',
+  'Satellite imagery': 'Imagem de satélite',
+  '2025 imagery is for non-commercial use. For commercial use, choose EOX 2016 in Settings.':
+    'As imagens de 2025 são para uso não comercial. Para uso comercial, escolha EOX 2016 em Configurações.',
   'Share GPX': 'Compartilhar GPX',
   'Choose route point': 'Escolher ponto da rota',
   'Set as destination': 'Definir como destino',
