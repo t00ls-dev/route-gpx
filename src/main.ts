@@ -18,7 +18,6 @@ import {
 import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
 import { UndoHistory } from './history';
 import { setLanguage, t, observeTranslations, type Language } from './i18n';
-import { parseDescription, intentPoints } from './description';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './style.css';
@@ -766,91 +765,6 @@ if (state.points.every((p) => p.coord)) {
   fit();
 }
 
-$('parse-description').onclick = () => {
-  try {
-    const intent = parseDescription(
-      $<HTMLTextAreaElement>('description').value,
-    );
-    const box = $('intent-preview');
-    box.replaceChildren();
-    const fields: HTMLInputElement[] = [];
-    intent.stops.forEach((name, i) => {
-      const label = text(
-        'label',
-        `${i + 1}. ${i === 0 ? 'Start' : i === intent.stops.length - 1 ? 'Destination' : 'Via'}`,
-      );
-      const input = document.createElement('input');
-      input.value = name;
-      input.maxLength = 240;
-      input.setAttribute('aria-label', `Described place ${i + 1}`);
-      label.append(input);
-      box.append(label);
-      fields.push(input);
-    });
-    const label = text('label', 'Search area (optional)');
-    const area = document.createElement('input');
-    area.placeholder = 'e.g. Rio de Janeiro, Brazil';
-    area.maxLength = 160;
-    label.append(area);
-    box.append(label);
-    const build = text('button', 'Create route') as HTMLButtonElement;
-    build.type = 'button';
-    box.append(build);
-    build.onclick = () => {
-      build.disabled = true;
-      const version = revision;
-      const points = intentPoints({
-        ...intent,
-        stops: fields.map((f) => f.value.trim()),
-      });
-      void (async () => {
-        for (const p of points) {
-          if (revision !== version)
-            throw new Error('The route changed. Review the description again.');
-          if (p.coord) continue;
-          if (!p.name)
-            throw new Error('Give each point a place name or coordinates.');
-          // Known demo landmarks do not need a network geocoding request.
-          const known = examplePoints.find(
-            (k) => k.name.toLowerCase() === p.name.toLowerCase(),
-          );
-          if (known?.coord) {
-            p.coord = [...known.coord];
-            continue;
-          }
-          status(`Finding “${p.name}”…`);
-          const results = await searchAddress(
-            [p.name, area.value.trim()].filter(Boolean).join(', '),
-            state.nominatim,
-          );
-          if (!results.length)
-            throw new Error(
-              `Could not find “${p.name}”. Edit the place name or add a city.`,
-            );
-          const c = parseCoordinates(`${results[0].lat},${results[0].lon}`);
-          if (!c) throw new Error(`Invalid search result for “${p.name}”.`);
-          p.coord = c;
-        }
-        if (revision !== version) return;
-        dirty.clear();
-        drafts = new WeakMap();
-        state.points = points;
-        state.prefer = intent.prefer;
-        selected = 0;
-        changed();
-        fit();
-        status('Places found. Check the markers.');
-      })()
-        .catch((e) => status((e as Error).message, true))
-        .finally(() => {
-          build.disabled = false;
-        });
-    };
-    status('Review the places.');
-  } catch (e) {
-    status((e as Error).message, true);
-  }
-};
 $('export-json').onclick = () => {
   $<HTMLTextAreaElement>('state-json').value = JSON.stringify(state, null, 2);
 };

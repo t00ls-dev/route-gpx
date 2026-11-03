@@ -192,27 +192,12 @@ h2 {
   min-height: 36px;
   padding: 8px 10px;
 }
-.description-panel {
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  margin: 0 0 18px;
-  padding: 0 12px;
-}
-.description-panel[open] {
-  padding-bottom: 12px;
-}
 summary {
   cursor: pointer;
   min-height: 44px;
   line-height: 44px;
   font-size: 13px;
   font-weight: 550;
-}
-.description-panel summary {
-  color: #145e49;
-}
-.description-panel > button {
-  width: 100%;
 }
 #points {
   position: relative;
@@ -493,18 +478,6 @@ footer {
 }
 footer a {
   font-size: 12px;
-}
-#intent-preview label {
-  display: block;
-  font-size: 12px;
-  margin-top: 10px;
-}
-#intent-preview input {
-  margin-top: 5px;
-}
-#intent-preview > button {
-  width: 100%;
-  margin-top: 10px;
 }
 .map-note {
   position: absolute;

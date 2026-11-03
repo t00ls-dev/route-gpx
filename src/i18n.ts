@@ -58,8 +58,6 @@ const pt: Record<string, string> = {
 
   'Plan your route': 'Criar rota',
   'Try example': 'Ver exemplo',
-  'Describe a route': 'Descrever uma rota',
-  Review: 'Revisar',
   Points: 'Pontos',
   '＋ Stop': '＋ Parada',
   '⇅ Reverse': '⇅ Inverter',
@@ -79,14 +77,9 @@ const pt: Record<string, string> = {
   'Choose a place.': 'Escolha um lugar.',
   'GPX downloaded.': 'GPX baixado.',
   'Link copied.': 'Link copiado.',
-  'Review the places.': 'Confira os lugares.',
-  'Create route': 'Criar rota',
-  'Places found. Check the markers.': 'Lugares encontrados. Confira os pontos.',
   'GPX imported. Edits recalculate the route.':
     'GPX importado. Alterações recalculam a rota.',
   'Import GPX': 'Importar GPX',
-  'From Metrô Uruguai via Postinho do Alto to Grumari':
-    'De Metrô Uruguai passando por Postinho do Alto até Grumari',
 
   'Your road, point by point.': 'Seu caminho, ponto a ponto.',
   'Open source ↗': 'Código aberto ↗',
@@ -97,16 +90,7 @@ const pt: Record<string, string> = {
   'Take every turn with you in GPX.': 'Leve cada curva com você em GPX.',
   '↗ Try Tijuca → Grumari': '↗ Testar Tijuca → Grumari',
   '↑ Import GPX': '↑ Importar GPX',
-  'Describe your route': 'Descreva sua rota',
   'ON YOUR DEVICE': 'NO SEU DISPOSITIVO',
-  'Use English or Portuguese. Start with “From”, add “via” stops, and finish with “to”. Or list one place per line.':
-    'Use inglês ou português. Comece com “De”, acrescente “passando por” e termine com “até”. Ou informe um lugar por linha.',
-  'Where would you like to go?': 'Por onde você quer passar?',
-  'From Metrô Uruguai via Alto da Boa Vista via Postinho do Alto via Estrada das Furnas via Barra da Tijuca via Prainha to Grumari. Prefer main roads.':
-    'De Metrô Uruguai passando por Alto da Boa Vista passando por Postinho do Alto passando por Estrada das Furnas passando por Barra da Tijuca passando por Prainha até Grumari. Prefira vias principais.',
-  '↝ Review described route': '↝ Revisar descrição da rota',
-  'Local text parser, not an AI service. Review the extracted places. Road and direction requests are guided by stops, not guaranteed.':
-    'Interpretador de texto local, sem serviço de IA. Confira os lugares extraídos. Pedidos de vias e direção são guiados por pontos e precisam de revisão.',
   'Your itinerary': 'Seu itinerário',
   'Route points': 'Pontos da rota',
   'Select a point. Click the map, search an address, or paste lat, lon.':
@@ -205,26 +189,8 @@ const pt: Record<string, string> = {
     'Geometria original do GPX preservada. Editar um ponto recalcula o trajeto pelas ruas. Links compartilhados contêm os pontos de controle e recalculam a rota.',
   'Invalid route link. Your current route has been kept.':
     'Link de rota inválido. Sua rota atual foi mantida.',
-  'Search area (optional)': 'Região da busca (opcional)',
-  'e.g. Rio de Janeiro, Brazil': 'Ex.: Rio de Janeiro, Brasil',
-  'Find places & build route': 'Buscar lugares e gerar rota',
-  'The route changed. Review the description again.':
-    'A rota mudou. Revise a descrição novamente.',
-  'Give each point a place name or coordinates.':
-    'Informe um lugar ou coordenadas para cada ponto.',
-  'Places resolved using the first search match. Review every marker; routing starts automatically.':
-    'Lugares definidos pelo primeiro resultado da busca. Confira cada marcador; o cálculo começa automaticamente.',
-  'Review the places below. No address search has been sent yet.':
-    'Revise os lugares abaixo. Nenhuma busca de endereço foi enviada ainda.',
   'Invalid JSON state. Load the current state to see the expected format.':
     'Estado JSON inválido. Carregue o estado atual para ver o formato esperado.',
-  'Keep the description under 4,000 characters.':
-    'Use até 4.000 caracteres na descrição.',
-  'Include a start and a destination: “From A via B to C”, “De A passando por B até C”, or one place per line.':
-    'Inclua origem e destino: “De A passando por B até C”, “From A via B to C” ou um lugar por linha.',
-  'Use up to 25 places per description.': 'Use até 25 lugares por descrição.',
-  'One place name is too long. Use a specific street or landmark.':
-    'O nome de um lugar é longo demais. Use uma rua ou ponto de referência.',
   'This file is not a valid GPX.': 'Este arquivo não é um GPX válido.',
   'No track or route geometry found in this GPX.':
     'Este GPX não contém geometria de trajeto ou rota.',
@@ -283,7 +249,6 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     /^Move point (\d+) (up|down)$/,
     (n, d) => `Mover ponto ${n} para ${d === 'up' ? 'cima' : 'baixo'}`,
   ],
-  [/^Described place (\d+)$/, (n) => `Lugar descrito ${n}`],
   [/^(\d+)\. (Start|Destination|Via)$/, (n, kind) => `${n}. ${pt[kind]}`],
   [/^Roads used \((\d+) sections\)$/, (n) => `Vias usadas (${n} trechos)`],
   [
@@ -299,15 +264,6 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     /^Finding “(.*?)”… \(public search, at most one request per second\)$/,
     (p) =>
       `Buscando “${p}”… (serviço público, no máximo uma requisição por segundo)`,
-  ],
-  [
-    /^Could not find “(.*?)”\. Edit the place name or add a city\.$/,
-    (p) =>
-      `Não foi possível encontrar “${p}”. Edite o nome ou acrescente a cidade.`,
-  ],
-  [
-    /^Invalid search result for “(.*?)”\.$/,
-    (p) => `Resultado de busca inválido para “${p}”.`,
   ],
   [
     /^Some points were snapped more than 100 m to a drivable road: (.*?)\. Move them closer to your intended road\.$/,

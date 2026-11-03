@@ -1,56 +1,66 @@
 # route-gpx
 
-Crie rotas e baixe o traçado completo pelas ruas em GPX.
+Planeje rotas e exporte o traçado completo em GPX.
 
-[Abrir o site](https://t00ls-dev.github.io/route-gpx/) · [English](README.md) · [Licença MIT](LICENSE)
+[Abrir o aplicativo](https://t00ls-dev.github.io/route-gpx/) · [English](README.md) · [Ajuda](https://t00ls-dev.github.io/route-gpx/help.html) · [Licença MIT](LICENSE)
 
-![Rota de Tijuca a Grumari no route-gpx](docs/screenshot.pt-BR.png)
+![Rota de Tijuca a Grumari no route-gpx](docs/screenshot.png)
 
-[Versão para celular](docs/mobile.png)
+## Recursos
 
-Site estático em HTML, TypeScript strict, Vite e Leaflet. Sem backend, chave de API, cadastro, cookies ou analytics. Inglês e português do Brasil são nativos; selecione o idioma no cabeçalho.
+- Defina início, destino e paradas com endereços, coordenadas ou cliques no mapa.
+- Mova e reordene pontos, inverta a rota, adicione um retorno e desfaça alterações.
+- Confira distância, duração estimada e referências de vias; alterne entre quilômetros e milhas ou defina uma velocidade média.
+- Importe GPX e exporte GPX 1.1 com segmentos completos do traçado e pontos de passagem nomeados.
+- Compartilhe links de rotas e salve explicitamente rotas nomeadas neste navegador, com importação e exportação de backup JSON.
 
-A interface é clara e tem contraste forte, mesmo se o sistema preferir tema escuro. Instruções e privacidade ficam na página separada de [Ajuda](https://t00ls-dev.github.io/route-gpx/help.html?lang=pt), deixando a criação mais compacta no celular.
+Um aplicativo estático feito com HTML, TypeScript, Vite e Leaflet. Não exige conta, chave de API nem backend da aplicação. A interface oferece inglês e português do Brasil pelo seletor no cabeçalho.
 
-## Como usar
+## Início rápido
 
-1. Digite endereço ou `latitude, longitude` diretamente nos campos **Início** e **Destino**. Coordenadas são aplicadas automaticamente. Para um endereço, toque em **Buscar** ou Enter e escolha um resultado. Também é possível clicar duas vezes no mapa.
-2. Arraste marcadores, reordene pelas setas, adicione ou remova pontos. A rota recalcula automaticamente após uma pequena espera; **Calcular rota** permite repetir o cálculo.
-3. Confira distância, duração, referências de rodovias e lista de vias. A preferência por vias principais avisa sobre possíveis trechos locais; não garante exclusão de vias locais. Adicione pontos nas vias desejadas.
-4. Baixe o GPX 1.1 com todos os pontos da geometria dentro de `trk/trkseg`, pontos nomeados em `wpt`, nome e data. O campo **Nome do GPX**, acima do botão de download, define o nome do arquivo e do trajeto. Se ficar vazio, usa origem e destino. Abra no [gpx.studio](https://gpx.studio/) ou outro aplicativo.
+1. Digite endereços ou `latitude, longitude` em **Início** e **Destino**, ou clique no mapa para definir os pontos. Coordenadas são aplicadas automaticamente; para endereços, pressione **Buscar** ou Enter e selecione um resultado. **Ver exemplo** carrega um itinerário de exemplo.
+2. Adicione paradas e ajuste os pontos. Confira a rota calculada, a distância e a duração.
+3. Se desejar, preencha **Nome do GPX** e pressione **Baixar GPX**. O nome vale para o arquivo e o trajeto; quando vazio, são usados os pontos de início e destino.
 
-O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**, com chegada na Avenida Estado da Guanabara junto à praia. O ponto do Postinho fica na Rua da Boa Vista, fora do pátio. A rota sobe a Avenida Edison Passos e desce pelas Furnas. [GPX de exemplo](docs/example.gpx).
+Para instruções passo a passo, consulte a [página de Ajuda](https://t00ls-dev.github.io/route-gpx/help.html). Há também um [GPX de exemplo](docs/example.gpx).
 
-**Desfazer** recupera até 50 alterações nesta aba, incluindo pontos movidos, removidos ou reordenados. Ctrl+Z / ⌘Z funciona fora dos campos de texto. O seletor **km / mi** troca quilômetros por milhas, independentemente do idioma. A escolha fica no link e não altera as coordenadas do GPX.
+## Comportamentos importantes
 
-**Velocidade média** calcula o tempo pela distância e a velocidade escolhida no controle deslizante: 1, 5, 10… até 200 km/h ou 130 mph. A troca de unidade arredonda para a posição mais próxima. Desative para voltar à estimativa do roteador. A conta não inclui paradas nem trânsito.
+- Arquivos GPX importados podem ter até 10 MB. Os pontos e segmentos do traçado permanecem intactos até você editar um ponto, o que recalcula a rota. Links compartilhados contêm pontos de controle e opções, não a geometria importada, e recalculam ao abrir.
+- **Nenhuma rota é salva automaticamente**. Preencha um nome e use **Salvar rota** para guardar a geometria exata no IndexedDB. Salvar com o mesmo nome atualiza a entrada. Reabrir uma rota salva não a recalcula. Exporte backups: limpar os dados do navegador pode remover as rotas salvas.
+- O roteamento usa atualmente um perfil de carro. **Preferir vias principais** sinaliza possíveis trechos locais; não garante sua exclusão. As estimativas não incluem paradas nem trânsito em tempo real. Revise o resultado antes de usá-lo.
+- Idioma e unidades de distância são independentes. Trocar unidades não altera as coordenadas do GPX. A velocidade média opcional muda a estimativa de tempo; desativá-la restaura a estimativa do roteador.
 
-## Descrever uma rota
+## Serviços e privacidade
 
-> De Metrô Uruguai passando por Alto da Boa Vista passando por Postinho do Alto passando por Estrada das Furnas passando por Barra da Tijuca passando por Prainha até Grumari. Prefira vias principais.
+O aplicativo usa tiles do OpenStreetMap, OSRM para roteamento, Valhalla como alternativa e Nominatim para busca de endereços. Mapas, buscas e roteamento exigem conexão à internet. Esses provedores recebem os locais necessários para cada requisição; links compartilhados e backups também contêm locais. O aplicativo não define cookies nem usa analytics.
 
-Também aceita `From A via B to C`, setas e um local por linha. **Revisar** exibe lugares editáveis, sem consultar serviços. Só após **Criar rota** os endereços são buscados, em sequência. Confira os marcadores: a resolução usa o primeiro resultado. Uma região de busca opcional ajuda a distinguir lugares com nomes iguais.
+As buscas de endereços são explícitas, sem autocompletar. As requisições são espaçadas e usam cache quando aplicável, mas os serviços públicos têm capacidade limitada e nenhuma garantia de disponibilidade. Siga a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) e a [política de tiles](https://operations.osmfoundation.org/policies/tiles/); configure serviços próprios antes de ampliar o uso. O espaçamento no navegador não consegue impor um limite de uso compartilhado entre todos os dispositivos.
 
-O interpretador funciona no navegador e reconhece instruções estruturadas. Não é uma IA geral. Instruções vagas, restrições de elevação e pedidos de segurança, trânsito ou exclusão total de vias locais não são resolvidos automaticamente. O editor de pontos permanece disponível. Há também um editor JSON em **Configurações → Avançado: JSON**.
+Altere as URLs base dos serviços em **Configurações**. Serviços remotos precisam de HTTPS e devem permitir requisições entre origens no navegador. Para hospedagem própria, consulte a [documentação do OSRM](https://github.com/Project-OSRM/osrm-backend#quick-start) e a [documentação do Nominatim](https://nominatim.org/release-docs/latest/admin/Installation/).
 
-## Rotas salvas neste dispositivo
+## Desenvolvimento local
 
-**Nenhuma rota é salva automaticamente.** Preencha **Nome do GPX** e toque em **Salvar rota**. Para um nome existente, o botão mostra **Atualizar rota**, sem criar uma duplicata. Em **Rotas salvas**, você pode reabrir o traçado completo, baixar o GPX ou excluir a entrada. Reabrir e baixar não consulta o roteador.
-
-As rotas ficam no IndexedDB deste perfil do navegador, sem conta ou sincronização em nuvem. Limpar dados do site, usar navegação privada ou a limpeza de armazenamento pelo navegador pode removê-las. Exporte um backup JSON para guardar uma cópia; a importação valida o arquivo inteiro e mantém as rotas existentes com o mesmo nome. O backup contém seus locais. Se o armazenamento não estiver disponível, o download do GPX continua funcionando.
-
-## Importar, compartilhar e ida e volta
-
-A importação aceita GPX até 10 MB e preserva todos os pontos e segmentos originais até uma edição. Os pontos de controle são derivados das extremidades, waypoints ou de uma amostra; editar recalcula pelas ruas. O link contém os controles e as opções, não a geometria importada, e recalcula a rota ao abrir. Os pontos solicitados podem ser ajustados à via de carro mais próxima; deslocamentos acima de 100 m são avisados.
-
-**Ida e volta** acrescenta um itinerário de retorno, calculado pelas vias permitidas. Revise pontos sobre pistas separadas para evitar retornos desnecessários. As estimativas não incluem paradas nem trânsito em tempo real.
-
-## Rodar e verificar
-
-Node.js 22.12 ou superior, preferencialmente Node 22 LTS:
+Use Node.js **22.12 ou superior**:
 
 ```sh
-npm install && npm run dev
+npm ci
+npm run dev
+```
+
+Abra `http://localhost:5173/route-gpx/`. Para compilar e visualizar a versão de produção:
+
+```sh
+npm run build
+npm run preview
+```
+
+## Validação
+
+Instale o Chromium uma vez para os testes de navegador e execute as verificações:
+
+```sh
+npx playwright install chromium
 npm run lint
 npm run format:check
 npm test
@@ -58,30 +68,18 @@ npm run test:browser
 npm run build
 ```
 
-Abra a URL `/route-gpx/` indicada pelo Vite. O teste de rede é opcional e fica desativado por padrão:
+O Vitest cobre a lógica central e o Playwright cobre os fluxos no navegador. Os testes regulares simulam os serviços públicos. O comando opcional `npm run test:integration` consulta o OSRM real.
 
-```sh
-npm run test:integration
-```
+O script separado de aceitação `node scripts/browser-check.mjs` exige um servidor local em execução ou `SITE_URL` apontando para um site publicado. Ele consulta serviços reais e atualiza capturas de tela, o GPX de exemplo e o relatório em `docs/`; execute-o apenas quando essas verificações forem necessárias.
 
-Os testes de navegador verificam a entrada manual de pontos, cliques no mapa, endereços, desfazer e unidades no computador e no celular. Eles usam respostas de teste e não consultam servidores públicos. Instale o Chromium com `npx playwright install chromium` antes de rodar localmente.
+## Publicação
 
-O teste de integração verifica o mesmo exemplo **Metrô Uruguai → Alto da Boa Vista → Postinho → Furnas → Barra → Prainha → Grumari**, com cerca de **42 km**, geometria completa e as vias principais. O trajeto segue as principais vias urbanas e os acessos às praias. Os testes normais não consultam servidores públicos. [Documentação completa dos testes e verificação no navegador](README.md#checks).
+O GitHub Actions executa verificações em pull requests e pushes para `main`. Builds bem-sucedidos do commit atual da `main` são publicados no GitHub Pages. O Vite usa `/route-gpx/` como caminho base; ao mudar o caminho de hospedagem, atualize também os caminhos do manifest, URLs canônicas e de compartilhamento, sitemap e documentação. Veja as [notas sobre identidade e hospedagem](docs/BRAND.md).
 
-## Servidores e limites
+## Créditos e licença
 
-OSRM é o padrão; Valhalla é tentado automaticamente após uma falha. Altere as URLs base em **Configurações**. O site espera HTTPS e CORS adequado para servidores remotos. O nome do repositório está configurado no `base` do Vite; o deploy no GitHub Pages é automático após CI bem-sucedida.
+Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
 
-As buscas Nominatim só acontecem por ação explícita, com debounce, cache em memória e ao menos 1,1 s entre requisições. **Não há autocompletar**: a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) o proíbe. O limite de 1 requisição por segundo vale para o conjunto de usuários da aplicação; um site estático não consegue impor esse limite entre dispositivos diferentes. Antes de ampliar o uso, configure uma instância própria. Os serviços públicos têm capacidade e disponibilidade limitadas. Os mapas respeitam a [política de tiles](https://operations.osmfoundation.org/policies/tiles/) e não oferecem downloads em massa.
+O código do aplicativo é licenciado sob [MIT](LICENSE). Dados e dependências mantêm suas próprias licenças. Sem afiliação com os operadores dos serviços públicos.
 
-Tudo executa no navegador, mas coordenadas, pesquisas e área visível do mapa são enviados aos serviços. O link inclui seus pontos; não compartilhe locais confidenciais. O aplicativo guarda um horário de busca em localStorage para espaçar consultas entre abas compatíveis. Apenas as rotas nomeadas que você salvar explicitamente ficam no IndexedDB local.
-
-[Como hospedar seu próprio OSRM com Docker](README.md#change-or-host-a-routing-server), incluindo preparação de dados, MLD, HTTPS e CORS.
-
-## Identidade e descoberta
-
-O site inclui símbolo da marca, favicons, ícones para Apple e Android, manifest, URLs canônicas, metadados traduzidos, imagem de compartilhamento, dados estruturados e sitemap. Veja os [arquivos de identidade e observações de hospedagem](docs/BRAND.md). A instalação depende do navegador; mapas e roteamento precisam de conexão à internet.
-
-## Créditos
-
-Dados © [OpenStreetMap e colaboradores](https://www.openstreetmap.org/copyright), mapa [Leaflet](https://leafletjs.com/), roteamento [OSRM](https://project-osrm.org/) e [Valhalla](https://valhalla.github.io/valhalla/), busca [Nominatim](https://nominatim.org/). Código do aplicativo sob MIT; dados e dependências mantêm suas próprias licenças. [Relatar problema ou contatar o mantenedor](https://github.com/t00ls-dev/route-gpx/issues).
+[Relatar problema ou contatar o mantenedor](https://github.com/t00ls-dev/route-gpx/issues) · [Relatar problema no mapa](https://www.openstreetmap.org/fixthemap)

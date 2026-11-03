@@ -71,18 +71,7 @@ const [again] = await Promise.all([
 ]);
 const rexml = await fs.readFile(await again.path(), 'utf8');
 assert.equal((rexml.match(/<trkpt /g) || []).length, trackPoints);
-// Native natural-language UI extracts points before searching.
-await page.locator('.description-panel').evaluate((el) => {
-  el.open = true;
-});
-await page
-  .locator('#description')
-  .fill(
-    'De Metrô Uruguai passando por Postinho do Alto até Grumari. Prefira vias principais.',
-  );
-await page.locator('#parse-description').click();
-assert.equal(await page.locator('#intent-preview input').count(), 4);
-// JSON editor exists alongside visual and text modes.
+// Advanced JSON editor remains available alongside the point editor.
 await page.locator('.settings').evaluate((el) => {
   el.open = true;
 });
@@ -169,7 +158,6 @@ await fs.writeFile(
       english: true,
       portuguese: true,
       importPreservesGeometry: true,
-      naturalLanguagePreview: true,
       pageErrors: errors,
     },
     null,
