@@ -93,7 +93,7 @@ export function encodeState(state: State): string {
       .replace(/=+$/, '')
   );
 }
-export function decodeState(hash: string): State {
+export function decodeState(hash: string, resetInvalidSpeed = false): State {
   if (!hash || hash === '#') return defaults();
   if (!hash.startsWith('#v1=') || hash.length > 60000)
     throw new Error('This route link is invalid or too large.');
@@ -104,8 +104,10 @@ export function decodeState(hash: string): State {
   if (
     x.averageSpeedKmh !== undefined &&
     !isValidAverageSpeedKmh(x.averageSpeedKmh)
-  )
-    throw new Error(AVERAGE_SPEED_ERROR);
+  ) {
+    if (resetInvalidSpeed) delete x.averageSpeedKmh;
+    else throw new Error(AVERAGE_SPEED_ERROR);
+  }
   if (
     (x.units !== undefined && !['metric', 'imperial'].includes(x.units)) ||
     (x.language !== undefined && !['en', 'pt'].includes(x.language)) ||

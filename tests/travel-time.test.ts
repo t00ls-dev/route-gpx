@@ -49,3 +49,15 @@ it('converts field bounds to mph and keeps rounded boundary values valid', () =>
     expect(display).toBeLessThanOrEqual(bounds.max);
   }
 });
+
+it('keeps route points from older links while clearing an out-of-range speed', () => {
+  const s = defaults();
+  s.points = [
+    { name: 'Start', coord: [-22.93, -43.23] },
+    { name: 'End', coord: [-23.05, -43.53] },
+  ];
+  s.averageSpeedKmh = 500;
+  const restored = decodeState(encodeState(s), true);
+  expect(restored.points).toEqual(s.points);
+  expect(restored.averageSpeedKmh).toBeUndefined();
+});

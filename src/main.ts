@@ -53,7 +53,7 @@ function status(message: string, error = false) {
   $('status').classList.toggle('error', error);
 }
 try {
-  state = decodeState(location.hash);
+  state = decodeState(location.hash, true);
 } catch {
   status('This route link is invalid. Start a new route below.', true);
 }
@@ -715,7 +715,7 @@ $<HTMLInputElement>('import').onchange = () => {
 };
 window.addEventListener('hashchange', () => {
   try {
-    state = decodeState(location.hash);
+    state = decodeState(location.hash, true);
     const lang = state.language ?? 'en';
     setLanguage(lang);
     settings();

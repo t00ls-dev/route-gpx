@@ -1,3 +1,4 @@
+import { defaults, encodeState } from '../src/core';
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
 const base = 'http://127.0.0.1:5173/route-gpx/';
@@ -272,4 +273,22 @@ test('average speed is limited to 1–200 km/h with equivalent mph bounds', asyn
     'aria-invalid',
     'true',
   );
+});
+
+test('an older route link with a 500 km/h average retains its points', async ({
+  page,
+}) => {
+  await setup(page);
+  const state = defaults();
+  state.averageSpeedKmh = 500;
+  state.points = [
+    { name: 'Start', coord: [-22.930929, -43.238286] },
+    { name: 'Destination', coord: [-23.05016, -43.53524] },
+  ];
+  await page.goto(base + encodeState(state));
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('#location-0')).toHaveValue(start);
+  await expect(page.locator('#location-1')).toHaveValue(end);
+  await expect(page.locator('#average-speed')).toHaveValue('');
+  await expect(page.locator('#summary')).toContainText('49 min');
 });
