@@ -114,23 +114,7 @@
       <aside id="route-panel" aria-label="Plan your route">
         <div class="section-line page-heading">
           <h1>Plan your route</h1>
-          <button id="example" type="button">Try example</button>
         </div>
-        <details class="saved-routes">
-          <summary>Saved routes <span id="saved-count">(0)</span></summary>
-          <p id="library-status" class="hint" role="status"></p>
-          <div id="saved-list"></div>
-          <div class="library-actions">
-            <button id="backup-routes" type="button" disabled>
-              Export backup</button
-            ><label class="file-button"
-              >Import backup<input
-                id="restore-routes"
-                type="file"
-                accept=".json,application/json"
-            /></label>
-          </div>
-        </details>
         <section aria-label="Route points">
           <div class="section-line">
             <h2>Points</h2>
@@ -165,6 +149,21 @@
             </select></label
           >
         </div>
+        <details class="saved-routes">
+          <summary>Saved routes <span id="saved-count">(0)</span></summary>
+          <p id="library-status" class="hint" role="status"></p>
+          <div id="saved-list"></div>
+          <div class="library-actions">
+            <button id="backup-routes" type="button" disabled>
+              Export backup</button
+            ><label class="file-button"
+              >Import backup<input
+                id="restore-routes"
+                type="file"
+                accept=".json,application/json"
+            /></label>
+          </div>
+        </details>
         <details class="speed-options">
           <summary>Average speed</summary>
           <label class="speed-toggle"

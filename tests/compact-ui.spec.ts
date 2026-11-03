@@ -35,9 +35,16 @@ for (const width of [320, 360, 390, 430]) {
               'Camadas do mapa',
               'Tela cheia',
               '◎ Ver rota',
+              '↶ Desfazer',
             ]
-          : ['Use my location', 'Map layers', 'Full screen', '◎ Fit route'];
-      const ids = ['locate', 'layers-toggle', 'fullscreen', 'fit'];
+          : [
+              'Use my location',
+              'Map layers',
+              'Full screen',
+              '◎ Fit route',
+              '↶ Undo',
+            ];
+      const ids = ['locate', 'layers-toggle', 'fullscreen', 'fit', 'undo'];
       let lastBottom = 0;
       for (let i = 0; i < ids.length; i++) {
         const locator = page.locator(`#${ids[i]}`);
@@ -51,6 +58,15 @@ for (const width of [320, 360, 390, 430]) {
         lastBottom = box.y + box.height;
         expect(await locator.locator('.button-label').isVisible()).toBe(false);
       }
+      await expect(page.locator('.map-action-control #undo')).toHaveCount(1);
+      await expect(page.locator('#example')).toHaveCount(0);
+      expect(
+        await page
+          .locator('.saved-routes')
+          .evaluate((el) =>
+            el.nextElementSibling?.classList.contains('speed-options'),
+          ),
+      ).toBe(true);
       const zoom = (await page
         .locator('.leaflet-control-zoom-out')
         .boundingBox())!;

@@ -25,7 +25,6 @@ import {
   defaults,
   decodeState,
   encodeState,
-  examplePoints,
   filename,
   generateGpx,
   highways,
@@ -95,11 +94,25 @@ const map = L.map('map', { zoomControl: false }).setView(
   localView.center,
   localView.zoom,
 );
+let zooming = false;
+map.on('zoomstart', () => {
+  zooming = true;
+});
+map.on('zoomend', () => {
+  zooming = false;
+});
 const zoom = L.control.zoom({ position: 'bottomright' }).addTo(map);
 const markers = L.layerGroup().addTo(map),
   line = L.featureGroup().addTo(map);
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
 function fit() {
+  if (zooming) {
+    const version = revision;
+    map.once('zoomend', () => {
+      if (version === revision) fit();
+    });
+    return;
+  }
   const pts =
     current?.segments.flat() ??
     state.points.flatMap((p) => (p.coord ? [p.coord] : []));
@@ -116,6 +129,7 @@ function fit() {
         bottom,
       ],
       maxZoom: 15,
+      animate: false,
     });
   }
 }
@@ -757,15 +771,6 @@ $('roundtrip').onclick = () => {
   state.points.at(-1)!.name = 'Return to start';
   changed();
   status('Round trip added. Check stops on divided roads.');
-};
-$('example').onclick = () => {
-  dirty.clear();
-  drafts = new WeakMap();
-  state.points = structuredClone(examplePoints);
-  state.name = 'Uruguai → Alto da Boa Vista → Grumari';
-  selected = 0;
-  changed();
-  fit();
 };
 $('fit').onclick = fit;
 $<HTMLSelectElement>('units').onchange = () => {

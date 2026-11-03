@@ -11,7 +11,7 @@ const paths = {
   up: '<path d="m5 10 7-7 7 7M12 3v18"/>',
   down: '<path d="m5 14 7 7 7-7M12 21V3"/>',
   close: '<path d="m5 5 14 14M19 5 5 19"/>',
-  example: '<path d="m9 5 11 7-11 7Z"/>',
+  undo: '<path d="M3 10h11a6 6 0 0 1 0 12M3 10l5-5m-5 5 5 5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .5-1.5 1-1.5 2M12 16v1"/>',
 } as const;
 export type IconName = keyof typeof paths;

@@ -174,7 +174,7 @@ export function setupMapView(
           fillColor: '#1765a5',
           fillOpacity: 1,
         }).addTo(userLocation);
-        map.setView(view.center, view.zoom);
+        map.setView(view.center, view.zoom, { animate: false });
         element('location-status').textContent =
           'Location found. Your route has not changed.';
         element('location-actions').hidden = false;
@@ -214,6 +214,6 @@ export function setupMapView(
       ),
   }).then((view) => {
     if (view && !interacted && !route.hasRoute())
-      map.setView(view.center, view.zoom);
+      map.setView(view.center, view.zoom, { animate: false });
   });
 }

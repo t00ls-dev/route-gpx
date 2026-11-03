@@ -2,13 +2,14 @@
 // @vitest-environment node
 import process from 'node:process';
 import { expect, it } from 'vitest';
-import { defaults, examplePoints, meters } from '../src/core';
+import { defaults, meters } from '../src/core';
+import { integrationPoints } from './route-fixture';
 import { osrmRoute } from '../src/services';
 it.skipIf(process.env.RUN_OSRM !== '1')(
   'routes the current Uruguai–Alto da Boa Vista–Grumari example on the main roads',
   async () => {
     const state = defaults();
-    state.points = structuredClone(examplePoints);
+    state.points = structuredClone(integrationPoints);
     const route = await osrmRoute(state);
     const roads = route.steps.map((s) => s.name);
     expect(roads).toEqual(
@@ -22,9 +23,9 @@ it.skipIf(process.env.RUN_OSRM !== '1')(
     expect(route.distance / 1000).toBeGreaterThan(35);
     expect(route.distance / 1000).toBeLessThan(55);
     expect(route.segments[0].length).toBeGreaterThan(500);
-    expect(route.snapped).toHaveLength(examplePoints.length);
+    expect(route.snapped).toHaveLength(integrationPoints.length);
     route.snapped!.forEach((point, i) =>
-      expect(meters(point, examplePoints[i].coord!)).toBeLessThan(100),
+      expect(meters(point, integrationPoints[i].coord!)).toBeLessThan(100),
     );
     console.log(
       JSON.stringify(

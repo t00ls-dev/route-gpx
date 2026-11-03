@@ -108,7 +108,6 @@ const pt: Record<string, string> = {
   'Place your start on the map': 'Posicione a origem no mapa',
 
   'Plan your route': 'Criar rota',
-  'Try example': 'Ver exemplo',
   Points: 'Pontos',
   '＋ Stop': '＋ Parada',
   '⇅ Reverse': '⇅ Inverter',

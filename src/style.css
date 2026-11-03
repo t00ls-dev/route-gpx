@@ -1327,7 +1327,7 @@ footer a {
   .planner {
     --route-sheet-height: min(
       48dvh,
-      max(100px, calc(100dvh - 350px - env(safe-area-inset-top)))
+      max(100px, calc(100dvh - 400px - env(safe-area-inset-top)))
     );
   }
   .planner aside {
@@ -1363,7 +1363,6 @@ footer a {
     height: 44px;
   }
   .planner header .button-label,
-  .planner .page-heading .button-label,
   .map-action-control .button-label {
     display: none;
   }
@@ -1438,11 +1437,6 @@ footer a {
   .page-heading h1 {
     font-size: 18px;
   }
-  .page-heading #example {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-  }
   .saved-routes {
     margin-bottom: 4px;
   }
@@ -1460,5 +1454,31 @@ footer a {
 @media (max-width: 759px) {
   .planner .brand {
     min-height: 44px;
+  }
+}
+
+@media (max-height: 500px) {
+  .planner .leaflet-top {
+    top: calc(44px + env(safe-area-inset-top));
+  }
+  .map-action-control {
+    width: 44px;
+    gap: 4px;
+  }
+  .map-action-control .button-label {
+    display: none;
+  }
+  .planner .map-action-control > button,
+  .planner .map-action-control .layer-control > button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .planner .leaflet-top .leaflet-control-zoom {
+    margin-top: 4px;
+  }
+  .planner .leaflet-bottom.leaflet-right {
+    right: calc(68px + env(safe-area-inset-right));
+    max-width: calc(100% - 68px);
   }
 }

@@ -229,3 +229,61 @@ test('satellite overzoom reuses native level 14 tiles instead of requesting miss
   await expect(page.locator('.leaflet-tile-loaded').first()).toBeVisible();
   expect(Math.max(...zooms)).toBe(14);
 });
+
+test('switching layers immediately after a nearby GPX import keeps its route framed', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'languages', { value: ['pt-BR'] });
+  });
+  await page.goto(base);
+  await page.locator('#import').setInputFiles('docs/example.gpx');
+  await expect(page.locator('#download')).toBeEnabled();
+  await page.locator('#layers-toggle').click();
+  await page.locator('[data-layer=satellite]').click();
+  const bounds = (await page.locator('#map').boundingBox())!;
+  const sheet = (await page.locator('#route-panel').boundingBox())!;
+  await expect
+    .poll(async () =>
+      page.locator('.route-marker').evaluateAll(
+        (markers, limit) =>
+          markers.length === 7 &&
+          markers.every((marker) => {
+            const box = marker.getBoundingClientRect();
+            return (
+              box.left >= limit.left &&
+              box.right <= limit.right &&
+              box.top >= 44 &&
+              box.bottom <= limit.bottom
+            );
+          }),
+        {
+          left: bounds.x,
+          right: bounds.x + bounds.width - 55,
+          bottom: sheet.y,
+        },
+      ),
+    )
+    .toBe(true);
+});
+test('GPX import during a running zoom takes precedence over that view', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(base);
+  await page.locator('.leaflet-control-zoom-in').click();
+  await page.locator('#import').setInputFiles('docs/example.gpx');
+  await expect(page.locator('#download')).toBeEnabled();
+  const bounds = (await page.locator('#map').boundingBox())!;
+  await expect
+    .poll(async () => {
+      const marker = await page.locator('.route-marker').first().boundingBox();
+      return (
+        marker !== null &&
+        marker.x >= bounds.x &&
+        marker.x + marker.width <= bounds.x + bounds.width
+      );
+    })
+    .toBe(true);
+});
