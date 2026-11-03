@@ -19,15 +19,15 @@ Um aplicativo estático feito com HTML, TypeScript, Vite e Leaflet. Não exige c
 
 ## Início rápido
 
-1. Digite endereços ou `latitude, longitude` em **Início** e **Destino**, ou clique no mapa no desktop. Em telas de toque, segure um ponto do mapa por cerca de meio segundo e escolha sua função. Coordenadas são aplicadas automaticamente; para endereços, pressione **Buscar** ou Enter e selecione um resultado. **Ver exemplo** carrega um itinerário de exemplo. Surgem sugestões ao digitar; setas e Enter selecionam uma. Sem sugestão selecionada, **Buscar** ou Enter consulta explicitamente o Nominatim.
+1. Digite endereços ou `latitude, longitude` em **Início** e **Destino**, ou clique no mapa no desktop. Em telas de toque, segure um ponto do mapa por cerca de meio segundo e escolha sua função. Coordenadas são aplicadas automaticamente; para endereços, pressione **Buscar** ou Enter e selecione um resultado. Surgem sugestões ao digitar; setas e Enter selecionam uma. Sem sugestão selecionada, **Buscar** ou Enter consulta explicitamente o Nominatim.
 2. Adicione paradas e ajuste os pontos. Confira a rota calculada, a distância e a duração.
 3. Se desejar, preencha **Nome do GPX** e pressione **Baixar GPX**. O nome vale para o arquivo e o trajeto; quando vazio, são usados os pontos de início e destino.
 
-Em telas pequenas, as ferramentas do mapa usam uma coluna de ícones junto ao zoom. Dicas e nomes acessíveis identificam cada ação. Os campos de endereço incluem uma lupa; o ícone de pin seleciona um ponto no mapa. O ícone de Ajuda explica os gestos de toque.
+Em telas pequenas, as ferramentas do mapa usam uma coluna de ícones, incluindo Desfazer, junto ao zoom. Dicas e nomes acessíveis identificam cada ação. Os campos de endereço incluem uma lupa; o ícone de pin seleciona um ponto no mapa. O ícone de Ajuda explica os gestos de toque. Rotas salvas fica acima de Velocidade média, após os controles de edição.
 
 Quando o navegador oferece suporte, **Compartilhar GPX** abre o menu de compartilhamento do aparelho com o mesmo arquivo GPX nomeado; cancelar não mostra erro. **Baixar GPX** continua disponível. O clique direito no desktop (ou Shift+F10 com o mapa em foco) abre o menu de pontos. Apenas o desenho da rota é simplificado para o zoom atual; a geometria do GPX e das rotas salvas e importadas permanece completa.
 
-Para instruções passo a passo, consulte a [página de Ajuda](https://t00ls-dev.github.io/route-gpx/help.html). Há também um [GPX de exemplo](docs/example.gpx).
+Para instruções passo a passo, consulte a [página de Ajuda](https://t00ls-dev.github.io/route-gpx/help.html).
 
 ## Comportamentos importantes
 

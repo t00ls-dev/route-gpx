@@ -19,15 +19,15 @@ A static application built with HTML, TypeScript, Vite and Leaflet. No account, 
 
 ## Quick start
 
-1. Enter addresses or `latitude, longitude` in **Start** and **Destination**, or click the map on desktop. On touch screens, hold a map point for about half a second and choose its role. Coordinates apply automatically; for addresses, press **Search** or Enter and select a result. **Try example** loads a sample itinerary. Suggestions appear while typing; arrows and Enter select one. Without a selected suggestion, **Search** or Enter uses Nominatim explicitly.
+1. Enter addresses or `latitude, longitude` in **Start** and **Destination**, or click the map on desktop. On touch screens, hold a map point for about half a second and choose its role. Coordinates apply automatically; for addresses, press **Search** or Enter and select a result. Suggestions appear while typing; arrows and Enter select one. Without a selected suggestion, **Search** or Enter uses Nominatim explicitly.
 2. Add stops and adjust the points. Review the calculated route, distance and duration.
 3. Optionally enter a **GPX name**, then press **Download GPX**. The name applies to both the file and track; when blank, the endpoints are used.
 
-On small screens, map tools use a single column of icon buttons beside zoom. Their tooltips and accessible names identify each action. Address fields include a search icon; the pin icon selects a point on the map. The Help icon explains touch gestures.
+On small screens, map tools use a single column of icon buttons, including Undo, beside zoom. Their tooltips and accessible names identify each action. Address fields include a search icon; the pin icon selects a point on the map. The Help icon explains touch gestures. Saved routes sits above Average speed, after the editing controls.
 
 When supported by your browser, **Share GPX** opens the device share menu with the same named GPX file; cancelling is silent. **Download GPX** remains available. A desktop right-click (or Shift+F10 on the focused map) opens the point menu. Route drawing is simplified for the current zoom only; GPX, saved and imported geometry remain complete.
 
-For step-by-step instructions, use the [Help page](https://t00ls-dev.github.io/route-gpx/help.html). A [sample GPX](docs/example.gpx) is also available.
+For step-by-step instructions, use the [Help page](https://t00ls-dev.github.io/route-gpx/help.html).
 
 ## Important behavior
 

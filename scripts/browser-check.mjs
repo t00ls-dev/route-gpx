@@ -22,7 +22,33 @@ page.on('response', async (r) => {
 });
 await page.goto(base);
 await page.locator('#language').selectOption('en');
-await page.locator('#example').click();
+// Build the acceptance itinerary from the GPX fixture through the validated editor.
+const fixtureXml = await fs.readFile('docs/example.gpx', 'utf8');
+const fixturePoints = await page.evaluate((xml) => {
+  const doc = new window.DOMParser().parseFromString(xml, 'application/xml');
+  return [...doc.querySelectorAll('wpt')].map((point) => ({
+    name: point.querySelector('name').textContent,
+    coord: [
+      Number(point.getAttribute('lat')),
+      Number(point.getAttribute('lon')),
+    ],
+  }));
+}, fixtureXml);
+await page.locator('.settings').evaluate((el) => {
+  el.open = true;
+});
+await page.locator('.json-settings').evaluate((el) => {
+  el.open = true;
+});
+await page.locator('#export-json').click();
+const fixtureState = JSON.parse(await page.locator('#state-json').inputValue());
+fixtureState.points = fixturePoints;
+fixtureState.name = 'Uruguai → Alto da Boa Vista → Grumari';
+await page.locator('#state-json').fill(JSON.stringify(fixtureState));
+await page.locator('#apply-json').click();
+await page.locator('.settings').evaluate((el) => {
+  el.open = false;
+});
 await page.locator('#download').waitFor({ state: 'visible' });
 await page.waitForFunction(
   () => !document.querySelector('#download').disabled,
