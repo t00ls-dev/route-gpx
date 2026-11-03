@@ -1,3 +1,4 @@
+import { holdMap } from './map-helpers';
 import { defaults, encodeState } from '../src/core';
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
@@ -71,14 +72,24 @@ for (const mobile of [false, true]) {
       await expect(page.locator('#download')).toBeDisabled();
       await expect(page.locator('.leaflet-marker-icon')).toHaveCount(1);
     });
-    test('two map clicks fill start and destination automatically', async ({
-      page,
-    }) => {
+    test('map gestures fill start and destination', async ({ page }) => {
       await setup(page);
-      await page.locator('#map').click({ position: { x: 130, y: 95 } });
+      if (mobile) {
+        await holdMap(page);
+        await page
+          .locator('#point-menu')
+          .getByRole('menuitem', { name: 'Set as start', exact: true })
+          .click();
+      } else await page.locator('#map').click({ position: { x: 130, y: 95 } });
       await expect(page.locator('#location-0')).not.toHaveValue('');
       await expect(page.locator('#location-1')).toHaveValue('');
-      await page.locator('#map').click({ position: { x: 210, y: 140 } });
+      if (mobile) {
+        await holdMap(page, 210, 280);
+        await page
+          .locator('#point-menu')
+          .getByRole('menuitem', { name: 'Set as destination' })
+          .click();
+      } else await page.locator('#map').click({ position: { x: 210, y: 140 } });
       await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
       await expect(page.locator('.leaflet-marker-icon')).toHaveCount(2);
     });
@@ -386,4 +397,10 @@ test('download still works if persistent browser storage is unavailable', async 
 
 test.beforeEach(async ({ page }) => {
   await page.route('https://ipwho.is/**', (r) => r.fulfill({ status: 503 }));
+});
+
+test.beforeEach(async ({ page }) => {
+  await page.route('https://photon.komoot.io/**', (r) =>
+    r.fulfill({ json: { features: [] } }),
+  );
 });

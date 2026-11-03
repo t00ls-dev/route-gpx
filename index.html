@@ -208,6 +208,8 @@
         <div class="export-actions">
           <button id="download" class="primary" disabled type="button">
             ↓ Download GPX</button
+          ><button id="share-gpx" type="button" hidden disabled>
+            Share GPX</button
           ><button id="share" type="button" title="Copy route link">
             Copy link
           </button>
@@ -232,7 +234,9 @@
                 >Detect region by IP</span
               ></label
             >
-            <label for="region-url">IP region service</label
+            <label for="photon">Photon server</label
+            ><input id="photon" type="url" /><label for="region-url"
+              >IP region service</label
             ><input id="region-url" type="url" />
             <p class="hint">
               The region service receives your IP address. Only an approximate

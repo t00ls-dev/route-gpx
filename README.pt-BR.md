@@ -19,9 +19,11 @@ Um aplicativo estático feito com HTML, TypeScript, Vite e Leaflet. Não exige c
 
 ## Início rápido
 
-1. Digite endereços ou `latitude, longitude` em **Início** e **Destino**, ou clique no mapa para definir os pontos. Coordenadas são aplicadas automaticamente; para endereços, pressione **Buscar** ou Enter e selecione um resultado. **Ver exemplo** carrega um itinerário de exemplo.
+1. Digite endereços ou `latitude, longitude` em **Início** e **Destino**, ou clique no mapa no desktop. Em telas de toque, segure um ponto do mapa por cerca de meio segundo e escolha sua função. Coordenadas são aplicadas automaticamente; para endereços, pressione **Buscar** ou Enter e selecione um resultado. **Ver exemplo** carrega um itinerário de exemplo. Surgem sugestões ao digitar; setas e Enter selecionam uma. Sem sugestão selecionada, **Buscar** ou Enter consulta explicitamente o Nominatim.
 2. Adicione paradas e ajuste os pontos. Confira a rota calculada, a distância e a duração.
 3. Se desejar, preencha **Nome do GPX** e pressione **Baixar GPX**. O nome vale para o arquivo e o trajeto; quando vazio, são usados os pontos de início e destino.
+
+Quando o navegador oferece suporte, **Compartilhar GPX** abre o menu de compartilhamento do aparelho com o mesmo arquivo GPX nomeado; cancelar não mostra erro. **Baixar GPX** continua disponível. O clique direito no desktop (ou Shift+F10 com o mapa em foco) abre o menu de pontos. Apenas o desenho da rota é simplificado para o zoom atual; a geometria do GPX e das rotas salvas e importadas permanece completa.
 
 Para instruções passo a passo, consulte a [página de Ajuda](https://t00ls-dev.github.io/route-gpx/help.html). Há também um [GPX de exemplo](docs/example.gpx).
 
@@ -40,7 +42,7 @@ A vista inicial usa, em ordem: uma rota na URL, GPS já autorizado no navegador,
 
 **Detectar região pelo IP** vem ativado e pode ser desligado em **Configurações**; a URL do serviço é configurável. A [documentação do ipwho.is](https://ipwhois.io/documentation) e seus [termos](https://ipwhois.io/terms) oferecem um endpoint gratuito HTTPS, com CORS e sem chave. O limite publicado é de 1.000 requisições/dia, compartilhado por domínio para tráfego CORS do navegador; o uso comercial é permitido, sem garantia de disponibilidade. O navegador envia seu endereço IP ao provedor escolhido, como também faz com os servidores de tiles. O aplicativo faz no máximo uma tentativa por sessão da aba, com timeout de 3 s e sem repetições. Apenas um centro aproximado da cidade fica em cache na memória; um indicador de sessão evita novas requisições após recarregar. Falhas usam silenciosamente a vista sem rede. Preferências e estado do painel não contêm dados de localização.
 
-As buscas de endereços são explícitas, sem autocompletar. As requisições são espaçadas e usam cache quando aplicável, mas os serviços públicos têm capacidade limitada e nenhuma garantia de disponibilidade. Siga a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) e a [política de tiles](https://operations.osmfoundation.org/policies/tiles/); configure serviços próprios antes de ampliar o uso. O espaçamento no navegador não consegue impor um limite de uso compartilhado entre todos os dispositivos.
+As sugestões usam [Photon](https://github.com/komoot/photon#demo-server) em `https://photon.komoot.io` (configurável em Configurações). A política permite uso razoável em projetos, sem cota numérica nem garantia de disponibilidade; uso intenso pode ser bloqueado. HTTPS e CORS aberto foram verificados. O texto digitado e um viés do centro do mapa em escala de cidade são enviados após 3 caracteres e pausa de 300 ms, com limite de cinco resultados, cancelamento, cache em memória e inícios serializados com intervalo mínimo de 1 s. O Nominatim só é consultado por Buscar/Enter, inclusive após falha do Photon, nunca automaticamente ao digitar. As requisições são espaçadas e usam cache quando aplicável, mas os serviços públicos têm capacidade limitada e nenhuma garantia de disponibilidade. Siga a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) e a [política de tiles](https://operations.osmfoundation.org/policies/tiles/); configure serviços próprios antes de ampliar o uso. O espaçamento no navegador não consegue impor um limite de uso compartilhado entre todos os dispositivos.
 
 Altere as URLs base dos serviços em **Configurações**. Serviços remotos precisam de HTTPS e devem permitir requisições entre origens no navegador. Para hospedagem própria, consulte a [documentação do OSRM](https://github.com/Project-OSRM/osrm-backend#quick-start) e a [documentação do Nominatim](https://nominatim.org/release-docs/latest/admin/Installation/).
 
@@ -83,7 +85,7 @@ O GitHub Actions executa verificações em pull requests e pushes para `main`. B
 
 ## Créditos e licença
 
-Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Região por IP pelo [ipwho.is](https://ipwhois.io/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
+Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Região por IP pelo [ipwho.is](https://ipwhois.io/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
 
 O código do aplicativo é licenciado sob [MIT](LICENSE). Dados e dependências mantêm suas próprias licenças. Sem afiliação com os operadores dos serviços públicos.
 

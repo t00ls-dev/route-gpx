@@ -19,9 +19,11 @@ A static application built with HTML, TypeScript, Vite and Leaflet. No account, 
 
 ## Quick start
 
-1. Enter addresses or `latitude, longitude` in **Start** and **Destination**, or click the map to set points. Coordinates apply automatically; for addresses, press **Search** or Enter and select a result. **Try example** loads a sample itinerary.
+1. Enter addresses or `latitude, longitude` in **Start** and **Destination**, or click the map on desktop. On touch screens, hold a map point for about half a second and choose its role. Coordinates apply automatically; for addresses, press **Search** or Enter and select a result. **Try example** loads a sample itinerary. Suggestions appear while typing; arrows and Enter select one. Without a selected suggestion, **Search** or Enter uses Nominatim explicitly.
 2. Add stops and adjust the points. Review the calculated route, distance and duration.
 3. Optionally enter a **GPX name**, then press **Download GPX**. The name applies to both the file and track; when blank, the endpoints are used.
+
+When supported by your browser, **Share GPX** opens the device share menu with the same named GPX file; cancelling is silent. **Download GPX** remains available. A desktop right-click (or Shift+F10 on the focused map) opens the point menu. Route drawing is simplified for the current zoom only; GPX, saved and imported geometry remain complete.
 
 For step-by-step instructions, use the [Help page](https://t00ls-dev.github.io/route-gpx/help.html). A [sample GPX](docs/example.gpx) is also available.
 
@@ -40,7 +42,7 @@ The initial view uses, in order: a route in the URL, GPS already authorized in t
 
 **Detect region by IP** is enabled by default and can be disabled in **Settings**; its service URL is configurable. [ipwho.is documentation](https://ipwhois.io/documentation) and [terms](https://ipwhois.io/terms) provide a free HTTPS, CORS-enabled endpoint without a key. Its published limit is 1,000 requests/day, shared by domain for browser CORS traffic; commercial use is allowed, with no availability guarantee. The browser sends its IP address to the selected provider, as it also does to tile servers. The app makes at most one attempt per tab session, with a 3 s timeout and no retries. Only an approximate city center is cached in memory; a session flag prevents repeated requests after reload. Failure silently uses the offline view. Preferences and panel state contain no location data.
 
-Address searches are explicit, with no autocomplete. Requests are spaced and cached where applicable, but public services have limited capacity and no availability guarantee. Follow the [Nominatim policy](https://operations.osmfoundation.org/policies/nominatim/) and [tile policy](https://operations.osmfoundation.org/policies/tiles/); configure your own services before scaling usage. Browser-side spacing cannot enforce a shared usage limit across all devices.
+Address suggestions use [Photon](https://github.com/komoot/photon#demo-server) at `https://photon.komoot.io` (configurable in Settings). Its policy permits reasonable project use, with no numeric quota or availability guarantee; heavy use can be blocked. HTTPS and open CORS were verified. Typed text and a city-scale map-center bias are sent after 3 characters and a 300 ms pause, with a five-result limit, cancellation, memory cache and serialized starts at least 1 s apart. Nominatim is used only by Search/Enter, including after a Photon failure, never automatically while typing. Requests are spaced and cached where applicable, but public services have limited capacity and no availability guarantee. Follow the [Nominatim policy](https://operations.osmfoundation.org/policies/nominatim/) and [tile policy](https://operations.osmfoundation.org/policies/tiles/); configure your own services before scaling usage. Browser-side spacing cannot enforce a shared usage limit across all devices.
 
 Change service base URLs in **Settings**. Remote services need HTTPS and must allow browser cross-origin requests. For self-hosting, consult the [OSRM documentation](https://github.com/Project-OSRM/osrm-backend#quick-start) and [Nominatim documentation](https://nominatim.org/release-docs/latest/admin/Installation/).
 
@@ -83,7 +85,7 @@ GitHub Actions runs checks on pull requests and pushes to `main`. Successful bui
 
 ## Credits and license
 
-Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
 Application code is licensed under [MIT](LICENSE). Data and dependencies retain their own licenses. No affiliation with the public service operators.
 

@@ -39,7 +39,11 @@ import {
   type Route,
   type State,
 } from './core';
-import { calculate, searchAddress } from './services';
+import { calculate, searchAddress, defaultPhotonUrl } from './services';
+import { simplifyTrack } from './simplify';
+import { shareFile } from './share-gpx';
+import { setupPointMenu } from './point-menu';
+import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -72,6 +76,14 @@ const routeCache = new Map<string, Route>();
 let savedEntries: SavedRoute[] = [];
 let libraryRevision = 0;
 let savingRoute = false;
+let photonUrl = defaultPhotonUrl;
+try {
+  photonUrl = serverUrl(localStorage.getItem('photon-url') ?? defaultPhotonUrl);
+} catch {
+  /* Optional preference. */
+}
+$<HTMLInputElement>('photon').value = photonUrl;
+let autocompleteCleanups: (() => void)[] = [];
 const localView = defaultView(
   Intl.DateTimeFormat().resolvedOptions().timeZone,
   navigator.languages,
@@ -172,7 +184,9 @@ function updateSelection() {
         .querySelector('button')
         ?.setAttribute('aria-pressed', String(i === selected));
     });
-  $('map-note').textContent = `Set ${pointLabel(selected)} on the map`;
+  $('map-note').textContent = matchMedia('(pointer: coarse)').matches
+    ? 'Touch and hold to choose a route point'
+    : `Set ${pointLabel(selected)} on the map`;
   $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
   $<HTMLButtonElement>('calculate').disabled =
     state.points.some((p) => !p.coord) || dirty.size > 0;
@@ -213,6 +227,8 @@ function pointValue(point: Point): string {
 function renderPoints() {
   const list = $('points');
   const scroll = list.scrollTop;
+  autocompleteCleanups.forEach((close) => close());
+  autocompleteCleanups = [];
   list.replaceChildren();
   $('point-count').textContent = `${state.points.length} points`;
   state.points.forEach((point, i) => {
@@ -247,6 +263,26 @@ function renderPoints() {
     results.id = `point-results-${i}`;
     results.className = 'point-results';
     results.setAttribute('aria-label', `Results for point ${i + 1}`);
+    const suggestions = document.createElement('div');
+    suggestions.id = `suggestions-${i}`;
+    suggestions.className = 'point-results suggestions';
+    suggestions.setAttribute('aria-label', `Results for point ${i + 1}`);
+    const closeSuggestions = addressAutocomplete(input, suggestions, {
+      base: () => photonUrl,
+      center: () => [map.getCenter().lat, map.getCenter().lng],
+      valid: () => state.points[i] === point && input.isConnected,
+      choose: (result) => {
+        const coord = parseCoordinates(`${result.lat},${result.lon}`);
+        if (!coord) return;
+        setPoint(point, i, coord, result.display_name.slice(0, 240), true);
+        map.panTo(coord);
+      },
+      failed: () =>
+        status(
+          'Suggestions unavailable. Press Search or Enter to search with Nominatim.',
+        ),
+    });
+    autocompleteCleanups.push(closeSuggestions);
     let coordinateTimer: ReturnType<typeof setTimeout>;
     let addressTimer: ReturnType<typeof setTimeout>;
     function commitCoordinates() {
@@ -290,6 +326,7 @@ function renderPoints() {
     };
     form.onsubmit = (e) => {
       e.preventDefault();
+      closeSuggestions();
       if (commitCoordinates()) return;
       const q = input.value.trim();
       if (q.length < 3) {
@@ -362,7 +399,7 @@ function renderPoints() {
       }, 500);
     };
     form.append(input, search);
-    fields.append(label, form, results);
+    fields.append(label, form, suggestions, results);
     const actions = document.createElement('div');
     actions.className = 'point-actions';
     const onMap = text('button', 'Set on map') as HTMLButtonElement;
@@ -431,6 +468,36 @@ function renderMarkers() {
     });
   });
 }
+function drawRoute(route: Route) {
+  line.clearLayers();
+  const anchors =
+    route.snapped ?? state.points.flatMap((p) => (p.coord ? [p.coord] : []));
+  route.segments.forEach((segment) => {
+    const visual = simplifyTrack(
+      segment,
+      (coord) => map.project(coord),
+      0.75,
+      anchors,
+    );
+    L.polyline(visual, {
+      color: '#fff',
+      weight: 8,
+      opacity: 0.95,
+      smoothFactor: 0,
+      className: 'route-casing',
+    }).addTo(line);
+    L.polyline(visual, {
+      color: '#12796e',
+      weight: 4,
+      opacity: 1,
+      smoothFactor: 0,
+      className: 'route-line',
+    }).addTo(line);
+  });
+}
+map.on('zoomend', () => {
+  if (current) drawRoute(current);
+});
 function renderRoute(route: Route) {
   routeCache.set(encodeState(state), route);
   if (routeCache.size > 50) routeCache.delete(routeCache.keys().next().value!);
@@ -439,11 +506,7 @@ function renderRoute(route: Route) {
     ? travelTimeSeconds(route.distance, state.averageSpeedKmh)
     : route.duration;
   const minutes = duration === null ? null : Math.round(duration / 60);
-  line.clearLayers();
-  route.segments.forEach((seg) => {
-    L.polyline(seg, { color: '#fff', weight: 8, opacity: 0.9 }).addTo(line);
-    L.polyline(seg, { color: '#12796e', weight: 4, opacity: 1 }).addTo(line);
-  });
+  drawRoute(route);
   const summary = $('summary');
   summary.replaceChildren();
   const stats = document.createElement('div');
@@ -586,9 +649,27 @@ function changed(preserveEditor = false) {
       });
   }, 900);
 }
-map.on('click', (e: L.LeafletMouseEvent) => {
-  setPoint(state.points[selected], selected, [e.latlng.lat, e.latlng.lng]);
-});
+setupPointMenu(
+  map,
+  (kind, coord) => {
+    if (kind === 'stop') {
+      if (state.points.length >= 50) {
+        status('The route already has 50 points.', true);
+        return;
+      }
+      state.points.splice(state.points.length - 1, 0, {
+        name: `Stop ${state.points.length - 1}`,
+        coord,
+      });
+      selected = state.points.length - 2;
+      changed();
+    } else {
+      selected = kind === 'start' ? 0 : state.points.length - 1;
+      setPoint(state.points[selected], selected, coord, pointLabel(selected));
+    }
+  },
+  (coord) => setPoint(state.points[selected], selected, coord),
+);
 $('calculate').onclick = () => {
   if (dirty.size || state.points.some((p) => !p.coord)) {
     status('Set your start and destination.', true);
@@ -696,6 +777,12 @@ $('save-settings').onclick = () => {
   try {
     for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
       state[key] = serverUrl($<HTMLInputElement>(key).value.trim());
+    photonUrl = serverUrl($<HTMLInputElement>('photon').value.trim());
+    try {
+      localStorage.setItem('photon-url', photonUrl);
+    } catch {
+      /* Optional preference. */
+    }
     state.name = $<HTMLInputElement>('route-name').value.trim();
     changed();
   } catch (e) {
@@ -710,11 +797,38 @@ $<HTMLInputElement>('route-name').onchange = () => {
   state.name = $<HTMLInputElement>('route-name').value.trim();
   syncUrl();
 };
+function gpxContent(): string {
+  return generateGpx(
+    current!,
+    state.points,
+    state.name || `${state.points[0].name} to ${state.points.at(-1)!.name}`,
+  );
+}
+function shareableFile(content = false) {
+  if (!navigator.canShare || !navigator.share) return null;
+  return shareFile(
+    content && current ? gpxContent() : '<gpx/>',
+    filename(state.points, state.name),
+    (data) => navigator.canShare(data),
+  );
+}
+$('share-gpx').onclick = () => {
+  if (!current) return;
+  const file = shareableFile(true);
+  if (!file) {
+    status('GPX sharing unavailable. Use Download GPX instead.', true);
+    return;
+  }
+  void navigator
+    .share({ files: [file], title: state.name || file.name })
+    .catch((error) => {
+      if (error?.name !== 'AbortError')
+        status('Could not share GPX. Use Download GPX instead.', true);
+    });
+};
 $('download').onclick = () => {
   if (!current) return;
-  const name =
-    state.name || `${state.points[0].name} to ${state.points.at(-1)!.name}`;
-  const blob = new Blob([generateGpx(current, state.points, name)], {
+  const blob = new Blob([gpxContent()], {
     type: 'application/gpx+xml;charset=utf-8',
   });
   const url = URL.createObjectURL(blob);
@@ -866,6 +980,8 @@ $('reset-speed').onclick = () => {
 };
 
 function updateSaveButton() {
+  $('share-gpx').hidden = !shareableFile();
+  $<HTMLButtonElement>('share-gpx').disabled = !current || dirty.size > 0;
   const button = $<HTMLButtonElement>('save-route');
   button.disabled =
     savingRoute || !current || !state.name.trim() || dirty.size > 0;

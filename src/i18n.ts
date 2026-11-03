@@ -2,6 +2,19 @@ import { updateSeo } from './seo';
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
+  'Share GPX': 'Compartilhar GPX',
+  'Choose route point': 'Escolher ponto da rota',
+  'Set as destination': 'Definir como destino',
+  'Photon server': 'Servidor Photon',
+  'Suggestions unavailable. Press Search or Enter to search with Nominatim.':
+    'Sugestões indisponíveis. Toque em Buscar ou Enter para buscar com Nominatim.',
+  'GPX sharing unavailable. Use Download GPX instead.':
+    'Compartilhamento de GPX indisponível. Use Baixar GPX.',
+  'Could not share GPX. Use Download GPX instead.':
+    'Não foi possível compartilhar o GPX. Use Baixar GPX.',
+  'The route already has 50 points.': 'A rota já tem 50 pontos.',
+  'Touch and hold to choose a route point':
+    'Toque e segure para escolher um ponto da rota',
   'Route panel': 'Painel da rota',
   'Detect region by IP': 'Detectar região pelo IP',
   'IP region service': 'Serviço de região por IP',
