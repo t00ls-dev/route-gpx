@@ -76,18 +76,22 @@
         </div>
         <details class="speed-options">
           <summary>Average speed</summary>
+          <label class="speed-toggle"
+            ><input id="use-average-speed" type="checkbox" />Enable</label
+          >
           <div class="speed-field">
             <input
               id="average-speed"
-              type="number"
-              min="1"
+              type="range"
+              min="0"
               max="200"
-              step="any"
-              inputmode="decimal"
-              placeholder="60"
+              step="5"
+              value="60"
+              disabled
               aria-label="Average speed"
               aria-describedby="speed-range"
-            /><span id="speed-unit">km/h</span
+            /><output id="average-speed-value" for="average-speed">60</output
+            ><span id="speed-unit">km/h</span
             ><button
               id="reset-speed"
               type="button"

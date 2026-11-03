@@ -23,7 +23,7 @@ O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Est
 
 **Desfazer** recupera até 50 alterações nesta aba, incluindo pontos movidos, removidos ou reordenados. Ctrl+Z / ⌘Z funciona fora dos campos de texto. O seletor **km / mi** troca quilômetros por milhas, independentemente do idioma. A escolha fica no link e não altera as coordenadas do GPX.
 
-**Velocidade média** calcula o tempo pela distância e a velocidade escolhida entre 1 e 200 km/h, com conversão automática para mph. Limpe o campo para voltar à estimativa do roteador. A conta não inclui paradas nem trânsito.
+**Velocidade média** calcula o tempo pela distância e a velocidade escolhida no controle deslizante: 1, 5, 10… até 200 km/h ou 130 mph. A troca de unidade arredonda para a posição mais próxima. Desative para voltar à estimativa do roteador. A conta não inclui paradas nem trânsito.
 
 ## Descrever uma rota
 

@@ -1,4 +1,10 @@
-import { isValidAverageSpeedKmh, AVERAGE_SPEED_ERROR } from './travel-time';
+import {
+  isValidAverageSpeedKmh,
+  AVERAGE_SPEED_ERROR,
+  speedToKmh,
+  speedFromKmh,
+  snapSpeed,
+} from './travel-time';
 export type Coord = [number, number]; // latitude, longitude
 export interface Point {
   name: string;
@@ -103,7 +109,7 @@ export function decodeState(hash: string, resetInvalidSpeed = false): State {
   ) as State;
   if (
     x.averageSpeedKmh !== undefined &&
-    !isValidAverageSpeedKmh(x.averageSpeedKmh)
+    !isValidAverageSpeedKmh(x.averageSpeedKmh, x.units)
   ) {
     if (resetInvalidSpeed) delete x.averageSpeedKmh;
     else throw new Error(AVERAGE_SPEED_ERROR);
@@ -126,6 +132,11 @@ export function decodeState(hash: string, resetInvalidSpeed = false): State {
     x.name.length > 160
   )
     throw new Error('This route link contains invalid points or options.');
+  if (x.averageSpeedKmh !== undefined)
+    x.averageSpeedKmh = speedToKmh(
+      snapSpeed(speedFromKmh(x.averageSpeedKmh, x.units), x.units),
+      x.units,
+    );
   return {
     ...x,
     osrm: serverUrl(x.osrm),

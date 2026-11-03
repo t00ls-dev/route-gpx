@@ -2,12 +2,8 @@ import {
   speedToKmh,
   speedFromKmh,
   travelTimeSeconds,
-  isValidAverageSpeedKmh,
   speedInputBounds,
-  speedInputValue,
-  AVERAGE_SPEED_ERROR,
-  MIN_AVERAGE_SPEED_KMH,
-  MAX_AVERAGE_SPEED_KMH,
+  snapSpeed,
 } from './travel-time';
 import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
 import { UndoHistory } from './history';
@@ -91,17 +87,27 @@ function syncUrl() {
 function settings() {
   const input = $<HTMLInputElement>('average-speed');
   const bounds = speedInputBounds(state.units);
-  input.min = String(bounds.min);
+  const value = state.averageSpeedKmh
+    ? snapSpeed(speedFromKmh(state.averageSpeedKmh, state.units), state.units)
+    : 60;
+  // The first notch represents 1; subsequent notches are 5, 10, 15…
+  input.min = '0';
   input.max = String(bounds.max);
-  input.value = state.averageSpeedKmh
-    ? speedInputValue(state.averageSpeedKmh, state.units)
-    : '';
-  input.removeAttribute('aria-invalid');
-  const locale = state.language === 'pt' ? 'pt-BR' : 'en';
+  input.step = '5';
+  input.value = value === 1 ? '0' : String(value);
+  input.disabled = state.averageSpeedKmh === undefined;
+  $<HTMLInputElement>('use-average-speed').checked =
+    state.averageSpeedKmh !== undefined;
+  input.setAttribute('aria-valuemin', '1');
+  input.setAttribute('aria-valuemax', String(bounds.max));
+  input.setAttribute('aria-valuenow', String(value));
+  input.setAttribute(
+    'aria-valuetext',
+    `${value} ${state.units === 'imperial' ? 'mph' : 'km/h'}`,
+  );
+  $('average-speed-value').textContent = String(value);
   $('speed-range').textContent =
-    state.units === 'imperial'
-      ? `≈ ${bounds.min.toLocaleString(locale, { maximumFractionDigits: 2 })}–${bounds.max.toLocaleString(locale, { maximumFractionDigits: 2 })} mph (1–200 km/h)`
-      : '1–200 km/h';
+    `1–${bounds.max} ${state.units === 'imperial' ? 'mph' : 'km/h'}`;
   $('speed-unit').textContent = state.units === 'imperial' ? 'mph' : 'km/h';
   $<HTMLSelectElement>('units').value = state.units ?? 'metric';
   for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
@@ -636,6 +642,11 @@ $('example').onclick = () => {
 $('fit').onclick = fit;
 $<HTMLSelectElement>('units').onchange = () => {
   state.units = $<HTMLSelectElement>('units').value as DistanceUnits;
+  if (state.averageSpeedKmh !== undefined)
+    state.averageSpeedKmh = speedToKmh(
+      snapSpeed(speedFromKmh(state.averageSpeedKmh, state.units), state.units),
+      state.units,
+    );
   settings();
   syncUrl();
   if (current) renderRoute(current);
@@ -860,37 +871,43 @@ $<HTMLSelectElement>('language').onchange = () => {
   syncUrl();
 };
 
-$<HTMLInputElement>('average-speed').oninput = () => {
-  const input = $<HTMLInputElement>('average-speed');
-  const raw = input.value.trim();
-  if (!raw) {
-    delete state.averageSpeedKmh;
-    input.removeAttribute('aria-invalid');
-  } else {
-    const speed = speedToKmh(Number(raw), state.units);
-    if (!isValidAverageSpeedKmh(speed)) {
-      input.setAttribute('aria-invalid', 'true');
-      status(AVERAGE_SPEED_ERROR, true);
-      return;
-    }
-    input.removeAttribute('aria-invalid');
-    state.averageSpeedKmh = Math.max(
-      MIN_AVERAGE_SPEED_KMH,
-      Math.min(MAX_AVERAGE_SPEED_KMH, speed),
-    );
-  }
+function updateSpeedEstimate() {
   if (current) renderRoute(current);
   status(current ? 'Route ready.' : 'Set your start and destination.');
+}
+$<HTMLInputElement>('use-average-speed').onchange = () => {
+  if ($<HTMLInputElement>('use-average-speed').checked)
+    state.averageSpeedKmh = speedToKmh(
+      snapSpeed(
+        Number($<HTMLInputElement>('average-speed').value),
+        state.units,
+      ),
+      state.units,
+    );
+  else delete state.averageSpeedKmh;
+  settings();
+  syncUrl();
+  updateSpeedEstimate();
 };
-$<HTMLInputElement>('average-speed').onchange = () => {
-  if (!$<HTMLInputElement>('average-speed').hasAttribute('aria-invalid'))
-    syncUrl();
+$<HTMLInputElement>('average-speed').oninput = () => {
+  const value = snapSpeed(
+    Number($<HTMLInputElement>('average-speed').value),
+    state.units,
+  );
+  state.averageSpeedKmh = speedToKmh(value, state.units);
+  $('average-speed-value').textContent = String(value);
+  const input = $<HTMLInputElement>('average-speed');
+  input.setAttribute('aria-valuenow', String(value));
+  input.setAttribute(
+    'aria-valuetext',
+    `${value} ${state.units === 'imperial' ? 'mph' : 'km/h'}`,
+  );
+  updateSpeedEstimate();
 };
+$<HTMLInputElement>('average-speed').onchange = syncUrl;
 $('reset-speed').onclick = () => {
   delete state.averageSpeedKmh;
   settings();
-  $<HTMLInputElement>('average-speed').removeAttribute('aria-invalid');
   syncUrl();
-  if (current) renderRoute(current);
-  status(current ? 'Route ready.' : 'Set your start and destination.');
+  updateSpeedEstimate();
 };

@@ -195,7 +195,7 @@ test('distance units change without rerouting or changing GPX geometry and can b
   await expect(page.locator('#summary')).toContainText('42 km');
 });
 
-test('average speed estimates trip time, converts with units, and resets to router time', async ({
+test('average-speed slider supports keyboard steps, units and router reset', async ({
   page,
 }) => {
   await setup(page);
@@ -204,75 +204,35 @@ test('average speed estimates trip time, converts with units, and resets to rout
   await page.locator('.speed-options').evaluate((el) => {
     (el as HTMLDetailsElement).open = true;
   });
-  await page.locator('#average-speed').fill('60');
-  await page.locator('#average-speed').press('Tab');
+  await expect(page.locator('#average-speed')).toBeDisabled();
+  await page.locator('#use-average-speed').check();
+  await expect(page.locator('#average-speed-value')).toHaveText('60');
   await expect(page.locator('#summary')).toContainText('42 min');
-  await page.locator('#units').selectOption('imperial');
-  await expect(page.locator('#speed-unit')).toHaveText('mph');
-  await expect(page.locator('#average-speed')).toHaveValue('37.28');
-  await expect(page.locator('#summary')).toContainText('42 min');
-  await page.locator('#reset-speed').click();
-  await expect(page.locator('#summary')).toContainText('49 min');
-});
-
-test('average speed is limited to 1–200 km/h with equivalent mph bounds', async ({
-  page,
-}) => {
-  await setup(page);
-  await page.locator('.speed-options').evaluate((el) => {
-    (el as HTMLDetailsElement).open = true;
-  });
-  await page.locator('#average-speed').fill('500');
-  await expect(page.locator('#status')).toHaveClass('error');
-  await page.locator('#average-speed').fill('200');
-  await expect(page.locator('#status')).not.toHaveClass('error');
-  await page.locator('#reset-speed').click();
-  await fillPair(page);
-  await page.locator('.speed-options').evaluate((el) => {
-    (el as HTMLDetailsElement).open = true;
-  });
-  await expect(page.locator('#average-speed')).toHaveAttribute('min', '1');
-  await expect(page.locator('#average-speed')).toHaveAttribute('max', '200');
+  await page.locator('#average-speed').focus();
+  await page.locator('#average-speed').press('Home');
+  await expect(page.locator('#average-speed-value')).toHaveText('1');
+  await page.locator('#average-speed').press('ArrowRight');
+  await expect(page.locator('#average-speed-value')).toHaveText('5');
+  await page.locator('#average-speed').press('ArrowRight');
+  await expect(page.locator('#average-speed-value')).toHaveText('10');
+  await page.locator('#average-speed').press('End');
+  await expect(page.locator('#average-speed-value')).toHaveText('200');
   await expect(page.locator('#speed-range')).toHaveText('1–200 km/h');
-  for (const value of ['0.5', '201', '500']) {
-    await page.locator('#average-speed').fill(value);
-    await expect(page.locator('#average-speed')).toHaveAttribute(
-      'aria-invalid',
-      'true',
-    );
-    await expect(page.locator('#status')).toContainText(
-      'between 1 and 200 km/h',
-    );
-  }
-  await page.locator('#average-speed').fill('200');
-  await page.locator('#average-speed').press('Tab');
-  await expect(page.locator('#average-speed')).not.toHaveAttribute(
-    'aria-invalid',
-    'true',
-  );
-  await expect(page.locator('#status')).not.toHaveClass('error');
   await page.locator('#units').selectOption('imperial');
-  await expect(page.locator('#average-speed')).toHaveValue('124.27');
-  expect(
-    Number(await page.locator('#average-speed').getAttribute('max')),
-  ).toBeCloseTo(124.274238);
-  await page.locator('#average-speed').fill('125');
-  await expect(page.locator('#average-speed')).toHaveAttribute(
-    'aria-invalid',
-    'true',
-  );
-  await page.locator('#units').selectOption('metric');
-  await page.locator('#average-speed').fill('1');
-  await page.locator('#average-speed').press('Tab');
-  await page.locator('#units').selectOption('imperial');
-  expect(
-    Number(await page.locator('#average-speed').inputValue()),
-  ).toBeGreaterThanOrEqual(1 / 1.609344);
-  await page.locator('#average-speed').press('Enter');
-  await expect(page.locator('#average-speed')).not.toHaveAttribute(
-    'aria-invalid',
-    'true',
-  );
+  await expect(page.locator('#average-speed-value')).toHaveText('125');
+  await expect(page.locator('#speed-range')).toHaveText('1–130 mph');
+  await expect(page.locator('#average-speed')).toHaveAttribute('step', '5');
+  await expect(page.locator('#average-speed')).toHaveAttribute('max', '130');
+  await page.locator('#average-speed').focus();
+  await page.locator('#average-speed').press('End');
+  await expect(page.locator('#average-speed-value')).toHaveText('130');
+  await expect(page.locator('#summary')).toContainText('12 min');
+  await page.locator('#average-speed').press('Home');
+  await expect(page.locator('#average-speed-value')).toHaveText('1');
+  await page.locator('#reset-speed').click();
+  await expect(page.locator('#average-speed')).toBeDisabled();
+  await expect(page.locator('#use-average-speed')).not.toBeChecked();
+  await expect(page.locator('#summary')).toContainText('49 min');
 });
 
 test('an older route link with a 500 km/h average retains its points', async ({
@@ -289,6 +249,7 @@ test('an older route link with a 500 km/h average retains its points', async ({
   await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
   await expect(page.locator('#location-0')).toHaveValue(start);
   await expect(page.locator('#location-1')).toHaveValue(end);
-  await expect(page.locator('#average-speed')).toHaveValue('');
+  await expect(page.locator('#use-average-speed')).not.toBeChecked();
+  await expect(page.locator('#average-speed')).toBeDisabled();
   await expect(page.locator('#summary')).toContainText('49 min');
 });

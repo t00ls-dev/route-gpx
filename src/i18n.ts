@@ -2,6 +2,9 @@ export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
   Help: 'Ajuda',
+  Enable: 'Ativar',
+  'Average speed must be between 1 and 200 km/h or 1 and 130 mph.':
+    'A velocidade média deve ficar entre 1 e 200 km/h ou 1 e 130 mph.',
   'Average speed must be between 1 and 200 km/h.':
     'A velocidade média deve ficar entre 1 e 200 km/h.',
   'Average speed': 'Velocidade média',

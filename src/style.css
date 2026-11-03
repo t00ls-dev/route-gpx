@@ -782,3 +782,37 @@ footer a {
   font-size: 20px;
   min-width: 44px;
 }
+.speed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 5px 0 12px;
+  min-height: 32px;
+}
+.speed-toggle input {
+  accent-color: #126447;
+  width: 18px;
+  height: 18px;
+}
+.speed-field {
+  max-width: none;
+  gap: 8px;
+}
+.speed-field input[type='range'] {
+  accent-color: #126447;
+  flex: 1;
+  min-width: 80px;
+  min-height: 44px;
+  margin: 0;
+}
+.speed-field output {
+  font-variant-numeric: tabular-nums;
+  min-width: 25px;
+  font-weight: 650;
+  text-align: right;
+}
+.speed-field:has(input:disabled) output,
+.speed-field:has(input:disabled) span {
+  color: #64727c;
+}

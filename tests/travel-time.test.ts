@@ -2,55 +2,55 @@ import { expect, it } from 'vitest';
 import {
   travelTimeSeconds,
   speedInputBounds,
-  speedInputValue,
+  snapSpeed,
   speedToKmh,
   speedFromKmh,
 } from '../src/travel-time';
 import { defaults, decodeState, encodeState } from '../src/core';
-it('estimates duration from route distance and average speed', () => {
+it('calculates trip time in both systems, including 130 mph', () => {
   expect(travelTimeSeconds(42000, 60)).toBeCloseTo(2520);
   expect(travelTimeSeconds(160934.4, speedToKmh(60, 'imperial'))).toBeCloseTo(
     6000,
   );
-  expect(speedFromKmh(speedToKmh(60, 'imperial'), 'imperial')).toBeCloseTo(60);
-});
-it('rejects zero speed and invalid shared speeds', () => {
+  expect(travelTimeSeconds(209214.72, speedToKmh(130, 'imperial'))).toBeCloseTo(
+    3600,
+  );
   expect(() => travelTimeSeconds(42000, 0)).toThrow();
+});
+it('uses rounded practical bounds for each unit system', () => {
+  expect(speedInputBounds()).toEqual({ min: 1, max: 200 });
+  expect(speedInputBounds('imperial')).toEqual({ min: 1, max: 130 });
+  expect(snapSpeed(0)).toBe(1);
+  expect(snapSpeed(6)).toBe(5);
+  expect(snapSpeed(199)).toBe(200);
+  expect(snapSpeed(500, 'imperial')).toBe(130);
+  expect(snapSpeed(speedFromKmh(200, 'imperial'), 'imperial')).toBe(125);
+});
+it('validates shared averages using the selected unit system', () => {
+  for (const units of ['metric', 'imperial'] as const) {
+    const bounds = speedInputBounds(units);
+    for (const speed of [1, bounds.max]) {
+      const s = defaults();
+      s.units = units;
+      s.averageSpeedKmh = speedToKmh(speed, units);
+      expect(decodeState(encodeState(s)).averageSpeedKmh).toBeCloseTo(
+        s.averageSpeedKmh,
+      );
+    }
+    for (const speed of [0.5, bounds.max + 1, 500, NaN, Infinity]) {
+      const s = defaults();
+      s.units = units;
+      s.averageSpeedKmh = speedToKmh(speed, units);
+      expect(() => decodeState(encodeState(s))).toThrow();
+    }
+  }
+});
+it('snaps legacy fractional speeds to the nearest slider position', () => {
   const s = defaults();
-  s.averageSpeedKmh = 60;
+  s.averageSpeedKmh = 61.5;
   expect(decodeState(encodeState(s)).averageSpeedKmh).toBe(60);
-  s.averageSpeedKmh = -1;
-  expect(() => decodeState(encodeState(s))).toThrow();
 });
-
-it('enforces the same physical 1–200 km/h range in shared routes and calculations', () => {
-  for (const speed of [1, 200]) {
-    const s = defaults();
-    s.averageSpeedKmh = speed;
-    expect(decodeState(encodeState(s)).averageSpeedKmh).toBe(speed);
-    expect(travelTimeSeconds(1000, speed)).toBeGreaterThan(0);
-  }
-  for (const speed of [0.5, 200.01, 500, NaN, Infinity]) {
-    const s = defaults();
-    s.averageSpeedKmh = speed;
-    expect(() => decodeState(encodeState(s))).toThrow();
-    expect(() => travelTimeSeconds(1000, speed)).toThrow();
-  }
-});
-
-it('converts field bounds to mph and keeps rounded boundary values valid', () => {
-  const bounds = speedInputBounds('imperial');
-  expect(bounds.min).toBeCloseTo(0.621371);
-  expect(bounds.max).toBeCloseTo(124.274238);
-  expect(speedInputValue(60, 'imperial')).toBe('37.28');
-  for (const speed of [1, 200]) {
-    const display = Number(speedInputValue(speed, 'imperial'));
-    expect(display).toBeGreaterThanOrEqual(bounds.min);
-    expect(display).toBeLessThanOrEqual(bounds.max);
-  }
-});
-
-it('keeps route points from older links while clearing an out-of-range speed', () => {
+it('retains points in older links with out-of-range speeds', () => {
   const s = defaults();
   s.points = [
     { name: 'Start', coord: [-22.93, -43.23] },
