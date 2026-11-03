@@ -35,6 +35,22 @@ assert.ok(status.includes('Route ready'), status);
 assert.match(await page.locator('#summary').innerText(), /OSRM|Valhalla/);
 const routeSummary = await page.locator('#summary').innerText();
 await fs.mkdir('docs', { recursive: true });
+// Wait for visible tiles to finish painting before refreshing documentation images.
+async function tilesPainted(target) {
+  await target.waitForFunction(
+    () => {
+      const tiles = [...document.querySelectorAll('#map img.leaflet-tile')];
+      return (
+        tiles.length > 0 &&
+        tiles.every((tile) => tile.complete && tile.naturalWidth > 0)
+      );
+    },
+    {},
+    { timeout: 30000 },
+  );
+  await target.waitForTimeout(250);
+}
+await tilesPainted(page);
 await page.locator('aside').evaluate((el) => {
   el.scrollTop = 0;
 });
@@ -123,6 +139,7 @@ await mobile.locator('aside').evaluate((el) => {
 await mobile.locator('#points').evaluate((el) => {
   el.scrollTop = 0;
 });
+await tilesPainted(mobile);
 await mobile.screenshot({ path: 'docs/mobile.png', fullPage: true });
 const dark = await browser.newPage({
   viewport: { width: 1280, height: 900 },
@@ -135,7 +152,7 @@ assert.equal(
   ),
   'light',
 );
-await dark.locator('.leaflet-tile-loaded').first().waitFor();
+await tilesPainted(dark);
 await dark.screenshot({ path: 'docs/dark.png' });
 const help = await browser.newPage();
 await help.goto(
