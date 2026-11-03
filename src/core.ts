@@ -204,15 +204,17 @@ export function generateGpx(
       '',
     )}<trk><name>${tag(name)}</name>${route.segments.map((s) => `<trkseg>${s.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg>`).join('')}</trk></gpx>\n`;
 }
-export function filename(points: Point[]): string {
-  const clean = (s: string) =>
+export function filename(points: Point[], customName = ''): string {
+  const clean = (s: string, limit = 48) =>
     s
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
-      .slice(0, 48) || 'point';
+      .slice(0, limit) || 'point';
+  if (customName.trim())
+    return `${clean(customName.trim().replace(/\.gpx$/i, ''), 160)}.gpx`;
   return `${clean(points[0].name)}-to-${clean(points.at(-1)!.name)}.gpx`;
 }
 export function meters(a: Coord, b: Coord): number {

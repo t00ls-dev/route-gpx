@@ -118,6 +118,21 @@
           ><button id="parse-description" type="button">Review</button>
           <div id="intent-preview"></div>
         </details>
+        <details class="saved-routes">
+          <summary>Saved routes <span id="saved-count">(0)</span></summary>
+          <p id="library-status" class="hint" role="status"></p>
+          <div id="saved-list"></div>
+          <div class="library-actions">
+            <button id="backup-routes" type="button" disabled>
+              Export backup</button
+            ><label class="file-button"
+              >Import backup<input
+                id="restore-routes"
+                type="file"
+                accept=".json,application/json"
+            /></label>
+          </div>
+        </details>
         <section aria-label="Route points">
           <div class="section-line">
             <h2>Points</h2>
@@ -182,6 +197,16 @@
           <p id="speed-range" class="hint">1–200 km/h</p>
         </details>
         <section id="summary" aria-label="Route summary"></section>
+        <div class="gpx-name">
+          <label for="route-name">GPX name</label>
+          <div class="save-name">
+            <input
+              id="route-name"
+              maxlength="160"
+              placeholder="My road trip"
+            /><button id="save-route" type="button" disabled>Save route</button>
+          </div>
+        </div>
         <div class="export-actions">
           <button id="download" class="primary" disabled type="button">
             ↓ Download GPX</button
@@ -198,12 +223,7 @@
           /></label>
           <details class="settings">
             <summary>Settings</summary>
-            <label for="route-name">Trip name</label
-            ><input
-              id="route-name"
-              maxlength="160"
-              placeholder="My road trip"
-            /><label for="osrm">OSRM server</label
+            <label for="osrm">OSRM server</label
             ><input id="osrm" type="url" /><label for="valhalla"
               >Valhalla fallback</label
             ><input id="valhalla" type="url" /><label for="nominatim"

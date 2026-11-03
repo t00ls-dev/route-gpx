@@ -3,6 +3,28 @@ export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
   Help: 'Ajuda',
+  'Save route': 'Salvar rota',
+  'Update saved route': 'Atualizar rota',
+  'Saved routes': 'Rotas salvas',
+  'No saved routes.': 'Nenhuma rota salva.',
+  Open: 'Abrir',
+  'Download GPX': 'Baixar GPX',
+  Delete: 'Excluir',
+  'Export backup': 'Exportar backup',
+  'Import backup': 'Importar backup',
+  'Saved route opened.': 'Rota salva aberta.',
+  'Saved route deleted.': 'Rota salva excluída.',
+  'Could not access saved routes.': 'Não foi possível acessar as rotas salvas.',
+  'Local route storage is unavailable in this browser.':
+    'O armazenamento local de rotas não está disponível neste navegador.',
+  'Route saved on this device.': 'Rota salva neste dispositivo.',
+  'Could not save locally. Download the GPX to keep it.':
+    'Não foi possível salvar neste dispositivo. Baixe o GPX para guardar a rota.',
+  'Choose a backup smaller than 50 MB.': 'Escolha um backup menor que 50 MB.',
+  'Could not import this route backup.':
+    'Não foi possível importar este backup de rotas.',
+
+  'GPX name': 'Nome do GPX',
   Enable: 'Ativar',
   'Average speed must be between 1 and 200 km/h or 1 and 130 mph.':
     'A velocidade média deve ficar entre 1 e 200 km/h ou 1 e 130 mph.',
@@ -220,6 +242,14 @@ const pt: Record<string, string> = {
   Via: 'Passagem',
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
+  [/^Open saved route: (.*?)$/, (n) => `Abrir rota salva: ${n}`],
+  [/^Download saved route: (.*?)$/, (n) => `Baixar rota salva: ${n}`],
+  [/^Delete saved route: (.*?)$/, (n) => `Excluir rota salva: ${n}`],
+  [
+    /^Imported (\d+) routes\. Existing names were kept\.$/,
+    (n) => `${n} rotas importadas. Os nomes existentes foram mantidos.`,
+  ],
+
   [/^At (.*?) (km\/h|mph) · no stops$/, (n, u) => `A ${n} ${u} · sem paradas`],
   [/^Location of point (\d+)$/, (n) => `Local do ponto ${n}`],
   [/^Search point (\d+)$/, (n) => `Buscar ponto ${n}`],

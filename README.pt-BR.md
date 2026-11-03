@@ -17,7 +17,7 @@ A interface é clara e tem contraste forte, mesmo se o sistema preferir tema esc
 1. Digite endereço ou `latitude, longitude` diretamente nos campos **Início** e **Destino**. Coordenadas são aplicadas automaticamente. Para um endereço, toque em **Buscar** ou Enter e escolha um resultado. Também é possível clicar duas vezes no mapa.
 2. Arraste marcadores, reordene pelas setas, adicione ou remova pontos. A rota recalcula automaticamente após uma pequena espera; **Calcular rota** permite repetir o cálculo.
 3. Confira distância, duração, referências de rodovias e lista de vias. A preferência por vias principais avisa sobre possíveis trechos locais; não garante exclusão de vias locais. Adicione pontos nas vias desejadas.
-4. Baixe o GPX 1.1 com todos os pontos da geometria dentro de `trk/trkseg`, pontos nomeados em `wpt`, nome e data. Abra no [gpx.studio](https://gpx.studio/) ou outro aplicativo.
+4. Baixe o GPX 1.1 com todos os pontos da geometria dentro de `trk/trkseg`, pontos nomeados em `wpt`, nome e data. O campo **Nome do GPX**, acima do botão de download, define o nome do arquivo e do trajeto. Se ficar vazio, usa origem e destino. Abra no [gpx.studio](https://gpx.studio/) ou outro aplicativo.
 
 O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**, com chegada na Avenida Estado da Guanabara junto à praia. O ponto do Postinho fica na Rua da Boa Vista, fora do pátio. A rota sobe a Avenida Edison Passos e desce pelas Furnas. [GPX de exemplo](docs/example.gpx).
 
@@ -32,6 +32,12 @@ O exemplo é **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Est
 Também aceita `From A via B to C`, setas e um local por linha. **Revisar** exibe lugares editáveis, sem consultar serviços. Só após **Criar rota** os endereços são buscados, em sequência. Confira os marcadores: a resolução usa o primeiro resultado. Uma região de busca opcional ajuda a distinguir lugares com nomes iguais.
 
 O interpretador funciona no navegador e reconhece instruções estruturadas. Não é uma IA geral. Instruções vagas, restrições de elevação e pedidos de segurança, trânsito ou exclusão total de vias locais não são resolvidos automaticamente. O editor de pontos permanece disponível. Há também um editor JSON em **Configurações → Avançado: JSON**.
+
+## Rotas salvas neste dispositivo
+
+**Nenhuma rota é salva automaticamente.** Preencha **Nome do GPX** e toque em **Salvar rota**. Para um nome existente, o botão mostra **Atualizar rota**, sem criar uma duplicata. Em **Rotas salvas**, você pode reabrir o traçado completo, baixar o GPX ou excluir a entrada. Reabrir e baixar não consulta o roteador.
+
+As rotas ficam no IndexedDB deste perfil do navegador, sem conta ou sincronização em nuvem. Limpar dados do site, usar navegação privada ou a limpeza de armazenamento pelo navegador pode removê-las. Exporte um backup JSON para guardar uma cópia; a importação valida o arquivo inteiro e mantém as rotas existentes com o mesmo nome. O backup contém seus locais. Se o armazenamento não estiver disponível, o download do GPX continua funcionando.
 
 ## Importar, compartilhar e ida e volta
 
@@ -68,7 +74,7 @@ OSRM é o padrão; Valhalla é tentado automaticamente após uma falha. Altere a
 
 As buscas Nominatim só acontecem por ação explícita, com debounce, cache em memória e ao menos 1,1 s entre requisições. **Não há autocompletar**: a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) o proíbe. O limite de 1 requisição por segundo vale para o conjunto de usuários da aplicação; um site estático não consegue impor esse limite entre dispositivos diferentes. Antes de ampliar o uso, configure uma instância própria. Os serviços públicos têm capacidade e disponibilidade limitadas. Os mapas respeitam a [política de tiles](https://operations.osmfoundation.org/policies/tiles/) e não oferecem downloads em massa.
 
-Tudo executa no navegador, mas coordenadas, pesquisas e área visível do mapa são enviados aos serviços. O link inclui seus pontos; não compartilhe locais confidenciais. O aplicativo guarda apenas um horário de busca em localStorage para espaçar consultas entre abas compatíveis, sem armazenar endereços.
+Tudo executa no navegador, mas coordenadas, pesquisas e área visível do mapa são enviados aos serviços. O link inclui seus pontos; não compartilhe locais confidenciais. O aplicativo guarda um horário de busca em localStorage para espaçar consultas entre abas compatíveis. Apenas as rotas nomeadas que você salvar explicitamente ficam no IndexedDB local.
 
 [Como hospedar seu próprio OSRM com Docker](README.md#change-or-host-a-routing-server), incluindo preparação de dados, MLD, HTTPS e CORS.
 

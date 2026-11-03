@@ -17,7 +17,7 @@ The interface uses a high-contrast light theme, even when the system prefers dar
 1. Enter an address or `latitude, longitude` directly in **Start** and **Destination**. Coordinates apply automatically. For an address, press **Search** or Enter and choose a result. Alternatively, click twice on the map, or choose **Try example**.
 2. Select a numbered point to move it on the map, drag a marker, add stops, reorder with the arrows, remove points or reverse the itinerary. **Round trip** adds a return itinerary, routed along legal driving directions. On divided roads, review the return stops: the nearest carriageway can cause detours.
 3. Review distance, estimated driving time, highway references and the road list. Add stops on the roads you want. Changes recalculate after a short delay; **Calculate route** also lets you retry.
-4. Download GPX. The export is GPX 1.1, with every full-resolution geometry point inside `trk/trkseg`, named `wpt` points, trip name and creation date. Multiple geometry segments remain separate. The filename comes from the endpoints. Open it in [gpx.studio](https://gpx.studio/) or your preferred GPX app.
+4. Download GPX. The export is GPX 1.1, with every full-resolution geometry point inside `trk/trkseg`, named `wpt` points, trip name and creation date. Multiple geometry segments remain separate. Set **GPX name** above Download GPX to name both the file and track. Leave it empty to use the endpoints. Open it in [gpx.studio](https://gpx.studio/) or your preferred GPX app.
 
 **Prefer main roads** is a review aid, not a strict road exclusion. OSRM does not offer a universal “only major highways” option. The app flags possible local sections of at least 500 m when no road reference is returned; classification is a heuristic and can include major avenues, unnamed roads and access roads. Street names are preserved in their original language. References come from router steps, not fabricated classifications. The Valhalla fallback requests higher highway preference. Travel times exclude stops and are not a live traffic forecast.
 
@@ -44,6 +44,12 @@ This is a deterministic parser, not an LLM. It does not understand arbitrary con
 The visible example follows **Metrô Uruguai → Alto da Boa Vista → Postinho do Alto → Estrada das Furnas → Barra da Tijuca → Prainha → Grumari**. Stops sit on drivable roads, including Rua da Boa Vista outside the Postinho. The route climbs Avenida Edison Passos, descends Estrada das Furnas, then follows the main avenues toward Grumari. The endpoint is on Avenida Estado da Guanabara at the beach. Router data can change over time; inspect the result.
 
 An exported sample is included at [docs/example.gpx](docs/example.gpx). The optional integration test uses this same example.
+
+### Saved routes on this device
+
+Routes are **never saved automatically**. Enter a **GPX name** and press **Save route**. Matching names show **Update saved route** and replace the existing entry rather than adding duplicates. Open **Saved routes** to reopen the exact geometry, download its GPX or delete it. Reopening and downloading saved geometry do not call the routing server.
+
+Saved routes use IndexedDB in this browser profile, with no account or cloud sync. Clearing site data, private browsing or browser storage eviction can remove them. Export a JSON backup to keep a portable copy; importing validates the complete backup and keeps existing routes with matching names. Backups include locations and should be treated as private files. If persistent storage is unavailable, GPX downloads still work.
 
 ### Import and share
 

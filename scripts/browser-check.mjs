@@ -8,7 +8,7 @@ const browser = await chromium.launch({
   args: ['--no-sandbox'],
 });
 const page = await browser.newPage({
-  viewport: { width: 1440, height: 1120 },
+  viewport: { width: 1440, height: 1280 },
   acceptDownloads: true,
 });
 const errors = [];

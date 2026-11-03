@@ -894,3 +894,71 @@ footer a {
     padding: 7px;
   }
 }
+.gpx-name {
+  margin: 12px 0;
+}
+.gpx-name label {
+  margin-top: 0;
+}
+.save-name {
+  display: flex;
+  gap: 6px;
+}
+.save-name input {
+  flex: 1;
+  width: 0 !important;
+}
+.save-name button {
+  font-size: 12px;
+  max-width: 120px;
+}
+.saved-routes {
+  border-bottom: 1px solid var(--border);
+  margin: 0 0 16px;
+}
+.saved-routes > summary {
+  color: #145e49;
+}
+.saved-routes #saved-count {
+  margin-left: 4px;
+  font-weight: 400;
+}
+.saved-route {
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 7px;
+  margin: 8px 0;
+}
+.saved-route strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.saved-route small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 5px 0;
+}
+.saved-route > div {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.saved-route button {
+  font-size: 12px;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+.library-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0 14px;
+}
+.library-actions button {
+  font-size: 12px;
+}
+.library-actions .file-button {
+  font-size: 12px;
+}

@@ -1,4 +1,14 @@
 import {
+  listSavedRoutes,
+  saveNamedRoute,
+  deleteSavedRoute,
+  exportRouteBackup,
+  parseRouteBackup,
+  importRouteBackup,
+  savedRouteKey,
+  type SavedRoute,
+} from './saved-routes';
+import {
   speedToKmh,
   speedFromKmh,
   travelTimeSeconds,
@@ -58,6 +68,9 @@ let drafts = new WeakMap<Point, string>();
 const dirty = new Set<Point>();
 const lookupVersions = new WeakMap<Point, number>();
 const routeCache = new Map<string, Route>();
+let savedEntries: SavedRoute[] = [];
+let libraryRevision = 0;
+let savingRoute = false;
 const map = L.map('map', { zoomControl: false }).setView([-22.96, -43.36], 11);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -77,6 +90,7 @@ function fit() {
     map.fitBounds(L.latLngBounds(pts), { padding: [45, 70], maxZoom: 15 });
 }
 function syncUrl() {
+  updateSaveButton();
   undoHistory.record(state);
   const hash = encodeState(state);
   $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
@@ -240,6 +254,7 @@ function renderPoints() {
       revision++;
       clearTimeout(timer);
       current = null;
+      updateSaveButton();
       line.clearLayers();
       $('summary').replaceChildren();
       $<HTMLButtonElement>('download').disabled = true;
@@ -500,6 +515,7 @@ function renderRoute(route: Route) {
       );
   }
   $<HTMLButtonElement>('download').disabled = false;
+  updateSaveButton();
 }
 function changed(preserveEditor = false) {
   revision++;
@@ -650,6 +666,7 @@ $<HTMLSelectElement>('units').onchange = () => {
   settings();
   syncUrl();
   if (current) renderRoute(current);
+  void refreshSavedRoutes();
 };
 
 $<HTMLInputElement>('prefer').onchange = () => {
@@ -667,6 +684,10 @@ $('save-settings').onclick = () => {
     status((e as Error).message, true);
   }
 };
+$<HTMLInputElement>('route-name').oninput = () => {
+  state.name = $<HTMLInputElement>('route-name').value.trim();
+  updateSaveButton();
+};
 $<HTMLInputElement>('route-name').onchange = () => {
   state.name = $<HTMLInputElement>('route-name').value.trim();
   syncUrl();
@@ -681,7 +702,7 @@ $('download').onclick = () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename(state.points);
+  a.download = filename(state.points, state.name);
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   status('GPX downloaded.');
@@ -869,6 +890,7 @@ $<HTMLSelectElement>('language').onchange = () => {
   renderPoints();
   if (current) renderRoute(current);
   syncUrl();
+  void refreshSavedRoutes();
 };
 
 function updateSpeedEstimate() {
@@ -911,3 +933,152 @@ $('reset-speed').onclick = () => {
   syncUrl();
   updateSpeedEstimate();
 };
+
+function updateSaveButton() {
+  const button = $<HTMLButtonElement>('save-route');
+  button.disabled =
+    savingRoute || !current || !state.name.trim() || dirty.size > 0;
+  button.textContent = savedEntries.some(
+    (r) => r.id === savedRouteKey(state.name),
+  )
+    ? 'Update saved route'
+    : 'Save route';
+}
+function downloadText(content: string, name: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function refreshSavedRoutes() {
+  const version = ++libraryRevision;
+  try {
+    const rows = await listSavedRoutes();
+    if (version !== libraryRevision) return;
+    savedEntries = rows;
+    $('saved-count').textContent = `(${rows.length})`;
+    const list = $('saved-list');
+    list.replaceChildren();
+    if (!rows.length) list.append(text('p', 'No saved routes.', 'hint'));
+    rows.forEach((record) => {
+      const card = document.createElement('article');
+      card.className = 'saved-route';
+      card.append(
+        text('strong', record.name),
+        text(
+          'small',
+          `${distanceLabel(record.route.distance, state.units, state.language === 'pt' ? 'pt-BR' : 'en')} · ${new Date(record.updatedAt).toLocaleDateString(state.language === 'pt' ? 'pt-BR' : 'en')}`,
+        ),
+      );
+      const actions = document.createElement('div');
+      const open = text('button', 'Open') as HTMLButtonElement;
+      open.type = 'button';
+      open.setAttribute('aria-label', `Open saved route: ${record.name}`);
+      open.onclick = () => {
+        const language = state.language;
+        revision++;
+        clearTimeout(timer);
+        dirty.clear();
+        drafts = new WeakMap();
+        state = structuredClone(record.state);
+        state.language = language;
+        selected = 0;
+        current = structuredClone(record.route);
+        syncUrl();
+        settings();
+        renderPoints();
+        renderRoute(current);
+        fit();
+        status('Saved route opened.');
+        void refreshSavedRoutes();
+      };
+      const download = text('button', 'Download GPX') as HTMLButtonElement;
+      download.type = 'button';
+      download.setAttribute(
+        'aria-label',
+        `Download saved route: ${record.name}`,
+      );
+      download.onclick = () =>
+        downloadText(
+          generateGpx(record.route, record.state.points, record.name),
+          filename(record.state.points, record.name),
+          'application/gpx+xml;charset=utf-8',
+        );
+      const remove = text('button', 'Delete') as HTMLButtonElement;
+      remove.type = 'button';
+      remove.setAttribute('aria-label', `Delete saved route: ${record.name}`);
+      remove.onclick = () => {
+        void deleteSavedRoute(record.id)
+          .then(() => {
+            libraryMessage('Saved route deleted.');
+            return refreshSavedRoutes();
+          })
+          .catch(() => libraryMessage('Could not access saved routes.', true));
+      };
+      actions.append(open, download, remove);
+      card.append(actions);
+      list.append(card);
+    });
+    $<HTMLButtonElement>('backup-routes').disabled = !rows.length;
+    updateSaveButton();
+  } catch {
+    libraryMessage('Local route storage is unavailable in this browser.', true);
+  }
+}
+function libraryMessage(message: string, error = false) {
+  $('library-status').textContent = message;
+  $('library-status').classList.toggle('error', error);
+}
+$('save-route').onclick = () => {
+  if (!current || !state.name.trim() || dirty.size) return;
+  const snapshot = structuredClone(state);
+  const route = structuredClone(current);
+  savingRoute = true;
+  updateSaveButton();
+  void saveNamedRoute(snapshot, route)
+    .then(() => {
+      status('Route saved on this device.');
+      libraryMessage('Route saved on this device.');
+      return refreshSavedRoutes();
+    })
+    .catch(() => {
+      status('Could not save locally. Download the GPX to keep it.', true);
+    })
+    .finally(() => {
+      savingRoute = false;
+      updateSaveButton();
+    });
+};
+$('backup-routes').onclick = () => {
+  if (savedEntries.length)
+    downloadText(
+      exportRouteBackup(savedEntries),
+      `route-gpx-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      'application/json',
+    );
+};
+$<HTMLInputElement>('restore-routes').onchange = () => {
+  const input = $<HTMLInputElement>('restore-routes');
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 50_000_000) {
+    libraryMessage('Choose a backup smaller than 50 MB.', true);
+    input.value = '';
+    return;
+  }
+  void file
+    .text()
+    .then((data) => importRouteBackup(parseRouteBackup(data)))
+    .then((count) => {
+      libraryMessage(`Imported ${count} routes. Existing names were kept.`);
+      return refreshSavedRoutes();
+    })
+    .catch(() => libraryMessage('Could not import this route backup.', true))
+    .finally(() => {
+      input.value = '';
+    });
+};
+void refreshSavedRoutes();
+updateSaveButton();

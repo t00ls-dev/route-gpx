@@ -160,3 +160,12 @@ describe('GPX 1.1', () => {
       ]),
     ).toBe('sao-start-to-end.gpx'));
 });
+
+it('uses a safe custom GPX filename without duplicating its extension', () => {
+  const points = defaults().points;
+  expect(filename(points, 'Passeio <Alto> & Grumari')).toBe(
+    'passeio-alto-grumari.gpx',
+  );
+  expect(filename(points, '../../Minha Viagem.GPX')).toBe('minha-viagem.gpx');
+  expect(filename(points, '   ')).toBe(filename(points));
+});

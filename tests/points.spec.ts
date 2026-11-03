@@ -253,3 +253,135 @@ test('an older route link with a 500 km/h average retains its points', async ({
   await expect(page.locator('#average-speed')).toBeDisabled();
   await expect(page.locator('#summary')).toContainText('49 min');
 });
+
+test('GPX name is visible and names the downloaded file, metadata and track', async ({
+  page,
+}) => {
+  await setup(page);
+  await fillPair(page);
+  const name = 'Passeio <Alto> & Grumari';
+  await expect(page.locator('#route-name')).toBeVisible();
+  await page.locator('#route-name').fill(name);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#download').click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('passeio-alto-grumari.gpx');
+  const xml = await readFile((await download.path())!, 'utf8');
+  const names = await page.evaluate((xml) => {
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    return [
+      doc.querySelector('metadata name')?.textContent,
+      doc.querySelector('trk name')?.textContent,
+      doc.querySelectorAll('trkpt').length,
+    ];
+  }, xml);
+  expect(names).toEqual([name, name, 2]);
+  await page.reload();
+  await expect(page.locator('#route-name')).toHaveValue(name);
+  await page.locator('#route-name').fill('');
+  const [fallback] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#download').click(),
+  ]);
+  expect(fallback.suggestedFilename()).toBe('start-to-destination.gpx');
+});
+
+test('only explicitly saved named routes persist, and reopening does not reroute', async ({
+  page,
+}) => {
+  await setup(page);
+  await fillPair(page);
+  await expect(page.locator('#saved-count')).toHaveText('(0)');
+  await expect(page.locator('#save-route')).toBeDisabled();
+  await page.locator('#route-name').fill('Weekend route');
+  await expect(page.locator('#saved-count')).toHaveText('(0)');
+  await page.locator('#save-route').click();
+  await expect(page.locator('#saved-count')).toHaveText('(1)');
+  await expect(page.locator('#save-route')).toHaveText('Update saved route');
+  await page.locator('#save-route').click();
+  await expect(page.locator('#status')).toHaveText(
+    'Route saved on this device.',
+  );
+  await expect(page.locator('#saved-count')).toHaveText('(1)');
+  await page.goto(base);
+  await page.locator('.saved-routes summary').click();
+  await expect(page.locator('#saved-list strong')).toHaveText('Weekend route');
+  let requests = 0;
+  page.on('request', (r) => {
+    if (r.url().includes('/route/v1/driving/')) requests++;
+  });
+  await page
+    .getByRole('button', {
+      name: 'Open saved route: Weekend route',
+      exact: true,
+    })
+    .click();
+  await expect(page.locator('#download')).toBeEnabled();
+  await expect(page.locator('#route-name')).toHaveValue('Weekend route');
+  await expect(page.locator('#summary')).toContainText('42 km');
+  expect(requests).toBe(0);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page
+      .getByRole('button', {
+        name: 'Download saved route: Weekend route',
+        exact: true,
+      })
+      .click(),
+  ]);
+  const xml = await readFile((await download.path())!, 'utf8');
+  expect((xml.match(/<trkpt /g) || []).length).toBe(2);
+  expect(download.suggestedFilename()).toBe('weekend-route.gpx');
+});
+test('route backups restore deleted routes and skip existing names', async ({
+  page,
+}) => {
+  await setup(page);
+  await fillPair(page);
+  await page.locator('#route-name').fill('Backup test');
+  await page.locator('#save-route').click();
+  await expect(page.locator('#saved-count')).toHaveText('(1)');
+  await page.locator('.saved-routes summary').click();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#backup-routes').click(),
+  ]);
+  const backup = await readFile((await download.path())!);
+  expect(JSON.parse(backup.toString()).routes).toHaveLength(1);
+  await page
+    .getByRole('button', {
+      name: 'Delete saved route: Backup test',
+      exact: true,
+    })
+    .click();
+  await expect(page.locator('#saved-count')).toHaveText('(0)');
+  for (let i = 0; i < 2; i++) {
+    await page
+      .locator('#restore-routes')
+      .setInputFiles({
+        name: 'backup.json',
+        mimeType: 'application/json',
+        buffer: backup,
+      });
+    await expect(page.locator('#saved-count')).toHaveText('(1)');
+    await expect(page.locator('#restore-routes')).toHaveValue('');
+  }
+  await expect(page.locator('#saved-list strong')).toHaveText('Backup test');
+  await expect(page.locator('#library-status')).toContainText(
+    'Existing names were kept.',
+  );
+});
+test('download still works if persistent browser storage is unavailable', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'indexedDB', { value: undefined });
+  });
+  await setup(page);
+  await fillPair(page);
+  await page.locator('#route-name').fill('Temporary');
+  await page.locator('#save-route').click();
+  await expect(page.locator('#status')).toContainText('Could not save locally');
+  await expect(page.locator('#download')).toBeEnabled();
+});
