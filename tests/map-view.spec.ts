@@ -300,9 +300,13 @@ for (const mobile of [false, true]) {
     );
     await page.locator('#fullscreen').click();
     await page.locator('#language').selectOption('pt');
-    await expect(page.locator('#locate')).toHaveText('⌖Usar minha localização');
+    await expect(page.locator('#locate')).toHaveAccessibleName(
+      'Usar minha localização',
+    );
     await page.locator('#language').selectOption('en');
-    await expect(page.locator('#locate')).toHaveText('⌖Use my location');
+    await expect(page.locator('#locate')).toHaveAccessibleName(
+      'Use my location',
+    );
     const zoom = await page.locator('.leaflet-control-zoom-in').boundingBox();
     expect(zoom!.width).toBeGreaterThanOrEqual(44);
     expect(zoom!.height).toBeGreaterThanOrEqual(44);

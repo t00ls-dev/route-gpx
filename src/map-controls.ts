@@ -1,0 +1,44 @@
+import L from 'leaflet';
+import { icon, iconControl } from './icons';
+export function setupMapControls(map: L.Map, zoom: L.Control.Zoom) {
+  const get = (id: string) => document.getElementById(id)!;
+  iconControl(get('locate'), 'locate', 'Use my location');
+  iconControl(get('layers-toggle'), 'layers', 'Map layers');
+  iconControl(get('fullscreen'), 'maximize', 'Full screen');
+  get('fullscreen').prepend(icon('minimize'));
+  iconControl(get('fit'), 'route', '◎ Fit route');
+  iconControl(get('help'), 'help', 'Help');
+  iconControl(get('example'), 'example', 'Try example');
+  const container = document.createElement('div');
+  container.className = 'map-action-control';
+  container.append(
+    get('locate'),
+    get('layers-toggle').parentElement!,
+    get('fullscreen'),
+    get('fit'),
+  );
+  document.querySelector('.map-tools')?.remove();
+  const control = new L.Control({ position: 'topright' });
+  control.onAdd = () => {
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    return container;
+  };
+  control.addTo(map);
+  zoom.setPosition('topright');
+  get('map').setAttribute('aria-describedby', 'map-note');
+  const layout = () => {
+    const position = matchMedia('(max-width: 759px)').matches
+      ? 'bottomleft'
+      : 'bottomright';
+    if (map.attributionControl.getPosition() !== position) {
+      // Recreate rather than re-add: Leaflet's attribution control counts each
+      // active layer again when onAdd runs on the same instance.
+      map.attributionControl.remove();
+      map.attributionControl = L.control.attribution({ position }).addTo(map);
+    }
+    map.invalidateSize({ pan: false });
+  };
+  window.addEventListener('resize', layout);
+  layout();
+}

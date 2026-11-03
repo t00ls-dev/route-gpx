@@ -47,6 +47,8 @@ import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
 import { setupMapLayers } from './map-layers';
+import { setupMapControls } from './map-controls';
+import { iconControl } from './icons';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const text = (tag: string, value: string, className = '') => {
@@ -93,7 +95,7 @@ const map = L.map('map', { zoomControl: false }).setView(
   localView.center,
   localView.zoom,
 );
-L.control.zoom({ position: 'bottomright' }).addTo(map);
+const zoom = L.control.zoom({ position: 'bottomright' }).addTo(map);
 const markers = L.layerGroup().addTo(map),
   line = L.featureGroup().addTo(map);
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
@@ -109,7 +111,10 @@ function fit() {
         : 70;
     map.fitBounds(L.latLngBounds(pts), {
       paddingTopLeft: [45, 105],
-      paddingBottomRight: [45, bottom],
+      paddingBottomRight: [
+        matchMedia('(max-width: 759px)').matches ? 76 : 176,
+        bottom,
+      ],
       maxZoom: 15,
     });
   }
@@ -253,6 +258,7 @@ function renderPoints() {
     input.setAttribute('aria-label', `Location of point ${i + 1}`);
     const search = text('button', 'Search') as HTMLButtonElement;
     search.type = 'submit';
+    iconControl(search, 'search', `Search point ${i + 1}`, true);
     search.setAttribute('aria-label', `Search point ${i + 1}`);
     const results = document.createElement('div');
     results.id = `point-results-${i}`;
@@ -394,11 +400,15 @@ function renderPoints() {
       }, 500);
     };
     form.append(input, search);
-    fields.append(label, form, suggestions, results);
+    const controls = document.createElement('div');
+    controls.className = 'point-controls';
+    controls.append(form);
+    fields.append(label, controls, suggestions, results);
     const actions = document.createElement('div');
     actions.className = 'point-actions';
     const onMap = text('button', 'Set on map') as HTMLButtonElement;
     onMap.type = 'button';
+    iconControl(onMap, 'pin', 'Set on map', true);
     onMap.onclick = () => selectPoint(i, true);
     actions.append(onMap);
     for (const [symbol, delta] of [
@@ -410,6 +420,12 @@ function renderPoints() {
       b.setAttribute(
         'aria-label',
         `Move point ${i + 1} ${delta < 0 ? 'up' : 'down'}`,
+      );
+      iconControl(
+        b,
+        delta < 0 ? 'up' : 'down',
+        `Move point ${i + 1} ${delta < 0 ? 'up' : 'down'}`,
+        true,
       );
       b.disabled = i + delta < 0 || i + delta >= state.points.length;
       b.onclick = () => {
@@ -425,6 +441,7 @@ function renderPoints() {
     const remove = text('button', '×') as HTMLButtonElement;
     remove.type = 'button';
     remove.setAttribute('aria-label', `Remove point ${i + 1}`);
+    iconControl(remove, 'close', `Remove point ${i + 1}`, true);
     remove.disabled = state.points.length <= 2;
     remove.onclick = () => {
       dirty.delete(point);
@@ -433,7 +450,8 @@ function renderPoints() {
       changed();
     };
     actions.append(remove);
-    row.append(choose, fields, actions);
+    controls.append(actions);
+    row.append(choose, fields);
     list.append(row);
   });
   list.scrollTop = scroll;
@@ -1141,3 +1159,5 @@ setupMapView(map, {
 });
 
 setupMapLayers(map);
+
+setupMapControls(map, zoom);

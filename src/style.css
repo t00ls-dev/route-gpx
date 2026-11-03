@@ -1228,3 +1228,237 @@ footer a {
     top: calc(120px + env(safe-area-inset-top));
   }
 }
+
+/* Compact map tools share Leaflet's right column, including zoom. */
+.button-icon {
+  flex: 0 0 20px;
+  pointer-events: none;
+}
+.icon-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.icon-only {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.icon-only .button-label {
+  display: none;
+}
+.map-action-control {
+  display: grid;
+  gap: 6px;
+  width: 145px;
+}
+.planner .map-action-control > button,
+.planner .map-action-control .layer-control > button {
+  width: 100%;
+  min-height: 44px;
+}
+.planner .map-action-control .fit-button,
+.planner .map-action-control .layer-control {
+  position: relative;
+  inset: auto;
+  font-size: 14px;
+  box-shadow: none;
+}
+.planner .map-action-control .layer-control {
+  z-index: auto;
+}
+.planner .leaflet-top {
+  top: calc(56px + env(safe-area-inset-top));
+}
+.planner.map-fullscreen .leaflet-top {
+  top: env(safe-area-inset-top);
+}
+.map-action-control #layers-menu {
+  top: 0;
+  right: calc(100% + 8px);
+  width: 210px;
+  max-height: min(340px, calc(100dvh - 160px));
+}
+.map-action-control button[aria-expanded='true'],
+.map-action-control button[aria-pressed='true'] {
+  background: var(--soft);
+  border: 2px solid var(--green);
+}
+#fullscreen[aria-pressed='false'] .icon-minimize,
+#fullscreen[aria-pressed='true'] .icon-maximize {
+  display: none;
+}
+.point-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.point-location-form {
+  position: relative;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.planner .point-fields .point-location-form input {
+  padding-right: 48px !important;
+}
+.point-location-form > button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 0;
+  border-radius: 0 6px 6px 0;
+}
+.point-controls .point-actions {
+  flex: 0 0 auto;
+  gap: 0;
+  margin-left: auto;
+}
+.point-controls .point-actions button,
+.point-controls .point-actions button:first-child {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 759px) {
+  .planner {
+    --route-sheet-height: min(
+      48dvh,
+      max(100px, calc(100dvh - 350px - env(safe-area-inset-top)))
+    );
+  }
+  .planner aside {
+    height: var(--route-sheet-height);
+    padding-top: 10px;
+  }
+  #panel-toggle {
+    bottom: var(--route-sheet-height);
+  }
+  .panel-closed #panel-toggle {
+    bottom: env(safe-area-inset-bottom);
+  }
+  .planner header {
+    height: 44px;
+    padding: 0 6px;
+    gap: 6px;
+  }
+  .planner .brand {
+    font-size: 18px;
+    letter-spacing: -0.6px;
+  }
+  .planner .brand-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .planner .language-control select {
+    min-height: 44px;
+    padding: 4px;
+    font-size: 12px;
+  }
+  .planner header .icon-control {
+    width: 44px;
+    height: 44px;
+  }
+  .planner header .button-label,
+  .planner .page-heading .button-label,
+  .map-action-control .button-label {
+    display: none;
+  }
+  .planner .map-note {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    border: 0;
+  }
+  .planner .leaflet-top {
+    top: calc(44px + env(safe-area-inset-top));
+  }
+  .planner.map-fullscreen .leaflet-top {
+    top: env(safe-area-inset-top);
+  }
+  .map-action-control {
+    width: 44px;
+  }
+  .planner .map-action-control > button,
+  .planner .map-action-control .layer-control > button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .planner .leaflet-top .leaflet-control-zoom {
+    margin-top: 6px;
+  }
+  .map-action-control #layers-menu {
+    width: min(210px, calc(100vw - 76px));
+    max-height: calc(100dvh - var(--route-sheet-height) - 168px);
+  }
+  .panel-closed .map-action-control #layers-menu,
+  .map-fullscreen .map-action-control #layers-menu {
+    max-height: min(340px, calc(100dvh - 180px));
+  }
+  .planner .leaflet-bottom.leaflet-left {
+    bottom: calc(var(--route-sheet-height) + 52px);
+    width: calc(100% - 68px);
+  }
+  .planner.panel-closed .leaflet-bottom.leaflet-left,
+  .planner.map-fullscreen .leaflet-bottom.leaflet-left {
+    bottom: calc(52px + env(safe-area-inset-bottom));
+  }
+  .planner .leaflet-control-attribution {
+    max-width: 100%;
+    margin: 0;
+  }
+  #points li,
+  #points li.selected {
+    padding: 6px;
+    gap: 4px;
+    margin: 4px 0;
+  }
+  .point-number {
+    margin-top: 16px;
+  }
+  .point-fields label {
+    font-size: 12px;
+    line-height: 16px;
+    margin-bottom: 2px;
+  }
+  .point-controls .point-actions button {
+    border: 0;
+  }
+  .page-heading {
+    margin-bottom: 6px;
+  }
+  .page-heading h1 {
+    font-size: 18px;
+  }
+  .page-heading #example {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .saved-routes {
+    margin-bottom: 4px;
+  }
+  .saved-routes > summary {
+    min-height: 44px;
+    line-height: 44px;
+  }
+}
+.point-menu {
+  z-index: 1100;
+}
+.location-card {
+  z-index: 1200;
+}
+@media (max-width: 759px) {
+  .planner .brand {
+    min-height: 44px;
+  }
+}
