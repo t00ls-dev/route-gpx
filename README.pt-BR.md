@@ -8,6 +8,7 @@ Planeje rotas e exporte o traçado completo em GPX.
 
 ## Recursos
 
+- Mapa em toda a janela com painel lateral recolhível no desktop, folha inferior no celular e controles de tela cheia. Localize-se com permissão e, se desejar, escolha um ponto aproximado para a rota.
 - Defina início, destino e paradas com endereços, coordenadas ou cliques no mapa.
 - Mova e reordene pontos, inverta a rota, adicione um retorno e desfaça alterações.
 - Confira distância, duração estimada e referências de vias; alterne entre quilômetros e milhas ou defina uma velocidade média.
@@ -34,6 +35,10 @@ Para instruções passo a passo, consulte a [página de Ajuda](https://t00ls-dev
 ## Serviços e privacidade
 
 O aplicativo usa tiles do OpenStreetMap, OSRM para roteamento, Valhalla como alternativa e Nominatim para busca de endereços. Mapas, buscas e roteamento exigem conexão à internet. Esses provedores recebem os locais necessários para cada requisição; links compartilhados e backups também contêm locais. O aplicativo não define cookies nem usa analytics.
+
+A vista inicial usa, em ordem: uma rota na URL, GPS já autorizado no navegador, região aproximada por IP e, depois, idioma e fuso horário do navegador (sem rede), com vista mundial como último recurso. **Usar minha localização** explica a finalidade antes de continuar para o pedido de permissão do navegador. As coordenadas exatas do GPS ficam apenas na memória, nunca são armazenadas em links, localStorage, sessionStorage ou IndexedDB e nunca são enviadas a servidores do projeto nem aos serviços de roteamento/busca. Escolher **Definir como início** ou **Adicionar como parada** cria explicitamente uma coordenada arredondada (grade de cerca de 100 m), que segue o comportamento normal de compartilhamento, roteamento e salvamento de rotas. Confira o ponto no mapa. O provedor de tiles recebe requisições da área visível do mapa, inclusive quando centralizada por GPS.
+
+**Detectar região pelo IP** vem ativado e pode ser desligado em **Configurações**; a URL do serviço é configurável. A [documentação do ipwho.is](https://ipwhois.io/documentation) e seus [termos](https://ipwhois.io/terms) oferecem um endpoint gratuito HTTPS, com CORS e sem chave. O limite publicado é de 1.000 requisições/dia, compartilhado por domínio para tráfego CORS do navegador; o uso comercial é permitido, sem garantia de disponibilidade. O navegador envia seu endereço IP ao provedor escolhido, como também faz com os servidores de tiles. O aplicativo faz no máximo uma tentativa por sessão da aba, com timeout de 3 s e sem repetições. Apenas um centro aproximado da cidade fica em cache na memória; um indicador de sessão evita novas requisições após recarregar. Falhas usam silenciosamente a vista sem rede. Preferências e estado do painel não contêm dados de localização.
 
 As buscas de endereços são explícitas, sem autocompletar. As requisições são espaçadas e usam cache quando aplicável, mas os serviços públicos têm capacidade limitada e nenhuma garantia de disponibilidade. Siga a [política do Nominatim](https://operations.osmfoundation.org/policies/nominatim/) e a [política de tiles](https://operations.osmfoundation.org/policies/tiles/); configure serviços próprios antes de ampliar o uso. O espaçamento no navegador não consegue impor um limite de uso compartilhado entre todos os dispositivos.
 
@@ -78,7 +83,7 @@ O GitHub Actions executa verificações em pull requests e pushes para `main`. B
 
 ## Créditos e licença
 
-Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
+Feito com [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) e [Vitest](https://vitest.dev/). Região por IP pelo [ipwho.is](https://ipwhois.io/). Dados do mapa © [colaboradores do OpenStreetMap](https://www.openstreetmap.org/copyright).
 
 O código do aplicativo é licenciado sob [MIT](LICENSE). Dados e dependências mantêm suas próprias licenças. Sem afiliação com os operadores dos serviços públicos.
 

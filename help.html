@@ -90,6 +90,28 @@
           retries the calculation. Use Undo to restore a change, the arrows to
           reorder, or × to remove a stop.
         </p>
+        <h2>Map and location</h2>
+        <p>
+          Use Route panel to open or close the side panel or mobile bottom
+          sheet. Its state is remembered in this tab session. Full screen
+          expands the map; press it again or Escape to leave.
+        </p>
+        <p>
+          Use my location explains why GPS is needed before Continue requests
+          browser permission. Exact location only centers the map and displays
+          an accuracy circle. Set as start and Add as stop use a rounded
+          coordinate (about 100 m); review it before routing. If permission is
+          denied, open this site's permissions in your browser settings and
+          allow Location, then try again. You can keep using the map without
+          GPS.
+        </p>
+        <p>
+          The initial view prefers the URL route, then already authorized GPS,
+          approximate IP region, and browser timezone/language. To stop IP
+          requests, open Settings and disable Detect region by IP. The selected
+          provider receives your IP address. Exact GPS is never stored or sent
+          to routing services; tile requests reveal the visible area.
+        </p>
         <h2>Choose main roads</h2>
         <p>
           Add stops directly on the roads you want. The road list shows the
@@ -156,7 +178,8 @@
           No cookies, accounts or analytics. Coordinates, searches and visible
           map tiles are sent to the selected services. Links include your
           locations. The browser stores a search timestamp to coordinate tabs,
-          plus only the named routes you explicitly save in local IndexedDB. Do
+          and the named routes you explicitly save in local IndexedDB. It also
+          remembers region preferences and panel state without location data. Do
           not enter confidential addresses.
         </p>
         <p>
@@ -188,6 +211,31 @@
           dois pontos clicando no mapa. Arraste marcadores para ajustar.
           Calcular rota repete o cálculo. Use Desfazer para recuperar uma
           alteração, as setas para reordenar ou × para remover uma parada.
+        </p>
+        <h2>Mapa e localização</h2>
+        <p>
+          Use Painel da rota para abrir ou fechar o painel lateral ou a folha
+          inferior no celular. O estado é lembrado durante a sessão desta aba.
+          Tela cheia expande o mapa; toque novamente ou pressione Escape para
+          sair.
+        </p>
+        <p>
+          Usar minha localização explica por que o GPS é necessário antes de
+          Continuar solicitar a permissão do navegador. A posição exata só
+          centraliza o mapa e mostra um círculo de precisão. Definir como início
+          e Adicionar como parada usam uma coordenada arredondada (cerca de 100
+          m); confira antes de calcular. Se a permissão for negada, abra as
+          permissões deste site nas configurações do navegador e libere
+          Localização, depois tente novamente. O mapa continua utilizável sem
+          GPS.
+        </p>
+        <p>
+          A vista inicial prioriza a rota da URL, GPS já autorizado, região
+          aproximada por IP e fuso/idioma do navegador. Para impedir consultas
+          por IP, abra Configurações e desative Detectar região pelo IP. O
+          provedor escolhido recebe seu endereço IP. O GPS exato nunca é
+          armazenado nem enviado aos roteadores; as requisições de tiles revelam
+          a área visível.
         </p>
         <h2>Escolher vias principais</h2>
         <p>
@@ -257,8 +305,9 @@
           Sem cookies, cadastro ou analytics. Coordenadas, buscas e área visível
           do mapa são enviados aos serviços escolhidos. Links incluem seus
           locais. O navegador guarda um horário de busca para coordenar abas e
-          somente as rotas nomeadas que você salvar explicitamente no IndexedDB
-          local. Não informe endereços confidenciais.
+          as rotas nomeadas que você salvar explicitamente no IndexedDB local.
+          Também lembra preferências de região e estado do painel, sem dados de
+          localização. Não informe endereços confidenciais.
         </p>
         <p>
           <a href="https://operations.osmfoundation.org/policies/nominatim/"

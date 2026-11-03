@@ -8,6 +8,7 @@ Plan routes and export the complete track as GPX.
 
 ## Features
 
+- Full viewport map with a collapsible side panel on desktop, a bottom sheet on mobile and full screen controls. Locate yourself with permission, then optionally choose an approximate route point.
 - Define start, destination and stops with addresses, coordinates or map clicks.
 - Move and reorder points, reverse the route, add a return trip and undo changes.
 - Review distance, estimated duration and road references; switch between kilometers and miles or set an average speed.
@@ -34,6 +35,10 @@ For step-by-step instructions, use the [Help page](https://t00ls-dev.github.io/r
 ## Services and privacy
 
 The app uses OpenStreetMap tiles, OSRM for routing, Valhalla as a fallback and Nominatim for address search. Maps, search and routing require an internet connection. These providers receive the locations needed for each request; shared links and backups also contain locations. The application sets no cookies or analytics.
+
+The initial view uses, in order: a route in the URL, GPS already authorized in the browser, an approximate IP region, then browser language and timezone (offline), with a world view as the final fallback. **Use my location** explains the purpose before you continue to the browser permission prompt. Exact GPS coordinates stay in memory only, are never stored in links, localStorage, sessionStorage or IndexedDB, and are never sent to project servers or routing/search services. Choosing **Set as start** or **Add as stop** explicitly creates a rounded coordinate (about a 100 m grid) that follows normal route sharing, routing and saving behavior. Review it on the map. The tile provider receives requests for the visible map area, including when centered by GPS.
+
+**Detect region by IP** is enabled by default and can be disabled in **Settings**; its service URL is configurable. [ipwho.is documentation](https://ipwhois.io/documentation) and [terms](https://ipwhois.io/terms) provide a free HTTPS, CORS-enabled endpoint without a key. Its published limit is 1,000 requests/day, shared by domain for browser CORS traffic; commercial use is allowed, with no availability guarantee. The browser sends its IP address to the selected provider, as it also does to tile servers. The app makes at most one attempt per tab session, with a 3 s timeout and no retries. Only an approximate city center is cached in memory; a session flag prevents repeated requests after reload. Failure silently uses the offline view. Preferences and panel state contain no location data.
 
 Address searches are explicit, with no autocomplete. Requests are spaced and cached where applicable, but public services have limited capacity and no availability guarantee. Follow the [Nominatim policy](https://operations.osmfoundation.org/policies/nominatim/) and [tile policy](https://operations.osmfoundation.org/policies/tiles/); configure your own services before scaling usage. Browser-side spacing cannot enforce a shared usage limit across all devices.
 
@@ -78,7 +83,7 @@ GitHub Actions runs checks on pull requests and pushes to `main`. Successful bui
 
 ## Credits and license
 
-Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
 Application code is licensed under [MIT](LICENSE). Data and dependencies retain their own licenses. No affiliation with the public service operators.
 

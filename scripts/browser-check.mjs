@@ -117,6 +117,12 @@ await mobile.waitForFunction(
 await mobile.locator('#language').selectOption('en');
 await mobile.getByRole('heading', { name: 'Plan your route' }).waitFor();
 await mobile.evaluate(() => window.scrollTo(0, 0));
+await mobile.locator('aside').evaluate((el) => {
+  el.scrollTop = 0;
+});
+await mobile.locator('#points').evaluate((el) => {
+  el.scrollTop = 0;
+});
 await mobile.screenshot({ path: 'docs/mobile.png', fullPage: true });
 const dark = await browser.newPage({
   viewport: { width: 1280, height: 900 },
@@ -129,6 +135,7 @@ assert.equal(
   ),
   'light',
 );
+await dark.locator('.leaflet-tile-loaded').first().waitFor();
 await dark.screenshot({ path: 'docs/dark.png' });
 const help = await browser.newPage();
 await help.goto(
