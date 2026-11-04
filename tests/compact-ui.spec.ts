@@ -96,27 +96,21 @@ for (const width of [320, 360, 390, 430]) {
       expect(menu.x).toBeGreaterThanOrEqual(0);
       expect(menu.x + menu.width).toBeLessThan(column.x);
       await page.keyboard.press('Escape');
+      await expect(page.locator('.map-credits-toggle')).toBeHidden();
+      await page.locator('#panel-toggle').tap();
       const credit = (await page.locator('.map-credits').boundingBox())!,
         handle = (await page.locator('#panel-toggle').boundingBox())!;
       expect(credit.y + credit.height).toBeLessThanOrEqual(handle.y);
       expect(credit.width).toBe(44);
       expect(credit.height).toBe(44);
-      expect(credit.x + credit.width).toBeLessThanOrEqual(zoom.x);
+      expect(
+        Math.abs(credit.x + credit.width / 2 - (zoom.x + zoom.width / 2)),
+      ).toBeLessThanOrEqual(1);
       const toggle = page.locator('.map-credits-toggle');
       await expect(toggle).toHaveAccessibleName(
         language === 'pt' ? 'Créditos do mapa' : 'Map credits',
       );
-      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
       await toggle.tap();
-      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-      const expanded = (await page.locator('.map-credits').boundingBox())!;
-      expect(expanded.x).toBeGreaterThanOrEqual(0);
-      expect(expanded.y + expanded.height).toBeLessThanOrEqual(handle.y);
-      expect(expanded.x + expanded.width).toBeLessThanOrEqual(zoom.x);
-      expect(
-        (await page.locator('#map-credits-summary').boundingBox())!.height,
-      ).toBeLessThanOrEqual(36);
-      await page.locator('.map-credits-details').tap();
       await expect(page.locator('.map-credits-dialog')).toBeVisible();
       await expect(page.locator('.map-credits-dialog')).toContainText(
         'MapServer',
@@ -126,13 +120,14 @@ for (const width of [320, 360, 390, 430]) {
       );
       await page.keyboard.press('Escape');
       await expect(page.locator('.map-credits-dialog')).toBeHidden();
-      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await expect(toggle).toBeFocused();
       await page.locator('#layers-toggle').tap();
       await page.locator('#map-labels').uncheck();
       await expect(page.locator('.map-credits-dialog')).not.toContainText(
         'MapServer',
       );
       await page.keyboard.press('Escape');
+      await page.locator('#panel-toggle').tap();
       await page.locator('#location-0').fill('38.72, -9.14');
       await page.locator('#location-0').press('Tab');
       const input = (await page.locator('#location-0').boundingBox())!,
@@ -166,31 +161,13 @@ for (const width of [320, 360, 390, 430]) {
       await page
         .locator('#language')
         .selectOption(language === 'pt' ? 'en' : 'pt');
-      await expect(toggle).toHaveAccessibleName(
+      await expect(toggle).toHaveAttribute(
+        'aria-label',
         language === 'pt' ? 'Map credits' : 'Créditos do mapa',
       );
       await expect(page.locator('#locate')).toHaveAccessibleName(
         language === 'pt' ? 'Use my location' : 'Usar minha localização',
       );
-      await toggle.tap();
-      await page.locator('#map').tap({ position: { x: 20, y: 180 } });
-      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await page.locator('#layers-toggle').tap();
-      await page.locator('[data-layer=topographic]').tap();
-      for (const control of ['#panel-toggle', '#fullscreen']) {
-        await page.locator(control).tap();
-        await toggle.tap();
-        const pill = (await page.locator('.map-credits').boundingBox())!;
-        expect(pill.x).toBeGreaterThanOrEqual(0);
-        expect(pill.y + pill.height).toBeLessThanOrEqual(
-          (await page.locator('#panel-toggle').boundingBox())!.y,
-        );
-        expect(pill.x + pill.width).toBeLessThanOrEqual(zoom.x);
-        expect(
-          (await page.locator('#map-credits-summary').boundingBox())!.height,
-        ).toBeLessThanOrEqual(36);
-        await toggle.tap();
-      }
     });
   }
 }

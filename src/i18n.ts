@@ -25,7 +25,8 @@ const pt: Record<string, string> = {
     'Toque e segure para escolher um ponto da rota',
   'Route panel': 'Painel da rota',
   'Map credits': 'Créditos do mapa',
-  Credits: 'Créditos',
+  '© OpenStreetMap contributors': '© colaboradores do OpenStreetMap',
+  'Rendering © EOX::Maps': 'Renderização © EOX::Maps',
   Close: 'Fechar',
   'Detect region by IP': 'Detectar região pelo IP',
   'IP region service': 'Serviço de região por IP',
@@ -261,6 +262,10 @@ const pt: Record<string, string> = {
   Via: 'Passagem',
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
+  [
+    /^Contains modified Copernicus Sentinel data (2016|2025)$/,
+    (year) => `Contém dados Copernicus Sentinel modificados de ${year}`,
+  ],
   [/^Open saved route: (.*?)$/, (n) => `Abrir rota salva: ${n}`],
   [/^Download saved route: (.*?)$/, (n) => `Baixar rota salva: ${n}`],
   [/^Delete saved route: (.*?)$/, (n) => `Excluir rota salva: ${n}`],

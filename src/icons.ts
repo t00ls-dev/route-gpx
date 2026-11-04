@@ -10,6 +10,7 @@ const paths = {
   pin: '<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2"/>',
   up: '<path d="m5 10 7-7 7 7M12 3v18"/>',
   down: '<path d="m5 14 7 7 7-7M12 21V3"/>',
+  info: '<path d="M12 11v6m-1-6h1m-1 6h2"/><circle cx="12" cy="7" r=".5"/>',
   close: '<path d="m5 5 14 14M19 5 5 19"/>',
   undo: '<path d="M3 10h11a6 6 0 0 1 0 12M3 10l5-5m-5 5 5 5"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .5-1.5 1-1.5 2M12 16v1"/>',

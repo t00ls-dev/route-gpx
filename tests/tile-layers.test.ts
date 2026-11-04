@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import {
   tileConfig,
+  mapCredits,
   labelConfig,
   tileTemplate,
   validateTileConfig,
@@ -29,4 +30,30 @@ it('rejects insecure, incomplete, credentialed or unknown-token tile templates a
   expect(() => validateTileConfig({ ...config, attribution: ' ' })).toThrow();
   expect(() => validateTileConfig({ ...config, maxNativeZoom: 20 })).toThrow();
   expect(() => validateTileConfig({ ...config, maxZoom: 2.5 })).toThrow();
+});
+
+it('keeps unique active credits and selects the matching satellite license', () => {
+  const street = mapCredits('standard');
+  const satellite = mapCredits('satellite', '2025', true);
+  const older = mapCredits('satellite', '2016', false);
+  expect(street.map((item) => item.url)).toEqual([
+    'https://www.openstreetmap.org/copyright',
+  ]);
+  expect(new Set(satellite.map((item) => item.text)).size).toBe(
+    satellite.length,
+  );
+  expect(
+    satellite.filter((item) => item.url.includes('openstreetmap.org')),
+  ).toHaveLength(1);
+  expect(satellite.some((item) => item.url.endsWith('/by-nc-sa/4.0/'))).toBe(
+    true,
+  );
+  expect(older.some((item) => item.url.endsWith('/by/4.0/'))).toBe(true);
+  expect(older.some((item) => item.text.includes('MapServer'))).toBe(false);
+  const attribution =
+    tileConfig('satellite', '2025').attribution + labelConfig.attribution;
+  for (const credit of satellite) {
+    expect(attribution).toContain(credit.url);
+    expect(attribution).toContain(credit.text);
+  }
 });

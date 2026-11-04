@@ -66,6 +66,13 @@ export function setupMapView(
       element<HTMLInputElement>('region-url').reportValidity();
     }
   };
+  const panelHandle = element('panel-toggle');
+  new ResizeObserver(() => {
+    document.body.style.setProperty(
+      '--route-handle-height',
+      `${panelHandle.getBoundingClientRect().height}px`,
+    );
+  }).observe(panelHandle);
   let panelOpen = true;
   try {
     panelOpen = sessionStorage.getItem('panel-open') !== 'false';

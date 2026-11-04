@@ -34,8 +34,55 @@ export function validateTileConfig(config: TileConfig): TileConfig {
     throw new Error('Invalid tile configuration');
   return config;
 }
-const osm =
-  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+export interface MapCredit {
+  text: string;
+  url: string;
+}
+const osm: MapCredit = {
+  text: '© OpenStreetMap contributors',
+  url: 'https://www.openstreetmap.org/copyright',
+};
+const labelCredits: MapCredit[] = [
+  osm,
+  { text: 'Rendering © EOX::Maps', url: 'https://maps.eox.at/' },
+  { text: 'MapServer', url: 'https://github.com/mapserver/basemaps' },
+];
+export function mapCredits(
+  layer: BaseLayer,
+  vintage: SatelliteVintage = '2025',
+  labels = false,
+): MapCredit[] {
+  const credits = [osm];
+  if (layer === 'topographic')
+    credits.push(
+      { text: 'SRTM', url: 'https://opentopomap.org/about' },
+      { text: '© OpenTopoMap', url: 'https://opentopomap.org/about' },
+      {
+        text: 'CC BY-SA 3.0',
+        url: 'https://creativecommons.org/licenses/by-sa/3.0/',
+      },
+    );
+  if (layer === 'satellite') {
+    credits.push(
+      {
+        text: 'EOxCloudless by EOX IT Services GmbH',
+        url: 'https://cloudless.eox.at/',
+      },
+      {
+        text: `Contains modified Copernicus Sentinel data ${vintage}`,
+        url: 'https://cloudless.eox.at/',
+      },
+      {
+        text: `CC ${vintage === '2016' ? 'BY' : 'BY-NC-SA'} 4.0`,
+        url: `https://creativecommons.org/licenses/${vintage === '2016' ? 'by' : 'by-nc-sa'}/4.0/`,
+      },
+    );
+    if (labels) credits.push(...labelCredits.slice(1));
+  }
+  return credits;
+}
+const attribution = (credits: MapCredit[]) =>
+  credits.map(({ text, url }) => `<a href="${url}">${text}</a>`).join(' · ');
 const eox = 'https://tiles.maps.eox.at/wmts/1.0.0/';
 export function tileConfig(
   layer: BaseLayer,
@@ -47,7 +94,7 @@ export function tileConfig(
       url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       maxNativeZoom: 19,
       maxZoom: 19,
-      attribution: osm,
+      attribution: attribution(mapCredits('standard')),
     });
   if (layer === 'topographic')
     return validateTileConfig({
@@ -55,16 +102,15 @@ export function tileConfig(
       url: 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
       maxNativeZoom: 17,
       maxZoom: 19,
-      attribution: `${osm}, SRTM | © <a href="https://opentopomap.org/about">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>)`,
+      attribution: attribution(mapCredits('topographic')),
     });
   const id = vintage === '2016' ? 's2cloudless_3857' : 's2cloudless-2025_3857';
-  const license = vintage === '2016' ? 'by' : 'by-nc-sa';
   return validateTileConfig({
     name: 'Satellite',
     url: `${eox}${id}/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg`,
     maxNativeZoom: 14,
     maxZoom: 19,
-    attribution: `${osm} | <a href="https://cloudless.eox.at/">EOxCloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data ${vintage}) · <a href="https://creativecommons.org/licenses/${license}/4.0/">CC ${vintage === '2016' ? 'BY' : 'BY-NC-SA'} 4.0</a>`,
+    attribution: attribution(mapCredits('satellite', vintage)),
   });
 }
 export const labelConfig = validateTileConfig({
@@ -72,5 +118,5 @@ export const labelConfig = validateTileConfig({
   url: `${eox}overlay_bright_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.png`,
   maxNativeZoom: 14,
   maxZoom: 19,
-  attribution: `Labels: ${osm}, Rendering © <a href="https://maps.eox.at/">EOX::Maps</a> and <a href="https://github.com/mapserver/basemaps">MapServer</a>`,
+  attribution: `Labels: ${attribution(labelCredits)}`,
 });
