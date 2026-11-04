@@ -35,7 +35,7 @@ test('loads only the selected layer, updates credits and keeps layer preferences
   await page
     .getByRole('menuitemradio', { name: 'Topographic', exact: true })
     .click();
-  await expect(page.locator('.leaflet-control-attribution')).toContainText(
+  await expect(page.locator('.map-credits-dialog')).toContainText(
     'OpenTopoMap',
   );
   await expect
@@ -49,12 +49,10 @@ test('loads only the selected layer, updates credits and keeps layer preferences
   await page
     .getByRole('menuitemradio', { name: 'Satellite', exact: true })
     .click();
-  await expect(page.locator('.leaflet-control-attribution')).toContainText(
+  await expect(page.locator('.map-credits-dialog')).toContainText(
     'EOxCloudless',
   );
-  await expect(page.locator('.leaflet-control-attribution')).toContainText(
-    '2025',
-  );
+  await expect(page.locator('.map-credits-dialog')).toContainText('2025');
   await expect
     .poll(() => requests.some((url) => url.includes('s2cloudless-2025')))
     .toBe(true);
@@ -73,19 +71,15 @@ test('loads only the selected layer, updates credits and keeps layer preferences
   );
   await page.locator('#layers-toggle').click();
   await page.locator('#map-labels').uncheck();
-  await expect(page.locator('.leaflet-control-attribution')).not.toContainText(
+  await expect(page.locator('.map-credits-dialog')).not.toContainText(
     'MapServer',
   );
   await page.keyboard.press('Escape');
   await page.locator('.settings > summary').click();
   await page.locator('#satellite-vintage').selectOption('2016');
-  await expect(page.locator('.leaflet-control-attribution')).toContainText(
-    '2016',
-  );
+  await expect(page.locator('.map-credits-dialog')).toContainText('2016');
   await page.reload();
-  await expect(page.locator('.leaflet-control-attribution')).toContainText(
-    '2016',
-  );
+  await expect(page.locator('.map-credits-dialog')).toContainText('2016');
 });
 test('menu works by keyboard, closes outside and translates both ways', async ({
   page,
@@ -286,4 +280,50 @@ test('GPX import during a running zoom takes precedence over that view', async (
       );
     })
     .toBe(true);
+});
+
+test('compact credits toggle, dismiss and follow the active provider on desktop', async ({
+  page,
+}) => {
+  await page.goto(base);
+  const toggle = page.getByRole('button', { name: 'Map credits', exact: true });
+  const summary = page.locator('#map-credits-summary');
+  await expect(page.locator('.leaflet-control-attribution')).toHaveCount(0);
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(summary).toBeHidden();
+  await toggle.click();
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText('OpenStreetMap');
+  await expect(summary).not.toContainText('EOX');
+  await expect(
+    summary.locator('a', { hasText: 'OpenStreetMap' }),
+  ).toHaveAttribute('href', 'https://www.openstreetmap.org/copyright');
+  await toggle.click();
+  await expect(summary).toBeHidden();
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+  await expect(summary).toBeHidden();
+  await expect(toggle).toBeFocused();
+  await toggle.click();
+  await page.locator('#map').click({ position: { x: 80, y: 180 } });
+  await expect(summary).toBeHidden();
+  await page.locator('#layers-toggle').click();
+  await page.locator('[data-layer=satellite]').click();
+  await toggle.click();
+  await expect(summary).toContainText('EOX');
+  await page.locator('.map-credits-details').click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Copernicus Sentinel data 2025');
+  await expect(
+    dialog.locator('a', { hasText: 'CC BY-NC-SA 4.0' }),
+  ).toHaveAttribute(
+    'href',
+    'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+  );
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await page.locator('#layers-toggle').click();
+  await page.locator('[data-layer=standard]').click();
+  await expect(summary).not.toContainText('EOX');
 });

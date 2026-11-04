@@ -48,6 +48,8 @@ Address suggestions use [Photon](https://github.com/komoot/photon#demo-server) a
 
 Change service base URLs in **Settings**. Remote services need HTTPS and must allow browser cross-origin requests. For self-hosting, consult the [OSRM documentation](https://github.com/Project-OSRM/osrm-backend#quick-start) and [Nominatim documentation](https://nominatim.org/release-docs/latest/admin/Installation/).
 
+The compact **i** button at the bottom right opens the active map credits; **Credits** shows the full attribution and license links. Tap **i** again, tap the map, or press Escape to collapse the pill.
+
 The Map layers control loads layers only when active; satellite Labels are optional and initially enabled. The selection and satellite edition are device preferences, outside route links and saved routes. The active tile provider receives your IP address and visible-area tile requests; labels send additional visible-area requests to EOX. No tile prefetching, offline storage or service worker is added. Zoom beyond native resolution enlarges existing tiles; it adds no detail.
 
 | Layer                             | Source and terms                                                                                                                      | Native zoom |

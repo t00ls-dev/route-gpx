@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { setupMapCredits } from './map-credits';
 import {
   tileConfig,
   labelConfig,
@@ -9,6 +10,7 @@ import {
 const element = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 export function setupMapLayers(map: L.Map) {
+  const updateCredits = setupMapCredits(map);
   let active: BaseLayer = 'standard',
     vintage: SatelliteVintage = '2025',
     labels = true;
@@ -49,6 +51,7 @@ export function setupMapLayers(map: L.Map) {
     if (active === 'satellite' && labels)
       overlay = create(labelConfig, 2).addTo(map);
     element('label-option').hidden = active !== 'satellite';
+    updateCredits(active, vintage, labels);
   };
   const render = () => {
     if (base) map.removeLayer(base);

@@ -29,15 +29,6 @@ export function setupMapControls(map: L.Map, zoom: L.Control.Zoom) {
   zoom.setPosition('topright');
   get('map').setAttribute('aria-describedby', 'map-note');
   const layout = () => {
-    const position = matchMedia('(max-width: 759px)').matches
-      ? 'bottomleft'
-      : 'bottomright';
-    if (map.attributionControl.getPosition() !== position) {
-      // Recreate rather than re-add: Leaflet's attribution control counts each
-      // active layer again when onAdd runs on the same instance.
-      map.attributionControl.remove();
-      map.attributionControl = L.control.attribution({ position }).addTo(map);
-    }
     map.invalidateSize({ pan: false });
   };
   window.addEventListener('resize', layout);

@@ -24,6 +24,9 @@ const pt: Record<string, string> = {
   'Touch and hold to choose a route point':
     'Toque e segure para escolher um ponto da rota',
   'Route panel': 'Painel da rota',
+  'Map credits': 'Créditos do mapa',
+  Credits: 'Créditos',
+  Close: 'Fechar',
   'Detect region by IP': 'Detectar região pelo IP',
   'IP region service': 'Serviço de região por IP',
   'The region service receives your IP address. Only an approximate city view is used.':

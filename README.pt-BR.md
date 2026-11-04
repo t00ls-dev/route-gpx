@@ -48,6 +48,8 @@ As sugestões usam [Photon](https://github.com/komoot/photon#demo-server) em `ht
 
 Altere as URLs base dos serviços em **Configurações**. Serviços remotos precisam de HTTPS e devem permitir requisições entre origens no navegador. Para hospedagem própria, consulte a [documentação do OSRM](https://github.com/Project-OSRM/osrm-backend#quick-start) e a [documentação do Nominatim](https://nominatim.org/release-docs/latest/admin/Installation/).
 
+O botão compacto **i** no canto inferior direito abre os créditos do mapa ativo; **Créditos** mostra a atribuição completa e os links das licenças. Toque em **i** novamente, toque no mapa ou pressione Escape para recolher a pílula.
+
 As camadas (botão Camadas do mapa) só são carregadas quando ativas; os Rótulos do satélite são opcionais e começam ligados. A escolha e a edição do satélite são preferências do aparelho, fora dos links e das rotas salvas. O provedor da camada ativa recebe seu IP e requisições de tiles da área visível; os rótulos enviam requisições adicionais da área visível à EOX. Não foi adicionado pré-carregamento, armazenamento offline nem service worker. Zoom acima da resolução nativa amplia os tiles existentes; não acrescenta detalhes.
 
 | Camada                                   | Fonte e termos                                                                                                                           | Zoom nativo |

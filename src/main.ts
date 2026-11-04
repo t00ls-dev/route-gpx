@@ -90,10 +90,10 @@ const localView = defaultView(
   Intl.DateTimeFormat().resolvedOptions().timeZone,
   navigator.languages,
 );
-const map = L.map('map', { zoomControl: false }).setView(
-  localView.center,
-  localView.zoom,
-);
+const map = L.map('map', {
+  zoomControl: false,
+  attributionControl: false,
+}).setView(localView.center, localView.zoom);
 let zooming = false;
 map.on('zoomstart', () => {
   zooming = true;
