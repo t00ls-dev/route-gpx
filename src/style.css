@@ -1466,7 +1466,7 @@ footer a {
   .map-fullscreen .map-action-control #layers-menu {
     max-height: min(340px, calc(100dvh - 180px));
   }
-  .planner .map-credits {
+  .planner .leaflet-right .map-credits {
     margin-right: 64px;
   }
   .planner .leaflet-bottom.leaflet-right {
@@ -1541,7 +1541,7 @@ footer a {
   .planner .leaflet-top .leaflet-control-zoom {
     margin-top: 4px;
   }
-  .planner .map-credits {
+  .planner .leaflet-right .map-credits {
     margin-right: 64px;
   }
   .planner .leaflet-bottom.leaflet-right {
