@@ -61,7 +61,12 @@ export function setupMapCredits(map: L.Map) {
           ? ' · <a href="https://opentopomap.org/about">OpenTopoMap</a>'
           : '';
     // Only provider-owned, static HTML enters the credits; never route input.
-    sources.innerHTML = `${osm}${provider} · ${leaflet}`;
+    // Put the shorter Leaflet link first for Topographic so narrow pills can
+    // wrap before OpenTopoMap and keep its credits on the second line.
+    sources.innerHTML =
+      layer === 'topographic'
+        ? `${osm} · ${leaflet}${provider}`
+        : `${osm}${provider} · ${leaflet}`;
     dialog.querySelector('p')!.innerHTML =
       `${leaflet} | ${tileConfig(layer, vintage).attribution}` +
       (layer === 'satellite' && labels ? ` | ${labelConfig.attribution}` : '');
