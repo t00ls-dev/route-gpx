@@ -1,0 +1,58 @@
+name: Deploy
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check current main commit
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          latest_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')
+          if [ "$HEAD_SHA" = "$latest_sha" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping deployment: $HEAD_SHA is no longer the current main commit ($latest_sha)."
+          fi
+      - uses: actions/checkout@v6
+        if: steps.current.outputs.publish == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v6
+        if: steps.current.outputs.publish == 'true'
+        with:
+          node-version: 22.23.4
+          cache: npm
+      - run: npm ci
+        if: steps.current.outputs.publish == 'true'
+      - run: npm run build
+        if: steps.current.outputs.publish == 'true'
+      - uses: actions/configure-pages@v6
+        if: steps.current.outputs.publish == 'true'
+      - uses: actions/upload-pages-artifact@v5
+        if: steps.current.outputs.publish == 'true'
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v5
+        if: steps.current.outputs.publish == 'true'
+        id: deployment
