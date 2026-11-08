@@ -5,7 +5,7 @@ Plan routes and export the complete track as GPX.
 [Português](README.pt-BR.md)
 
 <p>
-  <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml"><img src="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml/badge.svg?branch=main" alt="CI on main" /></a>
+  <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml"><img src="https://img.shields.io/github/actions/workflow/status/t00ls-dev/route-gpx/ci-pages.yml?branch=main&label=CI" alt="CI on main" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22.23.4-339933" alt="Node.js 22.23.4 or newer" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" /></a>
 </p>
