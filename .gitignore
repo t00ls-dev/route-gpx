@@ -3,3 +3,8 @@ dist/
 test-results/
 playwright-report/
 *.local
+blob-report/
+all-blob-reports/
+coverage/
+CLAUDE.local.md
+.claude/settings.local.json

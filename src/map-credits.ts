@@ -76,6 +76,16 @@ export function setupMapCredits(map: L.Map) {
       ...[
         { text: 'Leaflet', url: 'https://leafletjs.com/' },
         ...mapCredits(layer, vintage, labels),
+        { text: 'Weather data by Open-Meteo', url: 'https://open-meteo.com/' },
+        {
+          text: 'Weather data license: CC BY 4.0',
+          url: 'https://creativecommons.org/licenses/by/4.0/',
+        },
+        { text: 'Radar by RainViewer', url: 'https://www.rainviewer.com/' },
+        {
+          text: 'RainViewer API terms',
+          url: 'https://www.rainviewer.com/api.html',
+        },
       ].map(({ text, url }) => {
         const item = document.createElement('li');
         const link = document.createElement('a');
@@ -87,5 +97,9 @@ export function setupMapCredits(map: L.Map) {
         return item;
       }),
     );
+    const note = document.createElement('li');
+    note.textContent =
+      'Passage times and risk summaries calculated by route-gpx.';
+    list.append(note);
   };
 }

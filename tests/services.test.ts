@@ -131,3 +131,44 @@ describe('routing adapters', () => {
     expect(times[1] - times[0]).toBeGreaterThanOrEqual(1100);
   });
 });
+
+it('skips cancelled queue entries without spending request slots', async () => {
+  vi.useFakeTimers();
+  const queue = new RequestQueue(1100);
+  const starts: number[] = [];
+  const request = async () => {
+    starts.push(Date.now());
+    return 1;
+  };
+  const first = queue.run(request);
+  await vi.runAllTimersAsync();
+  await first;
+  const obsolete = Array.from({ length: 5 }, () =>
+    queue.run(request, () => false),
+  );
+  const rejected = obsolete.map((promise) =>
+    expect(promise).rejects.toThrow('Cancelled'),
+  );
+  const next = queue.run(request);
+  await vi.runAllTimersAsync();
+  await Promise.all([...rejected, next]);
+  expect(starts).toHaveLength(2);
+  expect(starts[1] - starts[0]).toBe(1100);
+});
+
+it('does not start Valhalla when a route is superseded during the fallback delay', async () => {
+  vi.useFakeTimers();
+  let current = true;
+  const fetch = vi.fn(async () => {
+    setTimeout(() => {
+      current = false;
+    }, 1);
+    throw new Error('Offline');
+  });
+  vi.stubGlobal('fetch', fetch);
+  const pending = calculate(state(), () => current);
+  const assertion = expect(pending).rejects.toThrow('Offline');
+  await vi.runAllTimersAsync();
+  await assertion;
+  expect(fetch).toHaveBeenCalledTimes(1);
+});

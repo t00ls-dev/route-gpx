@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { holdMap } from './map-helpers';
-const base = 'http://127.0.0.1:5173/route-gpx/';
+const base = 'http://127.0.0.1:5173/';
 const features = {
   features: [
     {
@@ -20,6 +20,7 @@ const coords = Array.from({ length: 1000 }, (_, i) => [
 ]);
 const gpx = `<gpx><trk><trkseg>${coords.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg></trk></gpx>`;
 test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
   await page.route('https://tile.openstreetmap.org/**', (r) =>
     r.fulfill({ status: 204 }),
   );
@@ -226,4 +227,55 @@ test('sharing is hidden without file support', async ({ page }) => {
   );
   await page.goto(base);
   await expect(page.locator('#share-gpx')).toBeHidden();
+});
+
+for (const width of [320, 390]) {
+  test(`destination and stop suggest while typing without a search button at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(base);
+    await expect(page.locator('.point-location-form button')).toHaveCount(0);
+    await page.locator('#location-1').fill('Li');
+    await expect(page.locator('#suggestions-1 [role=option]')).toHaveCount(0);
+    await page.locator('#location-1').pressSequentially('sboa');
+    await expect(page.locator('#suggestions-1 [role=option]')).toHaveCount(2);
+    await expect(page.locator('#status')).toHaveText('Choose a place.');
+    await page.locator('#suggestions-1 [role=option]').first().click();
+    await expect(page.locator('#location-1')).toHaveValue('Lisboa, Portugal');
+    await page.locator('#add').click();
+    await page.locator('#location-1').fill('Porto');
+    await expect(page.locator('#suggestions-1 [role=option]')).toHaveCount(2);
+    await page.locator('#location-1').press('ArrowDown');
+    await page.locator('#location-1').press('ArrowDown');
+    await page.locator('#location-1').press('Enter');
+    await expect(page.locator('#location-1')).toHaveValue('Porto');
+    await expect(page.locator('#location-2')).toHaveValue('Lisboa, Portugal');
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+    ).toBe(false);
+  });
+}
+
+test('empty suggestions offer an explicit Enter search and translate both ways', async ({
+  page,
+}) => {
+  await page.route('https://photon.komoot.io/**', (r) =>
+    r.fulfill({ json: { features: [] } }),
+  );
+  await page.goto(base);
+  await page.locator('#location-1').fill('Nowhere');
+  await expect(page.locator('#status')).toHaveText(
+    'No suggestions found. Press Enter to search with Nominatim.',
+  );
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('#status')).toHaveText(
+    'Nenhuma sugestão encontrada. Pressione Enter para buscar com Nominatim.',
+  );
+  await page.locator('#language').selectOption('en');
+  await expect(page.locator('#status')).toHaveText(
+    'No suggestions found. Press Enter to search with Nominatim.',
+  );
 });

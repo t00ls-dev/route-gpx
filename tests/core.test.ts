@@ -61,7 +61,7 @@ describe('coordinates', () => {
 describe('URL state', () => {
   it('roundtrips Unicode labels, points, options and custom server', () => {
     const s = defaults();
-    s.name = 'Viagem ☀ & Tijuca';
+    s.name = 'Viagem \u2600 & Tijuca';
     s.osrm = 'https://example.org/osrm';
     s.points = [
       { name: 'Café', coord: [-22, -43] },

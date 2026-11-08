@@ -2,7 +2,8 @@ import { URL } from 'node:url';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-const base = process.env.SITE_URL || 'http://localhost:5173/route-gpx/';
+const base = process.env.SITE_URL || 'http://localhost:5173/';
+const artifacts = '.browser-check.local';
 const browser = await chromium.launch({
   headless: true,
   args: ['--no-sandbox'],
@@ -60,8 +61,8 @@ const status = await page.locator('#status').innerText();
 assert.ok(status.includes('Route ready'), status);
 assert.match(await page.locator('#summary').innerText(), /OSRM|Valhalla/);
 const routeSummary = await page.locator('#summary').innerText();
-await fs.mkdir('docs', { recursive: true });
-// Wait for visible tiles to finish painting before refreshing documentation images.
+await fs.mkdir(artifacts, { recursive: true });
+// Capture local acceptance evidence without adding screenshots to the repository.
 async function tilesPainted(target) {
   await target.waitForFunction(
     () => {
@@ -80,18 +81,18 @@ await tilesPainted(page);
 await page.locator('aside').evaluate((el) => {
   el.scrollTop = 0;
 });
-await page.screenshot({ path: 'docs/screenshot.png' });
+await page.screenshot({ path: `${artifacts}/screenshot.png` });
 await page.locator('#language').selectOption('pt');
 await page.getByRole('heading', { name: 'Criar rota' }).waitFor();
-await page.screenshot({ path: 'docs/screenshot.pt-BR.png' });
+await page.screenshot({ path: `${artifacts}/screenshot.pt-BR.png` });
 await page.locator('#language').selectOption('en');
 await page.locator('#download').scrollIntoViewIfNeeded();
 const [download] = await Promise.all([
   page.waitForEvent('download'),
   page.locator('#download').click(),
 ]);
-await download.saveAs('docs/example.gpx');
-const xml = await fs.readFile('docs/example.gpx', 'utf8');
+await download.saveAs(`${artifacts}/example.gpx`);
+const xml = await fs.readFile(`${artifacts}/example.gpx`, 'utf8');
 const trackPoints = (xml.match(/<trkpt /g) || []).length;
 assert.ok(trackPoints > 500);
 if (geometryPoints) assert.equal(trackPoints, geometryPoints);
@@ -103,7 +104,7 @@ await page.getByRole('heading', { name: 'Criar rota' }).waitFor();
 assert.equal(await page.locator('html').getAttribute('lang'), 'pt-BR');
 assert.match(await page.locator('#download').innerText(), /Baixar/);
 // GPX import must preserve all original geometry, without a network recalculation.
-await page.locator('#import').setInputFiles('docs/example.gpx');
+await page.locator('#import').setInputFiles(`${artifacts}/example.gpx`);
 await page.waitForFunction(() =>
   document.querySelector('#summary').textContent.includes('Imported GPX'),
 );
@@ -166,7 +167,7 @@ await mobile.locator('#points').evaluate((el) => {
   el.scrollTop = 0;
 });
 await tilesPainted(mobile);
-await mobile.screenshot({ path: 'docs/mobile.png', fullPage: true });
+await mobile.screenshot({ path: `${artifacts}/mobile.png`, fullPage: true });
 const dark = await browser.newPage({
   viewport: { width: 1280, height: 900 },
   colorScheme: 'dark',
@@ -179,7 +180,7 @@ assert.equal(
   'light',
 );
 await tilesPainted(dark);
-await dark.screenshot({ path: 'docs/dark.png' });
+await dark.screenshot({ path: `${artifacts}/dark.png` });
 const help = await browser.newPage();
 await help.goto(
   new URL(await page.locator('#help').getAttribute('href'), base).href,
@@ -193,7 +194,7 @@ await help.locator('#language').selectOption('en');
 await help.getByRole('heading', { name: 'Help', exact: true }).waitFor();
 assert.deepEqual(errors, []);
 await fs.writeFile(
-  'docs/browser-check.json',
+  `${artifacts}/browser-check.json`,
   JSON.stringify(
     {
       base,

@@ -1,7 +1,132 @@
 import { updateSeo } from './seo';
+import type { IconName } from './icons';
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
 const pt: Record<string, string> = {
+  'View weather': 'Ver clima',
+  'Show on map': 'Mostrar no mapa',
+  Weather: 'Clima',
+  'Light wind': 'Vento fraco',
+  'Moderate wind': 'Vento moderado',
+  'Strong wind': 'Vento forte',
+  'Very strong wind': 'Vento muito forte',
+  'Wind toward': 'Vento em direção a',
+  North: 'Norte',
+  'North-east': 'Nordeste',
+  East: 'Leste',
+  'South-east': 'Sudeste',
+  South: 'Sul',
+  'South-west': 'Sudoeste',
+  West: 'Oeste',
+  'North-west': 'Noroeste',
+  Headwind: 'Vento contra',
+  Tailwind: 'Vento a favor',
+  Crosswind: 'Vento lateral',
+  'Calm wind': 'Vento calmo',
+  'Wind unavailable': 'Vento indisponível',
+  'Wind direction unavailable': 'Direção do vento indisponível',
+  'Past estimates': 'Estimativas do passado',
+  'Past estimates and forecast': 'Estimativas do passado e previsão',
+  'Departure must be within the last 90 days.':
+    'A saída deve estar nos últimos 90 dias.',
+  'No alert': 'Sem alerta',
+  'Alert 1': 'Alerta 1',
+  'Alert 2': 'Alerta 2',
+  'Alert 3': 'Alerta 3',
+  'Weather along the route': 'Clima ao longo da rota',
+  'Loading weather…': 'Buscando clima…',
+  'Weather data license: CC BY 4.0': 'Licença dos dados do tempo: CC BY 4.0',
+  'RainViewer API terms': 'Termos da API RainViewer',
+  'Past two hours only. Zoom above level 7 adds no detail.':
+    'Somente as últimas duas horas. Zoom acima do nível 7 não acrescenta detalhes.',
+  'Legend and opacity': 'Legenda e opacidade',
+  'Try again': 'Tentar novamente',
+  'Updating weather…': 'Atualizando clima…',
+  'Passage times exceed the fetched interval.':
+    'Os horários de passagem ultrapassam o intervalo consultado.',
+
+  'Rain radar': 'Radar de chuva',
+  'Play or pause radar': 'Reproduzir ou pausar radar',
+  'Radar frame time': 'Horário da imagem do radar',
+  'Radar timeline': 'Linha do tempo do radar',
+  'Try radar again': 'Tentar radar novamente',
+  'Radar opacity': 'Opacidade do radar',
+  'Show coverage mask': 'Mostrar máscara de cobertura',
+  'Reflectivity (dBZ), not rainfall totals.':
+    'Refletividade (dBZ), não volume de chuva.',
+  'Radar reflectivity legend': 'Legenda de refletividade do radar',
+  'Shaded areas: no coverage in the approximate mask. Clear areas do not confirm dry weather.':
+    'Áreas sombreadas: sem cobertura na máscara aproximada. Áreas claras não confirmam tempo seco.',
+  'Recent observations, not a forecast.':
+    'Observações recentes, não previsão futura.',
+  'Radar by RainViewer': 'Radar por RainViewer',
+  'Loading radar images…': 'Carregando imagens do radar…',
+  'Radar images are over 30 minutes old.':
+    'As imagens do radar têm mais de 30 minutos.',
+  'Radar service returned an invalid response.':
+    'O serviço de radar retornou uma resposta inválida.',
+  'No recent radar images available. Try again later.':
+    'Nenhuma imagem recente de radar disponível. Tente mais tarde.',
+  'Radar usage limit reached. Try again later.':
+    'Limite de uso do radar atingido. Tente mais tarde.',
+  'Radar unavailable. Try again.': 'Radar indisponível. Tente novamente.',
+  'Radar request timed out. Try again.':
+    'O tempo da consulta ao radar esgotou. Tente novamente.',
+  'Radar network error. Check your connection and try again.':
+    'Falha de rede no radar. Confira a conexão e tente novamente.',
+  'Radar coverage unavailable. Try again.':
+    'Cobertura do radar indisponível. Tente novamente.',
+  'Departure date and time': 'Data e hora de saída',
+  'Weather data by Open-Meteo': 'Dados do tempo por Open-Meteo',
+  'Passage times and risk summaries calculated by route-gpx.':
+    'Horários de passagem e resumos de risco calculados pelo route-gpx.',
+  'Open-Meteo server': 'Servidor Open-Meteo',
+  'Choose a departure date and time.': 'Escolha uma data e hora de saída.',
+  'Departure and arrival, including the weather margin, must fit within the 16-day forecast.':
+    'A saída e a chegada, incluindo a margem da previsão, devem estar no horizonte de 16 dias.',
+  'Calculate or import a route first.': 'Calcule ou importe uma rota primeiro.',
+  'Weather supports at most 20 distinct route stops. Reduce the stops and try again.':
+    'O clima aceita no máximo 20 pontos de passagem distintos. Reduza os pontos e tente novamente.',
+  'Weather service returned an invalid response.':
+    'O serviço de clima retornou uma resposta inválida.',
+  'Weather usage limit reached. Try again later.':
+    'Limite de uso do clima atingido. Tente mais tarde.',
+  'Weather unavailable. Try again.': 'Clima indisponível. Tente novamente.',
+  'Weather request timed out. Try again.':
+    'O tempo da consulta de clima esgotou. Tente novamente.',
+  'Weather network error. Check your connection and try again.':
+    'Falha de rede no clima. Confira a conexão e tente novamente.',
+  Thunderstorm: 'Trovoada',
+  'Heavy rain': 'Chuva forte',
+  'Rain risk': 'Risco de chuva',
+  'Fog / low visibility': 'Neblina / baixa visibilidade',
+  'Strong wind gusts': 'Rajadas de vento fortes',
+  'Cold / possible ice': 'Frio / possível gelo',
+  'Extreme heat': 'Calor extremo',
+  'Some weather data unavailable': 'Alguns dados de previsão indisponíveis',
+  'Clear sky': 'Céu limpo',
+  'Mainly clear': 'Predominantemente limpo',
+  'Partly cloudy': 'Parcialmente nublado',
+  Overcast: 'Encoberto',
+  Fog: 'Neblina',
+  'Freezing fog': 'Neblina congelante',
+  'Light drizzle': 'Garoa leve',
+  'Moderate drizzle': 'Garoa moderada',
+  'Dense drizzle': 'Garoa intensa',
+  'Freezing drizzle': 'Garoa congelante',
+  'Light rain': 'Chuva leve',
+  'Moderate rain': 'Chuva moderada',
+  'Freezing rain': 'Chuva congelante',
+  'Light snow': 'Neve leve',
+  'Moderate snow': 'Neve moderada',
+  'Heavy snow': 'Neve forte',
+  'Snow grains': 'Grãos de neve',
+  'Rain showers': 'Pancadas de chuva',
+  'Heavy rain showers': 'Pancadas fortes de chuva',
+  'Snow showers': 'Pancadas de neve',
+  'Thunderstorm with hail': 'Trovoada com granizo',
+  'Weather unavailable': 'Tempo indisponível',
+
   'Map layers': 'Camadas do mapa',
   Standard: 'Padrão',
   Topographic: 'Topográfico',
@@ -14,8 +139,10 @@ const pt: Record<string, string> = {
   'Choose route point': 'Escolher ponto da rota',
   'Set as destination': 'Definir como destino',
   'Photon server': 'Servidor Photon',
-  'Suggestions unavailable. Press Search or Enter to search with Nominatim.':
-    'Sugestões indisponíveis. Toque em Buscar ou Enter para buscar com Nominatim.',
+  'Suggestions unavailable. Press Enter to search with Nominatim.':
+    'Sugestões indisponíveis. Pressione Enter para buscar com Nominatim.',
+  'No suggestions found. Press Enter to search with Nominatim.':
+    'Nenhuma sugestão encontrada. Pressione Enter para buscar com Nominatim.',
   'GPX sharing unavailable. Use Download GPX instead.':
     'Compartilhamento de GPX indisponível. Use Baixar GPX.',
   'Could not share GPX. Use Download GPX instead.':
@@ -36,9 +163,6 @@ const pt: Record<string, string> = {
   'Full screen': 'Tela cheia',
   'Your location': 'Sua localização',
   'Close location': 'Fechar localização',
-  'Your exact location is used only to center the map and never leaves your device.':
-    'Sua localização exata é usada só para centralizar o mapa e nunca sai do seu aparelho',
-  Continue: 'Continuar',
   'Route points are rounded to about 100 m before sharing or routing. Check the point on the map.':
     'Os pontos da rota são arredondados para cerca de 100 m antes de compartilhar ou calcular. Confira o ponto no mapa.',
   'Set as start': 'Definir como início',
@@ -83,12 +207,8 @@ const pt: Record<string, string> = {
   Enable: 'Ativar',
   'Average speed must be between 1 and 200 km/h or 1 and 130 mph.':
     'A velocidade média deve ficar entre 1 e 200 km/h ou 1 e 130 mph.',
-  'Average speed must be between 1 and 200 km/h.':
-    'A velocidade média deve ficar entre 1 e 200 km/h.',
   'Average speed': 'Velocidade média',
   'Use router estimate': 'Usar estimativa do roteador',
-  'Enter an average speed greater than zero.':
-    'Informe uma velocidade média maior que zero.',
   'Distance units': 'Unidades de distância',
   'Calculate route': 'Calcular rota',
   '↶ Undo': '↶ Desfazer',
@@ -115,7 +235,6 @@ const pt: Record<string, string> = {
   Points: 'Pontos',
   '＋ Stop': '＋ Parada',
   '⇅ Reverse': '⇅ Inverter',
-  'Place or coordinates': 'Lugar ou coordenadas',
   'Address or lat, lon': 'Endereço ou lat, lon',
   'Prefer main roads': 'Preferir vias principais',
   Settings: 'Configurações',
@@ -123,7 +242,6 @@ const pt: Record<string, string> = {
   'Public, shared servers.': 'Servidores públicos e compartilhados.',
   '◎ Fit route': '◎ Ver rota',
   'Set your start and destination.': 'Defina a origem e o destino.',
-  'Set all points.': 'Defina todos os pontos.',
   'Updating…': 'Atualizando…',
   'Calculating…': 'Calculando…',
   'Route ready.': 'Rota pronta.',
@@ -134,113 +252,37 @@ const pt: Record<string, string> = {
   'GPX imported. Edits recalculate the route.':
     'GPX importado. Alterações recalculam a rota.',
   'Import GPX': 'Importar GPX',
-
-  'Your road, point by point.': 'Seu caminho, ponto a ponto.',
-  'Open source ↗': 'Código aberto ↗',
-
-  'MAKE YOUR NEXT MOVE': 'PLANEJE A PRÓXIMA VIAGEM',
-  'Take the scenic route.': 'A estrada é sua.',
-  'Choose the roads you love.': 'Escolha por onde passar.',
-  'Take every turn with you in GPX.': 'Leve cada curva com você em GPX.',
-  '↗ Try Tijuca → Grumari': '↗ Testar Tijuca → Grumari',
-  '↑ Import GPX': '↑ Importar GPX',
-  'ON YOUR DEVICE': 'NO SEU DISPOSITIVO',
-  'Your itinerary': 'Seu itinerário',
   'Route points': 'Pontos da rota',
-  'Select a point. Click the map, search an address, or paste lat, lon.':
-    'Selecione um ponto. Clique no mapa, busque um endereço ou cole lat, lon.',
-  '＋ Add a stop': '＋ Adicionar parada',
-  '⇅ Reverse route': '⇅ Inverter rota',
   '↶ Round trip': '↶ Ida e volta',
-  'Address or coordinates for the selected point':
-    'Endereço ou coordenadas do ponto selecionado',
-  'e.g. -22.6917362, -43.4589026': 'Ex.: -22.6917362, -43.4589026',
-  Search: 'Buscar',
-  'Addresses are searched only when you press Search.':
-    'Endereços são buscados somente ao tocar em Buscar.',
-  'Address results': 'Resultados de endereços',
-  'Prefer major highways': 'Preferir vias principais',
-  'Review the roads and guide your route with stops.':
-    'Confira as vias e guie sua rota com pontos de passagem.',
   'Route summary': 'Resumo da rota',
-  'From the first point to the last turn.': 'Do primeiro ponto à última curva.',
-  'Set your start and destination to begin.':
-    'Defina origem e destino para começar.',
-  'Ready when you are.': 'Pronto para traçar seu caminho.',
   '↓ Download GPX': '↓ Baixar GPX',
   'Copy route link': 'Copiar link da rota',
   'Copy link': 'Copiar link',
-  'Settings & privacy': 'Configurações e privacidade',
-  'Trip name': 'Nome da viagem',
   'My road trip': 'Minha viagem',
   'OSRM server': 'Servidor OSRM',
   'Valhalla fallback': 'Fallback Valhalla',
   'Nominatim server': 'Servidor Nominatim',
   'Apply settings': 'Aplicar configurações',
-  'No cookies or analytics. Points are stored in the link. Coordinates, searches and the map area are sent to your selected services. Avoid sharing links containing private locations.':
-    'Sem cookies ou analytics. Os pontos ficam no link. Coordenadas, buscas e a área do mapa são enviados aos serviços escolhidos. Evite compartilhar links com locais privados.',
-  'Public, shared servers: limited capacity and best-effort availability. Requests are spaced out. No address autocomplete or map downloads.':
-    'Servidores públicos e compartilhados, com capacidade e disponibilidade limitadas. Requisições espaçadas. Sem autocompletar endereços ou baixar mapas.',
-  'Nominatim usage policy ↗': 'Política de uso do Nominatim ↗',
-  'Advanced: route state as JSON': 'Avançado: estado da rota em JSON',
   'Points and settings (latitude, longitude)':
     'Pontos e configurações (latitude, longitude)',
   'Load current state': 'Carregar estado atual',
   'Apply JSON': 'Aplicar JSON',
-  'Made for the open road.': 'Feito para ir mais longe.',
-  'Data © OpenStreetMap · OSRM · Valhalla · Leaflet · Nominatim':
-    'Dados © OpenStreetMap · OSRM · Valhalla · Leaflet · Nominatim',
   'Interactive map': 'Mapa interativo',
-  'Click the map to place a point': 'Clique no mapa para posicionar um ponto',
-  '◎ Fit entire route': '◎ Ver rota inteira',
-  'Select this point on the map': 'Selecionar este ponto no mapa',
-  'Choose your start': 'Defina sua origem',
-  'Choose your destination': 'Defina seu destino',
-  'Choose a stop': 'Defina um ponto de passagem',
-  'No highway references returned':
-    'O roteador não retornou referências de rodovias',
-  'Road references unavailable for imported tracks':
-    'Referências de vias indisponíveis em trajetos importados',
-  'Highway preference is a review aid. OSRM cannot guarantee a highway-only route; add stops on the roads you want.':
-    'A preferência por vias principais auxilia a revisão. O OSRM não garante uma rota só por rodovias; adicione pontos nas vias desejadas.',
   'This route link is invalid. Start a new route below.':
     'O link da rota é inválido. Comece uma nova rota abaixo.',
   'Invalid coordinates. Use latitude, longitude (for example: -22.90, -43.18).':
     'Coordenadas inválidas. Use latitude, longitude (por exemplo: -22.90, -43.18).',
-  'Place all points to calculate a driving route.':
-    'Posicione todos os pontos para calcular a rota de carro.',
-  'Route updated. Waiting briefly before recalculating…':
-    'Rota alterada. Aguardando um instante antes de recalcular…',
-  'Finding your route along the streets…': 'Calculando sua rota pelas ruas…',
-  'Route ready. Review the roads, then download your GPX.':
-    'Rota pronta. Confira as vias e baixe seu GPX.',
   'Routing server unavailable. Please try again.':
     'Servidor de roteamento indisponível. Tente novamente.',
   'A round trip would exceed the 50-point limit.':
     'A ida e volta ultrapassaria o limite de 50 pontos.',
-  'Round trip added. Each direction will be routed along drivable streets. Check stops on divided roads for unwanted detours.':
-    'Ida e volta adicionada. Cada sentido seguirá as vias permitidas para carros. Confira os pontos em vias com pistas separadas para evitar desvios.',
-  'Invalid coordinates. Use latitude (-90 to 90), longitude (-180 to 180).':
-    'Coordenadas inválidas. Use latitude (-90 a 90), longitude (-180 a 180).',
-  'Enter at least three characters or a latitude, longitude pair.':
-    'Informe ao menos três caracteres ou um par latitude, longitude.',
-  'Searching for this address…': 'Buscando este endereço…',
   'No address found. Try a nearby street, city, or coordinates.':
     'Nenhum endereço encontrado. Tente uma rua próxima, cidade ou coordenadas.',
   'Search returned invalid coordinates.':
     'A busca retornou coordenadas inválidas.',
-  'Choose an address result.': 'Selecione um resultado da busca.',
   'Address search unavailable. Try again later or paste coordinates.':
     'Busca de endereços indisponível. Tente mais tarde ou cole coordenadas.',
-  'GPX downloaded with every geometry point and your stops.':
-    'GPX baixado com todos os pontos da geometria e suas paradas.',
-  'Route link copied. It contains the points and settings.':
-    'Link copiado. Ele contém os pontos e as configurações.',
-  'Copy the URL from your browser’s address bar to share this route.':
-    'Copie a URL na barra de endereços do navegador para compartilhar esta rota.',
   'Choose a GPX smaller than 10 MB.': 'Escolha um GPX menor que 10 MB.',
-  'Original GPX geometry preserved. Editing a point recalculates the track on streets. Shared links contain control points; they recalculate the route.':
-    'Geometria original do GPX preservada. Editar um ponto recalcula o trajeto pelas ruas. Links compartilhados contêm os pontos de controle e recalculam a rota.',
   'Invalid route link. Your current route has been kept.':
     'Link de rota inválido. Sua rota atual foi mantida.',
   'Invalid JSON state. Load the current state to see the expected format.':
@@ -263,6 +305,11 @@ const pt: Record<string, string> = {
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
   [
+    /^Weather speed: (.*?) (km\/h|mph)( \(default\))?\.$/,
+    (n, u, fallback) =>
+      `Velocidade utilizada: ${n} ${u}${fallback ? ' (padrão)' : ''}.`,
+  ],
+  [
     /^Contains modified Copernicus Sentinel data (2016|2025)$/,
     (year) => `Contém dados Copernicus Sentinel modificados de ${year}`,
   ],
@@ -276,7 +323,6 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
 
   [/^At (.*?) (km\/h|mph) · no stops$/, (n, u) => `A ${n} ${u} · sem paradas`],
   [/^Location of point (\d+)$/, (n) => `Local do ponto ${n}`],
-  [/^Search point (\d+)$/, (n) => `Buscar ponto ${n}`],
   [/^Results for point (\d+)$/, (n) => `Resultados do ponto ${n}`],
   [
     /^Set (Start|Destination|Stop \d+) on the map$/,
@@ -286,48 +332,20 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
 
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
-  [/^Finding “(.*?)”…$/, (p) => `Buscando “${p}”…`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],
 
   [/^(.*?) · (.*?) points$/, (p, n) => `${p} · ${n} pontos`],
-  [/^Place point (\d+) on the map$/, (n) => `Posicione o ponto ${n} no mapa`],
   [/^(\d+) road sections to review$/, (n) => `${n} trechos para conferir`],
   [/^Roads \((\d+)\)$/, (n) => `Vias (${n})`],
 
   [/^(\d+) points$/, (n) => `${n} pontos`],
-  [
-    /^Click the map to place point (\d+)$/,
-    (n) => `Clique no mapa para posicionar o ponto ${n}`,
-  ],
   [/^Select point (\d+)$/, (n) => `Selecionar ponto ${n}`],
-  [/^Name of point (\d+)$/, (n) => `Nome do ponto ${n}`],
-  [/^Coordinates of point (\d+)$/, (n) => `Coordenadas do ponto ${n}`],
   [/^Remove point (\d+)$/, (n) => `Remover ponto ${n}`],
   [
     /^Move point (\d+) (up|down)$/,
     (n, d) => `Mover ponto ${n} para ${d === 'up' ? 'cima' : 'baixo'}`,
   ],
   [/^(\d+)\. (Start|Destination|Via)$/, (n, kind) => `${n}. ${pt[kind]}`],
-  [/^Roads used \((\d+) sections\)$/, (n) => `Vias usadas (${n} trechos)`],
-  [
-    /^(.*?) · full geometry · (.*?) points$/,
-    (provider, n) => `${provider} · geometria completa · ${n} pontos`,
-  ],
-  [
-    /^(\d+) possible local-road sections of 500 m or more\. Check the road list and adjust your stops\. Access roads and ramps may be included\.$/,
-    (n) =>
-      `${n} possíveis trechos de vias locais com 500 m ou mais. Confira a lista e ajuste os pontos. Acessos e alças podem estar incluídos.`,
-  ],
-  [
-    /^Finding “(.*?)”… \(public search, at most one request per second\)$/,
-    (p) =>
-      `Buscando “${p}”… (serviço público, no máximo uma requisição por segundo)`,
-  ],
-  [
-    /^Some points were snapped more than 100 m to a drivable road: (.*?)\. Move them closer to your intended road\.$/,
-    (p) =>
-      `Alguns pontos foram ajustados mais de 100 m para uma via de carro: ${p}. Aproxime-os da via desejada.`,
-  ],
   [
     /^No route available\. Check the points or try again later\. (.*?) The fallback server also failed\.$/,
     (p) =>
@@ -393,4 +411,43 @@ export function observeTranslations(): void {
     attributes: true,
     attributeFilter: ['placeholder', 'aria-label', 'title'],
   });
+}
+
+/** Open-Meteo WMO interpretation codes; text keys use the normal DOM translator. */
+export function weatherDescription(code: number | null): {
+  icon: IconName;
+  text: string;
+} {
+  const codes: Record<number, [IconName, string]> = {
+    0: ['weather-sun', 'Clear sky'],
+    1: ['weather-partly-cloudy', 'Mainly clear'],
+    2: ['weather-partly-cloudy', 'Partly cloudy'],
+    3: ['weather-cloud', 'Overcast'],
+    45: ['weather-fog', 'Fog'],
+    48: ['weather-fog', 'Freezing fog'],
+    51: ['weather-drizzle', 'Light drizzle'],
+    53: ['weather-drizzle', 'Moderate drizzle'],
+    55: ['weather-drizzle', 'Dense drizzle'],
+    56: ['weather-freezing-rain', 'Freezing drizzle'],
+    57: ['weather-freezing-rain', 'Freezing drizzle'],
+    61: ['weather-rain', 'Light rain'],
+    63: ['weather-rain', 'Moderate rain'],
+    65: ['weather-heavy-rain', 'Heavy rain'],
+    66: ['weather-freezing-rain', 'Freezing rain'],
+    67: ['weather-freezing-rain', 'Freezing rain'],
+    71: ['weather-snow', 'Light snow'],
+    73: ['weather-snow', 'Moderate snow'],
+    75: ['weather-snow', 'Heavy snow'],
+    77: ['weather-snow', 'Snow grains'],
+    80: ['weather-rain', 'Rain showers'],
+    81: ['weather-rain', 'Rain showers'],
+    82: ['weather-heavy-rain', 'Heavy rain showers'],
+    85: ['weather-snow', 'Snow showers'],
+    86: ['weather-snow', 'Snow showers'],
+    95: ['weather-thunderstorm', 'Thunderstorm'],
+    96: ['weather-hail', 'Thunderstorm with hail'],
+    99: ['weather-hail', 'Thunderstorm with hail'],
+  };
+  const [icon, text] = codes[code ?? -1] ?? ['help', 'Weather unavailable'];
+  return { icon, text };
 }

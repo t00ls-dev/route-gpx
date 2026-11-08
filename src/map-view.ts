@@ -130,23 +130,22 @@ export function setupMapView(
   const userLocation = L.layerGroup().addTo(map);
   let exactPosition: Coord | null = null;
   let locationRequest = 0;
-  element('locate').onclick = () => {
-    interact();
-    if (panelOpen && matchMedia('(max-width: 759px)').matches)
-      element('panel-toggle').click();
-    element('location-card').hidden = false;
-    element('location-status').textContent = '';
-    element('confirm-location').hidden = false;
-  };
   element('close-location').onclick = () => {
     locationRequest++;
     element('location-card').hidden = true;
     userLocation.clearLayers();
     exactPosition = null;
     element('location-actions').hidden = true;
-    element<HTMLButtonElement>('confirm-location').disabled = false;
+    element<HTMLButtonElement>('locate').disabled = false;
   };
-  element('confirm-location').onclick = () => {
+  element('locate').onclick = () => {
+    interact();
+    if (panelOpen && matchMedia('(max-width: 759px)').matches)
+      element('panel-toggle').click();
+    element('location-card').hidden = false;
+    element('location-actions').hidden = true;
+    exactPosition = null;
+    userLocation.clearLayers();
     if (!window.isSecureContext) {
       element('location-status').textContent =
         'Location requires HTTPS. Open the secure site or choose a point on the map.';
@@ -159,7 +158,7 @@ export function setupMapView(
     }
     interact();
     const request = ++locationRequest;
-    const button = element<HTMLButtonElement>('confirm-location');
+    const button = element<HTMLButtonElement>('locate');
     button.disabled = true;
     element('location-status').textContent = 'Finding your location…';
     void getPosition()
@@ -185,7 +184,6 @@ export function setupMapView(
         element('location-status').textContent =
           'Location found. Your route has not changed.';
         element('location-actions').hidden = false;
-        button.hidden = true;
       })
       .catch((error: GeolocationPositionError) => {
         if (request !== locationRequest) return;

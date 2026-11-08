@@ -1,11 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 import { defaults, encodeState, decodeState } from '../src/core';
-const base = 'http://127.0.0.1:5173/route-gpx/';
+const base = 'http://127.0.0.1:5173/';
 const ipUrl = 'https://ipwho.is/**';
 const position = { latitude: 48.1234567, longitude: 11.7654321, accuracy: 35 };
 const tile =
   '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#e3ecea"/></svg>';
 test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
+
   await page.route('https://tile.openstreetmap.org/**', (r) =>
     r.fulfill({ contentType: 'image/svg+xml', body: tile }),
   );
@@ -17,10 +19,7 @@ test.beforeEach(async ({ page }) => {
 });
 async function locate(page: Page) {
   await page.locator('#locate').click();
-  await expect(page.locator('#location-card')).toContainText(
-    'never leaves your device',
-  );
-  await page.locator('#confirm-location').click();
+  await expect(page.locator('#confirm-location')).toHaveCount(0);
 }
 async function noExactStorage(page: Page) {
   const content = await page.evaluate(async () => {
@@ -408,3 +407,43 @@ test('mobile route endpoints fit above the open sheet', async ({ page }) => {
     expect(box!.y + box!.height).toBeLessThan(sheet!.y);
   }
 });
+
+for (const width of [320, 390, 1280])
+  test(`location actions stay spaced and inside the card at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.addInitScript(() =>
+      Object.defineProperty(navigator.geolocation, 'getCurrentPosition', {
+        value: (ok: PositionCallback) =>
+          ok({
+            coords: { latitude: 48.123, longitude: 11.765, accuracy: 25 },
+            timestamp: Date.now(),
+          } as GeolocationPosition),
+      }),
+    );
+    await page.goto(base);
+    await locate(page);
+    await expect(page.locator('#location-actions')).toBeVisible();
+    const a = (await page.locator('#location-start').boundingBox())!,
+      b = (await page.locator('#location-stop').boundingBox())!,
+      card = (await page.locator('#location-card').boundingBox())!;
+    expect(a.width).toBeCloseTo(b.width, 0);
+    for (const button of [a, b]) {
+      expect(button.height).toBeGreaterThanOrEqual(48);
+      expect(button.x).toBeGreaterThan(card.x);
+      expect(button.x + button.width).toBeLessThan(card.x + card.width);
+      expect(button.y + button.height).toBeLessThan(card.y + card.height);
+    }
+    expect(b.x - a.x - a.width >= 11.9 || b.y - a.y - a.height >= 11.9).toBe(
+      true,
+    );
+    if (width === 320) expect(b.y).toBeGreaterThan(a.y + a.height);
+    await page.locator('#language').selectOption('pt');
+    await expect(page.locator('#location-start')).toHaveText(
+      'Definir como início',
+    );
+    await expect(page.locator('#location-stop')).toHaveText(
+      'Adicionar como parada',
+    );
+  });

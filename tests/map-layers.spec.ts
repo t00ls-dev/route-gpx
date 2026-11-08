@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-const base = 'http://127.0.0.1:5173/route-gpx/';
+const base = 'http://127.0.0.1:5173/';
 const tile =
   '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#d1e2ce"/></svg>';
 test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
+
   for (const domain of [
     'tile.openstreetmap.org',
     'a.tile.opentopomap.org',

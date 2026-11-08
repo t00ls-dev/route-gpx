@@ -11,10 +11,7 @@
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="route-gpx" />
-    <link
-      rel="canonical"
-      href="https://t00ls-dev.github.io/route-gpx/help.html"
-    />
+    <link rel="canonical" href="https://route-gpx.t00ls.dev/help.html" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
@@ -29,14 +26,11 @@
       property="og:description"
       content="Learn to set route points, use the map, import and export GPX, estimate travel time, switch units and share routes with route-gpx."
     />
-    <meta
-      property="og:url"
-      content="https://t00ls-dev.github.io/route-gpx/help.html"
-    />
+    <meta property="og:url" content="https://route-gpx.t00ls.dev/help.html" />
     <meta property="og:locale" content="en_US" />
     <meta
       property="og:image"
-      content="https://t00ls-dev.github.io/route-gpx/social-card.png"
+      content="https://route-gpx.t00ls.dev/social-card.png"
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -55,7 +49,7 @@
     />
     <meta
       name="twitter:image"
-      content="https://t00ls-dev.github.io/route-gpx/social-card.png"
+      content="https://route-gpx.t00ls.dev/social-card.png"
     />
     <meta name="twitter:image:alt" content="route-gpx route planner" />
   </head>
@@ -85,18 +79,18 @@
         <p>
           Enter an address or latitude, longitude directly in Start and
           Destination. Coordinates are applied automatically; for addresses,
-          press Search or Enter and choose a result. You can also set both
-          points by clicking the map on desktop or holding a point on touch
-          screens. Drag markers to adjust. Calculate route retries the
-          calculation. Use Undo to restore a change, the arrows to reorder, or ×
-          to remove a stop.
+          choose a suggestion while typing, or press Enter for an explicit
+          search. You can also set both points by clicking the map on desktop or
+          holding a point on touch screens. Drag markers to adjust. Calculate
+          route retries the calculation. Use Undo to restore a change, the
+          arrows to reorder, or × to remove a stop.
         </p>
         <p>
           On small screens, the right column contains location, layers, full
           screen, fit route, undo and zoom icons. Each has a tooltip and
           accessible name. The header Help icon opens these instructions;
-          address fields use a search icon, and the pin icon selects the point
-          on the map.
+          address fields suggest places as you type; the pin icon selects the
+          point on the map.
         </p>
         <h2>Map layers</h2>
         <p>
@@ -137,9 +131,9 @@
           Numeric coordinates, including incomplete input, stay local. Use
           arrows and Enter or touch a suggestion; Escape closes the list. Typed
           text and an approximate map-center bias go to the configured Photon
-          service. If it fails, press Search or Enter for an explicit Nominatim
-          search. Public services have limited capacity; configure another
-          instance before scaling.
+          service. If it fails, press Enter for an explicit Nominatim search.
+          Public services have limited capacity; configure another instance
+          before scaling.
         </p>
         <p>
           Share GPX appears when the browser supports sharing files. It uses the
@@ -154,13 +148,13 @@
           expands the map; press it again or Escape to leave.
         </p>
         <p>
-          Use my location explains why GPS is needed before Continue requests
-          browser permission. Exact location only centers the map and displays
-          an accuracy circle. Set as start and Add as stop use a rounded
-          coordinate (about 100 m); review it before routing. If permission is
-          denied, open this site's permissions in your browser settings and
-          allow Location, then try again. You can keep using the map without
-          GPS.
+          Use my location requests your position directly. The browser asks for
+          permission when needed, without a preliminary confirmation screen.
+          Exact location only centers the map and displays an accuracy circle.
+          Set as start and Add as stop use a rounded coordinate (about 100 m);
+          review it before routing. If permission is denied, open this site's
+          permissions in your browser settings and allow Location, then try
+          again. You can keep using the map without GPS.
         </p>
         <p>
           The initial view prefers the URL route, then already authorized GPS,
@@ -176,6 +170,11 @@
           local sections of 500 m or more; it does not exclude all local roads.
           Major avenues without a reference may also be flagged. Access roads
           can be necessary.
+        </p>
+        <p>
+          Recent router results stay in page memory for 15 minutes, up to 20
+          routes. Returning to the same points and routing settings reuses them;
+          Calculate route requests a fresh result. Reloading clears this cache.
         </p>
         <h2>Saved routes</h2>
         <p>
@@ -201,6 +200,133 @@
           stops fall on the intended carriageway. Estimated times exclude stops
           and live traffic.
         </p>
+        <h2>Departure and weather</h2>
+        <p>
+          Choose Departure date and time in Weather. Once the route is ready,
+          weather loads automatically after a short pause. There is no request
+          without a date. Choosing a date sends sampled points and expected
+          dates/times to Open-Meteo. The interface shows the speed actually
+          used: 60 km/h by default, or the value enabled in Average speed,
+          displayed in km/h or mph. Adjust it for your journey. Stops and
+          traffic are excluded. All displayed times use the device timezone.
+          Departures in the last 90 UTC calendar days are accepted. Older
+          departures and arrival windows beyond 16 UTC calendar days including
+          today are rejected. Past dates show Past estimates, or Past estimates
+          and forecast if the journey crosses the current time. Past values are
+          archived model estimates, not exact observations at each route point.
+          Imported GPX works too. Samples include endpoints and waypoints,
+          approximately every 20 km. Below 20 km/h, spacing is reduced to about
+          one hour of travel (5 km at 5 km/h, for example). The maximum of 20
+          points takes priority and may require larger gaps. Select a weather
+          icon on the map to open its weather card in the panel. Selecting a
+          card centers the map on its point and collapses the mobile panel;
+          Enter and Space work too.
+        </p>
+        <p>
+          Speed changes recalculate locally if coverage permits; use Try again
+          if the interval is exceeded. Slower travel automatically requests
+          additional points if needed for the shorter spacing; faster travel
+          reuses the existing points without another request. Track, date or
+          server changes automatically update the weather. Errors allow a manual
+          retry, never automatic retry loops. Weather data and sample
+          coordinates stay only in page memory, never in storage, application
+          logs or links. Only departure is new persisted trip data, in normal
+          links and explicitly saved routes. Reopening requests weather again.
+          GPX point timestamps are not added.
+        </p>
+        <p>
+          Hourly temperature, precipitation probability/volume, weather code,
+          wind speed/direction, gusts and visibility come from
+          <a href="https://open-meteo.com/">Open-Meteo</a>, under
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+          Weather data by Open-Meteo; passage times and risk summaries
+          calculated by route-gpx. The free API is non-commercial only, no key,
+          HTTPS/CORS; its base URL is configurable in Settings. Limits: 600
+          calls/minute, 5,000/hour, 10,000/day and 300,000/month. Every location
+          counts even in one grouped request; over 10 variables or two weeks
+          increases call accounting. Requests are at least six seconds apart
+          with conservative memory budgets, a ten-minute memory cache and a
+          20-second timeout. The cache holds up to 200 locations and 100,000
+          hourly entries, reusing covered locations and grouping only missing
+          ones. Hits do not extend freshness. Page limits cannot enforce
+          aggregate usage. <a href="https://open-meteo.com/en/terms">Terms</a> ·
+          <a href="https://open-meteo.com/en/pricing">Call accounting</a> ·
+          <a href="https://open-meteo.com/en/docs">Documentation</a>.
+        </p>
+        <p>
+          Forecasts are approximate, on a grid of several kilometres, and may
+          miss local showers; passage times depend on stops and traffic. Risk
+          alerts are review aids, not official warnings: worst case within ±1
+          hour, rounded outward. Rain: ≥60% probability or ≥1 mm/h; heavy rain
+          ≥10 mm/h; thunderstorm codes 95/96/99; fog codes 45/48 or visibility
+          ≤1,000 m; gusts ≥60 km/h; cold/possible ice ≤2 °C or freezing codes;
+          extreme heat ≥40 °C. Alerts are ordered by severity; missing data is
+          flagged. Real forecast accuracy has not been evaluated.
+        </p>
+        <p>
+          Each sampled point has one card combining weather and risk, without a
+          separate alert list. Alert 1, 2 and 3 use yellow, orange and red plus
+          text labels; no-alert cards are neutral. All cards use the main panel
+          scroll.
+        </p>
+        <p>
+          Cards use matching outline SVG icons; map markers use colored,
+          centered weather icons. The wind icon accompanies the relative
+          direction and speed. Wind compares the direction it comes from with
+          the local track direction: headwind within 45° ahead, tailwind within
+          45° behind, otherwise crosswind. Below 1 km/h is calm. The nearest
+          weather hour is used, with speed in km/h or mph. Bends use the
+          outgoing edge; the destination uses the incoming edge. This is model
+          wind at 10 m, not apparent wind or resistance experienced by a
+          vehicle. Terrain and shelter can change local wind. Missing direction
+          or speed is reported explicitly. Map arrows point toward where wind
+          blows and show speed. Colors indicate headwind (red), tailwind
+          (green), crosswind (amber), or calm/unavailable (gray), also
+          identified by text. Accessible labels classify mean wind as calm &lt;1
+          km/h, light 1–&lt;20, moderate 20–&lt;39, strong 39–&lt;62 and very
+          strong ≥62: simplified Beaufort bands, separate from gust alerts.
+          Direction follows the
+          <a
+            href="https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398"
+            >meteorological convention</a
+          >.
+        </p>
+        <h2>Rain radar</h2>
+        <p>
+          Enable Rain radar in Map layers. It is off by default, independent of
+          departure date. Play/pause or choose the time using the slider; expand
+          Legend and opacity for the legend, transparency and approximate
+          coverage mask. Disable in Map layers. Moving the map or hiding the tab
+          pauses playback. Route geometry stays intact and above the radar.
+        </p>
+        <p>
+          <a href="https://www.rainviewer.com/">Radar by RainViewer</a>,
+          personal and educational use only, without a key. The
+          <a href="https://www.rainviewer.com/api/weather-maps-api.html"
+            >specific API documentation</a
+          >
+          and
+          <a href="https://www.rainviewer.com/api/transition-faq.html"
+            >2026 transition</a
+          >
+          provide past two-hour observations at ten-minute intervals, native
+          zoom 7 and 100 requests/IP/minute. This is not a future forecast or
+          cloud animation. Mosaic generation times use the device timezone;
+          individual observations may be older. Images older than 30 minutes are
+          flagged. Reflectivity in dBZ is not exact rainfall volume. Shaded
+          areas show the provider's infrequently updated coverage mask; clear
+          areas do not prove dry weather.
+        </p>
+        <p>
+          Activation sends RainViewer your IP and visible map area, not your
+          route or departure date. Only the current visible frame is fetched.
+          Requests are spaced at least 800 ms apart, with cancellation and no
+          automatic retries. Already viewed images stay in bounded page memory
+          (64 images or 16 MB); metadata is cached for two minutes and refreshed
+          only on activation/retry. Nothing enters route links or storage. There
+          is no prefetching or offline caching. Page limits cannot enforce
+          shared-IP limits. Availability and coverage are not guaranteed.
+        </p>
         <h2>Travel time</h2>
         <p>
           Open Average speed, enable it and drag the slider. Values are 1, 5,
@@ -220,18 +346,18 @@
         <p>
           Change server base URLs in Settings. Use HTTPS and servers that allow
           browser requests (CORS). The advanced JSON editor gives you the same
-          points and options used by route links. Hosting your own OSRM is
-          documented in the README.
+          points and options used by route links. Provider behavior and usage
+          limits are described in the READMEs.
         </p>
         <h2>Public services and privacy</h2>
         <p>
           The default servers are public and shared, with limited capacity.
           Photon suggests addresses while typing; Nominatim is only used by
-          Search or Enter without a selected suggestion, including if
-          suggestions fail. Nominatim requests are spaced at least 1.1 seconds
-          apart; its one-request-per-second limit applies across all users. Use
-          your own service before scaling. Routing changes are debounced and
-          serialized; OSRM falls back to Valhalla.
+          Enter without a selected suggestion, including if suggestions fail.
+          Nominatim requests are spaced at least 1.1 seconds apart; its
+          one-request-per-second limit applies across all users. Use your own
+          service before scaling. Routing changes are debounced and serialized;
+          OSRM falls back to Valhalla.
         </p>
         <p>
           No cookies, accounts or analytics. Coordinates, searches and visible
@@ -250,14 +376,68 @@
             >Tile policy</a
           >
         </p>
+        <p>
+          Routing sends control coordinates and options to
+          https://router.project-osrm.org or, on fallback,
+          https://valhalla1.openstreetmap.de. The route data uses
+          OpenStreetMap/ODbL. The
+          <a href="https://routing.openstreetmap.de/about.html"
+            >OSRM operator</a
+          >
+          documents a one-request/second limit and server-side route logs; the
+          page spaces routing starts by at least 1.5 seconds. A separate
+          Valhalla numeric quota was not verified. Address text goes to
+          https://photon.komoot.io while typing or
+          https://nominatim.openstreetmap.org on Enter; both use OSM/ODbL data.
+        </p>
+        <p>
+          IP region requests use https://ipwho.is/. Its free-endpoint
+          documentation permits keyless commercial use, but general terms also
+          contain account and redistribution clauses whose applicability should
+          be confirmed before scaling. Weather uses https://api.open-meteo.com;
+          radar metadata uses https://api.rainviewer.com and visible-frame
+          images use https://tilecache.rainviewer.com. Map images use
+          https://tile.openstreetmap.org, https://a.tile.opentopomap.org or
+          https://tiles.maps.eox.at, including the EOX label overlay. Only the
+          active layer and selected radar frame request images. GitHub Pages
+          receives requests for the site files. External providers receive the
+          request IP and normal browser metadata and may keep their own logs.
+          URL fragments are not sent in HTTP requests. Browser HTTP caching of
+          ordinary map tiles follows provider headers; there is no added offline
+          storage.
+        </p>
+        <h2>Local checks</h2>
+        <p>
+          Developers: use Node.js 22.23.4 (Node 24 or 26+ is also supported).
+          Run these commands from the repository root. Playwright starts its own
+          local server. Shards are available locally; current CI runs the
+          complete suites without shards, using one Chromium worker and a Vite
+          development server. TypeScript is checked by the build. The optional
+          live OSRM test is intentionally skipped in regular runs.
+        </p>
+        <pre><code>npm ci
+npx playwright install chromium
+npm run lint
+npm run format:check
+npm test
+npm run build
+npm run test:browser
+npm run test:browser -- --shard=1/2
+npm run test:browser -- --shard=2/2</code></pre>
         <h2>Open source</h2>
         <p>
           <a href="https://github.com/t00ls-dev/route-gpx"
             >Code, full documentation and issues</a
-          >. MIT license. Map data ©
+          >. MIT license. Leaflet uses BSD 2-Clause; see the
+          <a href="./THIRD_PARTY_NOTICES.txt">complete third-party notice</a>.
+          Map data ©
           <a href="https://www.openstreetmap.org/copyright"
             >OpenStreetMap contributors</a
-          >. Built with Leaflet, OSRM, Valhalla and Nominatim.
+          >. Built with Leaflet, OSRM, Valhalla, Nominatim, Photon, Vite and
+          Vitest. IP region by ipwho.is; maps by OpenTopoMap and EOX. Weather
+          data by Open-Meteo (CC BY 4.0); radar by RainViewer (personal and
+          educational use). Source and license links appear in the respective
+          sections above and in the READMEs.
         </p>
       </article>
       <article lang="pt-BR" id="help-pt" hidden>
@@ -266,18 +446,19 @@
         <p>
           Informe endereço ou latitude, longitude nos campos Início e Destino.
           Coordenadas são aplicadas automaticamente; para endereços, toque em
-          Buscar ou Enter e escolha um resultado. Também é possível definir os
-          dois pontos clicando no mapa no desktop ou segurando um ponto em telas
-          de toque. Arraste marcadores para ajustar. Calcular rota repete o
-          cálculo. Use Desfazer para recuperar uma alteração, as setas para
-          reordenar ou × para remover uma parada.
+          escolha uma sugestão enquanto digita, ou pressione Enter para uma
+          busca explícita. Também é possível definir os dois pontos clicando no
+          mapa no desktop ou segurando um ponto em telas de toque. Arraste
+          marcadores para ajustar. Calcular rota repete o cálculo. Use Desfazer
+          para recuperar uma alteração, as setas para reordenar ou × para
+          remover uma parada.
         </p>
         <p>
           Em telas pequenas, a coluna à direita contém ícones de localização,
           camadas, tela cheia, ver rota, desfazer e zoom. Cada um tem dica e
           nome acessível. O ícone de Ajuda no cabeçalho abre estas instruções;
-          os campos de endereço usam uma lupa, e o ícone de pin seleciona o
-          ponto no mapa.
+          os campos de endereço sugerem locais ao digitar; o ícone de pin
+          seleciona o ponto no mapa.
         </p>
         <h2>Camadas do mapa</h2>
         <p>
@@ -319,9 +500,9 @@
           Coordenadas numéricas, inclusive incompletas, ficam no aparelho. Use
           setas e Enter ou toque em uma sugestão; Escape fecha a lista. O texto
           digitado e um viés aproximado do centro do mapa vão ao serviço Photon
-          configurado. Se falhar, toque em Buscar ou Enter para uma busca
-          explícita no Nominatim. Os serviços públicos têm capacidade limitada;
-          configure outra instância antes de ampliar o uso.
+          configurado. Se falhar, pressione Enter para uma busca explícita no
+          Nominatim. Os serviços públicos têm capacidade limitada; configure
+          outra instância antes de ampliar o uso.
         </p>
         <p>
           Compartilhar GPX aparece quando o navegador permite compartilhar
@@ -338,14 +519,14 @@
           sair.
         </p>
         <p>
-          Usar minha localização explica por que o GPS é necessário antes de
-          Continuar solicitar a permissão do navegador. A posição exata só
-          centraliza o mapa e mostra um círculo de precisão. Definir como início
-          e Adicionar como parada usam uma coordenada arredondada (cerca de 100
-          m); confira antes de calcular. Se a permissão for negada, abra as
-          permissões deste site nas configurações do navegador e libere
-          Localização, depois tente novamente. O mapa continua utilizável sem
-          GPS.
+          Usar minha localização solicita a posição diretamente. O navegador
+          pede permissão quando necessário, sem tela preliminar de confirmação.
+          A posição exata só centraliza o mapa e mostra um círculo de precisão.
+          Definir como início e Adicionar como parada usam uma coordenada
+          arredondada (cerca de 100 m); confira antes de calcular. Se a
+          permissão for negada, abra as permissões deste site nas configurações
+          do navegador e libere Localização, depois tente novamente. O mapa
+          continua utilizável sem GPS.
         </p>
         <p>
           A vista inicial prioriza a rota da URL, GPS já autorizado, região
@@ -362,6 +543,12 @@
           principais” sinaliza possíveis trechos locais com 500 m ou mais; não
           exclui todas as vias locais. Avenidas principais sem referência também
           podem ser sinalizadas. Vias de acesso podem ser necessárias.
+        </p>
+        <p>
+          Resultados recentes do roteador ficam na memória da página por 15
+          minutos, até 20 rotas. Voltar aos mesmos pontos e configurações
+          reaproveita o resultado; Calcular rota solicita um novo. Recarregar
+          limpa esse cache.
         </p>
         <h2>Rotas salvas</h2>
         <p>
@@ -387,6 +574,142 @@
           separadas, confira se os pontos estão na pista desejada. As durações
           não incluem paradas nem trânsito em tempo real.
         </p>
+        <h2>Saída e clima</h2>
+        <p>
+          Escolha Data e hora de saída em Clima. Quando houver rota pronta, o
+          clima carrega automaticamente após uma breve pausa. Sem data não há
+          consulta. Escolher uma data envia pontos de amostragem e
+          datas/horários previstos ao Open-Meteo. A interface mostra a
+          velocidade usada: 60 km/h por padrão ou o valor ativado em Velocidade
+          média, exibido em km/h ou mph. Ajuste ao seu deslocamento. Paradas e
+          trânsito não são incluídos. Todos os horários usam o fuso do aparelho.
+          São aceitas saídas nos últimos 90 dias de calendário UTC. Saídas
+          anteriores e janelas de chegada além de 16 dias de calendário UTC
+          incluindo hoje são rejeitadas. Datas passadas mostram Estimativas do
+          passado, ou Estimativas do passado e previsão se a viagem atravessa o
+          momento atual. Os valores passados são estimativas arquivadas dos
+          modelos, não observações exatas em cada ponto da rota. Também funciona
+          com GPX importado. As amostras incluem origem, destino e passagens,
+          aproximadamente a cada 20 km. Abaixo de 20 km/h, o espaçamento é
+          reduzido para cerca de uma hora de deslocamento (5 km a 5 km/h, por
+          exemplo). O máximo de 20 pontos tem prioridade e pode exigir
+          intervalos maiores. Selecione um ícone de tempo no mapa para abrir seu
+          card de clima no painel. Selecionar um card centraliza o mapa no ponto
+          e recolhe o painel no celular; Enter e Espaço também funcionam.
+        </p>
+        <p>
+          Alterar a velocidade recalcula localmente se houver cobertura; use
+          Tentar novamente se ultrapassar o intervalo. Deslocamentos mais lentos
+          consultam automaticamente pontos adicionais se o espaçamento menor
+          exigir; deslocamentos mais rápidos reaproveitam os pontos existentes
+          sem nova consulta. Alterar traçado, data ou servidor atualiza
+          automaticamente o clima. Erros permitem tentar manualmente, sem ciclos
+          automáticos de repetição. Dados do clima e coordenadas de amostragem
+          ficam só na memória da página, nunca em armazenamento, logs ou links.
+          Apenas a saída é um novo dado da viagem persistido, nos links normais
+          e rotas salvas explicitamente. Ao reabrir, o clima é consultado
+          novamente. Não são adicionados horários aos pontos do GPX.
+        </p>
+        <p>
+          Temperatura horária, probabilidade/volume de precipitação, código do
+          tempo, velocidade/direção do vento, rajadas e visibilidade vêm do
+          <a href="https://open-meteo.com/">Open-Meteo</a>, sob
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+          Dados do tempo por Open-Meteo; horários de passagem e resumos de risco
+          calculados pelo route-gpx. A API gratuita é só para uso não comercial,
+          sem chave, com HTTPS/CORS; a URL base é configurável em Configurações.
+          Limites: 600 chamadas/minuto, 5.000/hora, 10.000/dia e 300.000/mês.
+          Cada localização conta mesmo numa requisição agrupada; mais de 10
+          variáveis ou duas semanas aumenta a contagem. Consultas têm intervalo
+          mínimo de seis segundos com orçamentos conservadores em memória, cache
+          em memória de dez minutos e timeout de 20 segundos. Limites por página
+          não controlam uso agregado. O cache guarda até 200 localizações e
+          100.000 registros horários, reaproveitando locais cobertos e agrupando
+          somente os ausentes. Reutilizar não prolonga a validade.
+          <a href="https://open-meteo.com/en/terms">Termos</a> ·
+          <a href="https://open-meteo.com/en/pricing">Contagem de chamadas</a> ·
+          <a href="https://open-meteo.com/en/docs">Documentação</a>.
+        </p>
+        <p>
+          A previsão é aproximada, em grade de alguns quilômetros, e pode não
+          captar pancadas locais; a hora de passagem depende de paradas e
+          trânsito. Alertas de risco auxiliam a revisão, não são avisos
+          oficiais: pior caso em ±1 hora, arredondada para fora. Chuva:
+          probabilidade ≥60% ou ≥1 mm/h; chuva forte ≥10 mm/h; códigos de
+          trovoada 95/96/99; códigos de neblina 45/48 ou visibilidade ≤1.000 m;
+          rajadas ≥60 km/h; frio/possível gelo ≤2 °C ou códigos de congelamento;
+          calor extremo ≥40 °C. Alertas são ordenados por gravidade; dados
+          ausentes são sinalizados. A precisão real da previsão não foi
+          avaliada.
+        </p>
+        <p>
+          Cada ponto amostrado tem um único card com condições e riscos, sem
+          lista separada de alertas. Alerta 1, 2 e 3 usam amarelo, laranja e
+          vermelho, além de rótulos; sem alerta, o card é neutro. Todos usam a
+          rolagem do painel principal.
+        </p>
+        <p>
+          Os cards usam ícones SVG em traço no mesmo estilo; o mapa usa ícones
+          de clima coloridos e centralizados. O ícone de vento acompanha a
+          direção relativa e a velocidade. O vento compara a direção de onde vem
+          com o sentido local do traçado: contra até 45° pela frente, a favor
+          até 45° por trás e lateral nos demais casos. Abaixo de 1 km/h é calmo.
+          Usa-se a hora de clima mais próxima, com velocidade em km/h ou mph. Em
+          curvas usa-se o trecho de saída; no destino, o de chegada. É vento do
+          modelo a 10 m, não vento aparente nem resistência sentida por um
+          veículo. Relevo e abrigo podem alterar o vento local. A falta de
+          direção ou velocidade é indicada explicitamente. As setas no mapa
+          apontam para onde o vento sopra e mostram a velocidade. As cores
+          indicam vento contra (vermelho), a favor (verde), lateral (âmbar) ou
+          calmo/indisponível (cinza), também identificados por texto. Os rótulos
+          acessíveis classificam o vento médio em calmo &lt;1 km/h, fraco
+          1–&lt;20, moderado 20–&lt;39, forte 39–&lt;62 e muito forte ≥62:
+          faixas simplificadas de Beaufort, separadas dos alertas de rajadas. A
+          direção segue a
+          <a
+            href="https://confluence.ecmwf.int/pages/viewpage.action?pageId=133262398"
+            >convenção meteorológica</a
+          >.
+        </p>
+        <h2>Radar de chuva</h2>
+        <p>
+          Ative Radar de chuva em Camadas do mapa. Ele vem desligado,
+          independente da data de saída. Reproduza/pause ou escolha o horário
+          pelo controle; expanda Legenda e opacidade para a legenda,
+          transparência e máscara aproximada de cobertura. Desative em Camadas
+          do mapa. Mover o mapa ou ocultar a aba pausa a reprodução. A geometria
+          da rota permanece intacta e sobre o radar.
+        </p>
+        <p>
+          <a href="https://www.rainviewer.com/">Radar por RainViewer</a>,
+          somente uso pessoal e educacional, sem chave. A
+          <a href="https://www.rainviewer.com/api/weather-maps-api.html"
+            >documentação específica da API</a
+          >
+          e a
+          <a href="https://www.rainviewer.com/api/transition-faq.html"
+            >transição de 2026</a
+          >
+          oferecem observações das últimas duas horas em passos de dez minutos,
+          zoom nativo 7 e 100 requisições/IP/minuto. Não é previsão futura nem
+          animação de nuvens. Os horários de geração do mosaico usam o fuso do
+          aparelho; observações individuais podem ser mais antigas. Imagens com
+          mais de 30 minutos são sinalizadas. Refletividade em dBZ não é volume
+          exato de chuva. Áreas sombreadas mostram a máscara de cobertura
+          atualizada com pouca frequência pelo provedor; áreas claras não
+          comprovam tempo seco.
+        </p>
+        <p>
+          Ativar envia ao RainViewer seu IP e a área visível do mapa, não a rota
+          nem a data de saída. Somente o quadro atual visível é buscado.
+          Consultas têm intervalo mínimo de 800 ms, com cancelamento e sem
+          repetições automáticas. Imagens já vistas ficam na memória limitada da
+          página (64 imagens ou 16 MB); metadados têm cache de dois minutos,
+          atualizado só ao ativar ou tentar novamente. Nada entra nos links ou
+          no armazenamento. Não há pré-carregamento nem cache offline. Limites
+          por página não controlam limites compartilhados por IP.
+          Disponibilidade e cobertura não são garantidas.
+        </p>
         <h2>Tempo de viagem</h2>
         <p>
           Abra Velocidade média, ative e arraste o controle. Os valores são 1,
@@ -407,18 +730,18 @@
         <p>
           Altere as URLs base dos servidores nas Configurações. Use HTTPS e
           servidores que permitam requisições do navegador (CORS). O editor JSON
-          avançado usa os mesmos pontos e opções dos links de rota. O README
-          explica como hospedar seu próprio OSRM.
+          avançado usa os mesmos pontos e opções dos links de rota. Os READMEs
+          descrevem o comportamento e os limites de uso dos provedores.
         </p>
         <h2>Serviços públicos e privacidade</h2>
         <p>
           Os servidores padrão são públicos, compartilhados e têm capacidade
           limitada. Photon sugere endereços ao digitar; Nominatim só é usado por
-          Buscar ou Enter sem sugestão selecionada, inclusive se as sugestões
-          falharem. As consultas Nominatim têm ao menos 1,1 s entre requisições;
-          o limite de uma requisição por segundo vale para todos os usuários.
-          Use uma instância própria antes de ampliar o uso. O roteamento tem
-          debounce e fila; o Valhalla é usado se o OSRM falhar.
+          Enter sem sugestão selecionada, inclusive se as sugestões falharem. As
+          consultas Nominatim têm ao menos 1,1 s entre requisições; o limite de
+          uma requisição por segundo vale para todos os usuários. Use uma
+          instância própria antes de ampliar o uso. O roteamento tem debounce e
+          fila; o Valhalla é usado se o OSRM falhar.
         </p>
         <p>
           Sem cookies, cadastro ou analytics. Coordenadas, buscas e área visível
@@ -437,14 +760,71 @@
             >Política de tiles</a
           >
         </p>
+        <p>
+          O roteamento envia coordenadas de controle e opções a
+          https://router.project-osrm.org ou, na alternativa,
+          https://valhalla1.openstreetmap.de. Os dados usam OpenStreetMap/ODbL.
+          O
+          <a href="https://routing.openstreetmap.de/about.html"
+            >operador OSRM</a
+          >
+          documenta o limite de uma requisição/segundo e logs de rotas no
+          servidor; a página espaça inícios de roteamento por ao menos 1,5
+          segundo. Não foi verificada uma cota numérica separada para o
+          Valhalla. O texto de endereço vai a https://photon.komoot.io ao
+          digitar ou a https://nominatim.openstreetmap.org por Enter; ambos usam
+          dados OSM/ODbL.
+        </p>
+        <p>
+          Consultas de região por IP usam https://ipwho.is/. A documentação do
+          endpoint gratuito permite uso comercial sem chave, mas os termos
+          gerais também contêm cláusulas de conta e redistribuição cuja
+          aplicação deve ser confirmada antes de ampliar o uso. O clima usa
+          https://api.open-meteo.com; os metadados do radar usam
+          https://api.rainviewer.com e imagens do quadro visível usam
+          https://tilecache.rainviewer.com. Imagens do mapa usam
+          https://tile.openstreetmap.org, https://a.tile.opentopomap.org ou
+          https://tiles.maps.eox.at, incluindo a sobreposição de rótulos EOX. Só
+          a camada ativa e o quadro de radar selecionado solicitam imagens. O
+          GitHub Pages recebe pedidos dos arquivos do site. Provedores externos
+          recebem o IP da requisição e metadados normais do navegador e podem
+          manter logs próprios. Fragmentos de URL não são enviados nas
+          requisições HTTP. O cache HTTP comum dos tiles segue os cabeçalhos dos
+          provedores; não há armazenamento offline adicional.
+        </p>
+        <h2>Verificações locais</h2>
+        <p>
+          Desenvolvedores: use Node.js 22.23.4 (Node 24 ou 26+ também é aceito).
+          Execute estes comandos na raiz do repositório. O Playwright inicia seu
+          servidor local. Shards estão disponíveis localmente; o CI atual
+          executa os conjuntos completos sem shards, com um worker Chromium e
+          servidor de desenvolvimento Vite. O build verifica TypeScript. O teste
+          opcional com OSRM real é ignorado intencionalmente nas execuções
+          regulares.
+        </p>
+        <pre><code>npm ci
+npx playwright install chromium
+npm run lint
+npm run format:check
+npm test
+npm run build
+npm run test:browser
+npm run test:browser -- --shard=1/2
+npm run test:browser -- --shard=2/2</code></pre>
         <h2>Código aberto</h2>
         <p>
           <a href="https://github.com/t00ls-dev/route-gpx"
             >Código, documentação e relatos de problemas</a
-          >. Licença MIT. Dados ©
+          >. Licença MIT. Leaflet usa BSD de 2 cláusulas; veja o
+          <a href="./THIRD_PARTY_NOTICES.txt">aviso completo de terceiros</a>.
+          Dados ©
           <a href="https://www.openstreetmap.org/copyright"
             >OpenStreetMap e colaboradores</a
-          >. Feito com Leaflet, OSRM, Valhalla e Nominatim.
+          >. Feito com Leaflet, OSRM, Valhalla, Nominatim, Photon, Vite e
+          Vitest. Região por IP pelo ipwho.is; mapas por OpenTopoMap e EOX.
+          Dados do tempo por Open-Meteo (CC BY 4.0); radar por RainViewer (uso
+          pessoal e educacional). Links das fontes e licenças estão nas
+          respectivas seções acima e nos READMEs.
         </p>
       </article>
     </main>

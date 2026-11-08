@@ -29,6 +29,8 @@ it('debounces, aborts the previous request and rejects a late response after new
     valid: () => true,
     choose,
     failed,
+    pending: vi.fn(),
+    completed: vi.fn(),
   });
   input.focus();
   input.value = 'Li';
@@ -62,6 +64,8 @@ it('keeps incomplete coordinate input local while still suggesting numbered stre
     valid: () => true,
     choose: vi.fn(),
     failed: vi.fn(),
+    pending: vi.fn(),
+    completed: vi.fn(),
   });
   input.focus();
   for (const value of ['-22.930929', '-22.930929,', '-22.930929, -43.238286']) {

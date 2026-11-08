@@ -1,3 +1,6 @@
+import { RoutingCache } from './routing-cache';
+import { setupRadar } from './radar-ui';
+import { setupWeather } from './weather-ui';
 import {
   listSavedRoutes,
   saveNamedRoute,
@@ -47,7 +50,7 @@ import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
 import { setupMapLayers } from './map-layers';
 import { setupMapControls } from './map-controls';
-import { iconControl } from './icons';
+import { icon, iconControl } from './icons';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const text = (tag: string, value: string, className = '') => {
@@ -56,6 +59,7 @@ const text = (tag: string, value: string, className = '') => {
   e.className = className;
   return e;
 };
+$('github').append(icon('external'));
 let state: State = defaults(),
   selected = 0,
   current: Route | null = null,
@@ -75,6 +79,7 @@ let drafts = new WeakMap<Point, string>();
 const dirty = new Set<Point>();
 const lookupVersions = new WeakMap<Point, number>();
 const routeCache = new Map<string, Route>();
+const routingCache = new RoutingCache();
 let savedEntries: SavedRoute[] = [];
 let libraryRevision = 0;
 let savingRoute = false;
@@ -104,6 +109,12 @@ map.on('zoomend', () => {
 const zoom = L.control.zoom({ position: 'bottomright' }).addTo(map);
 const markers = L.layerGroup().addTo(map),
   line = L.featureGroup().addTo(map);
+const weather = setupWeather(
+  map,
+  () => state,
+  () => current,
+  syncUrl,
+);
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
 function fit() {
   if (zooming) {
@@ -143,6 +154,7 @@ function syncUrl() {
     './help.html?lang=' + (state.language ?? 'en') + hash;
 }
 function settings() {
+  weather.syncInputs();
   const input = $<HTMLInputElement>('average-speed');
   const bounds = speedInputBounds(state.units);
   const value = state.averageSpeedKmh
@@ -270,10 +282,7 @@ function renderPoints() {
     input.placeholder = 'Address or lat, lon';
     input.autocomplete = 'off';
     input.setAttribute('aria-label', `Location of point ${i + 1}`);
-    const search = text('button', 'Search') as HTMLButtonElement;
-    search.type = 'submit';
-    iconControl(search, 'search', `Search point ${i + 1}`, true);
-    search.setAttribute('aria-label', `Search point ${i + 1}`);
+    input.enterKeyHint = 'search';
     const results = document.createElement('div');
     results.id = `point-results-${i}`;
     results.className = 'point-results';
@@ -292,9 +301,16 @@ function renderPoints() {
         setPoint(point, i, coord, result.display_name.slice(0, 240), true);
         map.panTo(coord);
       },
+      pending: () => status('Searching…'),
+      completed: (count) =>
+        status(
+          count
+            ? 'Choose a place.'
+            : 'No suggestions found. Press Enter to search with Nominatim.',
+        ),
       failed: () =>
         status(
-          'Suggestions unavailable. Press Search or Enter to search with Nominatim.',
+          'Suggestions unavailable. Press Enter to search with Nominatim.',
         ),
     });
     autocompleteCleanups.push(closeSuggestions);
@@ -323,6 +339,7 @@ function renderPoints() {
       revision++;
       clearTimeout(timer);
       current = null;
+      weather.invalidate();
       updateSaveButton();
       line.clearLayers();
       $('summary').replaceChildren();
@@ -359,7 +376,6 @@ function renderPoints() {
       }
       const version = (lookupVersions.get(point) ?? 0) + 1;
       lookupVersions.set(point, version);
-      search.disabled = true;
       status('Searching…');
       results.replaceChildren();
       clearTimeout(addressTimer);
@@ -407,13 +423,10 @@ function renderPoints() {
                 'Address search unavailable. Try again later or paste coordinates.',
                 true,
               );
-          })
-          .finally(() => {
-            search.disabled = false;
           });
       }, 500);
     };
-    form.append(input, search);
+    form.append(input);
     const controls = document.createElement('div');
     controls.className = 'point-controls';
     controls.append(form);
@@ -624,8 +637,10 @@ function renderRoute(route: Route) {
   }
   $<HTMLButtonElement>('download').disabled = false;
   updateSaveButton();
+  weather.render();
 }
-function changed(preserveEditor = false) {
+function changed(preserveEditor = false, forceRouting = false) {
+  weather.invalidate();
   revision++;
 
   current = null;
@@ -655,9 +670,15 @@ function changed(preserveEditor = false) {
   timer = setTimeout(() => {
     status('Calculating…');
     $<HTMLButtonElement>('calculate').disabled = true;
-    void calculate(snapshot, () => version === revision)
+    const cached = forceRouting ? undefined : routingCache.get(snapshot);
+    void (
+      cached
+        ? Promise.resolve(cached)
+        : calculate(snapshot, () => version === revision)
+    )
       .then((route) => {
         if (version !== revision) return;
+        if (!cached) routingCache.set(snapshot, route);
         current = route;
         renderRoute(route);
         status('Route ready.');
@@ -702,7 +723,7 @@ $('calculate').onclick = () => {
     status('Set your start and destination.', true);
     return;
   }
-  changed();
+  changed(false, true);
 };
 $('undo').onclick = () => {
   if (dirty.size) {
@@ -793,6 +814,7 @@ $<HTMLInputElement>('prefer').onchange = () => {
 };
 $('save-settings').onclick = () => {
   try {
+    weather.applyServer();
     for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
       state[key] = serverUrl($<HTMLInputElement>(key).value.trim());
     photonUrl = serverUrl($<HTMLInputElement>('photon').value.trim());
@@ -882,6 +904,7 @@ $<HTMLInputElement>('import').onchange = () => {
       state.points = imported.points;
       state.name = imported.name;
       selected = 0;
+      weather.invalidate();
       current = imported.route;
       syncUrl();
       renderPoints();
@@ -1050,6 +1073,7 @@ async function refreshSavedRoutes() {
         state = structuredClone(record.state);
         state.language = language;
         selected = 0;
+        weather.invalidate();
         current = structuredClone(record.route);
         syncUrl();
         settings();
@@ -1164,5 +1188,6 @@ setupMapView(map, {
 });
 
 setupMapLayers(map);
+setupRadar(map);
 
 setupMapControls(map, zoom);

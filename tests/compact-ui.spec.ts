@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 test.use({ isMobile: true, hasTouch: true });
-const base = 'http://127.0.0.1:5173/route-gpx/';
+const base = 'http://127.0.0.1:5173/';
 const tile =
   '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#e3ecea"/></svg>';
 test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
+
   for (const domain of [
     'tile.openstreetmap.org',
     'a.tile.opentopomap.org',
@@ -28,6 +30,22 @@ for (const width of [320, 360, 390, 430]) {
       });
       await page.goto(base);
       await page.locator('#language').selectOption(language);
+      const smallInputs = await page
+        .locator(
+          'input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select',
+        )
+        .evaluateAll((elements) =>
+          elements
+            .filter(
+              (element) => parseFloat(getComputedStyle(element).fontSize) < 16,
+            )
+            .map((element) => element.id),
+        );
+      expect(smallInputs).toEqual([]);
+      await expect(page.locator('meta[name="viewport"]')).not.toHaveAttribute(
+        'content',
+        /user-scalable=no|maximum-scale=1/,
+      );
       const labels =
         language === 'pt'
           ? [
@@ -131,16 +149,15 @@ for (const width of [320, 360, 390, 430]) {
       await page.locator('#location-0').fill('38.72, -9.14');
       await page.locator('#location-0').press('Tab');
       const input = (await page.locator('#location-0').boundingBox())!,
-        search = (await page
+        form = (await page
           .locator('#points li')
           .first()
-          .locator('button[type=submit]')
+          .locator('form')
           .boundingBox())!;
-      expect(search.width).toBe(44);
-      expect(search.height).toBe(44);
-      expect(search.x + search.width).toBeLessThanOrEqual(
-        input.x + input.width + 1,
-      );
+      await expect(page.locator('.point-location-form button')).toHaveCount(0);
+      expect(input.height).toBe(44);
+      expect(input.width).toBeGreaterThan(100);
+      expect(Math.abs(input.width - form.width)).toBeLessThanOrEqual(1);
       const buttons = page.locator('#points li.selected .point-actions button');
       for (const button of await buttons.all()) {
         const box = (await button.boundingBox())!;

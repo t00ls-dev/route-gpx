@@ -142,5 +142,6 @@ export function setupMapLayers(map: L.Map) {
     )
       close();
   });
+  element('radar-enabled').addEventListener('change', () => close(true));
   render();
 }

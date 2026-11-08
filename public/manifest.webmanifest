@@ -1,12 +1,12 @@
 {
-  "id": "/route-gpx/",
+  "id": "/",
   "name": "route-gpx — Route Planner",
   "short_name": "route-gpx",
   "description": "Plan routes and export complete GPX tracks. Free and open source.",
   "lang": "en",
-  "start_url": "/route-gpx/",
-  "scope": "/route-gpx/",
-  "display": "standalone",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
   "background_color": "#ffffff",
   "theme_color": "#126447",
   "categories": ["navigation", "travel", "utilities"],
@@ -33,7 +33,7 @@
   "shortcuts": [
     {
       "name": "Help",
-      "url": "/route-gpx/help.html",
+      "url": "/help.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

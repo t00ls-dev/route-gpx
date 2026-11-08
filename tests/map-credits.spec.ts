@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 test.use({ isMobile: true, hasTouch: true });
-const base = 'http://127.0.0.1:5173/route-gpx/';
+const base = 'http://127.0.0.1:5173/';
 test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
+
   await page.addInitScript(() =>
     localStorage.setItem('detect-region', 'false'),
   );

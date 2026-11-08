@@ -2,9 +2,12 @@ import { holdMap } from './map-helpers';
 import { defaults, encodeState } from '../src/core';
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
-const base = 'http://127.0.0.1:5173/route-gpx/';
+const base = 'http://127.0.0.1:5173/';
 const start = '-22.930929, -43.238286',
   end = '-23.050160, -43.535240';
+test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+});
 async function setup(page: Page) {
   await page.route('https://tile.openstreetmap.org/**', (r) =>
     r.fulfill({ status: 204 }),
@@ -119,17 +122,13 @@ test('address searches belong to their own point and do not fire while typing', 
   await page.locator('#location-0').fill('Metrô Uruguai');
   await page.locator('#location-1').fill('Grumari');
   expect(searches).toBe(0);
-  await page
-    .getByRole('button', { name: 'Search point 1', exact: true })
-    .click();
+  await page.locator('#location-0').press('Enter');
   await page.locator('#point-results-0 button').click();
   await expect(page.locator('#location-0')).toHaveValue(
     'Metrô Uruguai, Rio de Janeiro',
   );
   await expect(page.locator('#location-1')).toHaveValue('Grumari');
-  await page
-    .getByRole('button', { name: 'Search point 2', exact: true })
-    .click();
+  await page.locator('#location-1').press('Enter');
   await page.locator('#point-results-1 button').click();
   await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
   expect(searches).toBe(2);
@@ -163,9 +162,7 @@ test('invalid coordinates cannot enable a stale GPX download', async ({
   await setup(page);
   await fillPair(page);
   await page.locator('#location-1').fill('99, 200');
-  await page
-    .getByRole('button', { name: 'Search point 2', exact: true })
-    .click();
+  await page.locator('#location-1').press('Enter');
   await expect(page.locator('#status')).toHaveClass('error');
   await expect(page.locator('#download')).toBeDisabled();
   await page.locator('#undo').click();

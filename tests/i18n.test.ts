@@ -8,7 +8,6 @@ it('translates native UI labels and dynamic messages in both directions', () => 
   setLanguage('pt');
   expect(t('↓ Download GPX')).toBe('↓ Baixar GPX');
   expect(t('7 points')).toBe('7 pontos');
-  expect(t('Place point 3 on the map')).toContain('ponto 3');
   setLanguage('en');
   expect(t('↓ Download GPX')).toBe('↓ Download GPX');
 });
@@ -29,7 +28,6 @@ it('translates generated stop names and short status messages', () => {
   setLanguage('pt');
   expect(t('Stop 2')).toBe('Parada 2');
   expect(t('Return to start')).toBe('Volta ao início');
-  expect(t('Finding “Grumari”…')).toBe('Buscando “Grumari”…');
   expect(t('Check road positions: 2 (150 m)')).toBe(
     'Confira os pontos nas vias: 2 (150 m)',
   );

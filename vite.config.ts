@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 export default defineConfig({
-  base: '/route-gpx/',
+  base: '/',
   build: {
     rollupOptions: { input: { main: 'index.html', help: 'help.html' } },
   },

@@ -11,6 +11,7 @@ export interface Point {
   coord: Coord | null;
 }
 export interface State {
+  departure?: string;
   averageSpeedKmh?: number;
   units?: 'metric' | 'imperial';
   language?: 'en' | 'pt';
@@ -117,6 +118,11 @@ export function decodeState(hash: string, resetInvalidSpeed = false): State {
   if (
     (x.units !== undefined && !['metric', 'imperial'].includes(x.units)) ||
     (x.language !== undefined && !['en', 'pt'].includes(x.language)) ||
+    (x.departure !== undefined &&
+      (typeof x.departure !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(x.departure) ||
+        !Number.isFinite(Date.parse(x.departure)) ||
+        new Date(x.departure).toISOString() !== x.departure)) ||
     x.version !== 1 ||
     !Array.isArray(x.points) ||
     x.points.length < 2 ||
@@ -138,7 +144,16 @@ export function decodeState(hash: string, resetInvalidSpeed = false): State {
       x.units,
     );
   return {
-    ...x,
+    version: 1,
+    points: x.points.map((p) => ({ name: p.name, coord: p.coord })),
+    prefer: x.prefer,
+    name: x.name,
+    ...(x.units !== undefined ? { units: x.units } : {}),
+    ...(x.language !== undefined ? { language: x.language } : {}),
+    ...(x.averageSpeedKmh !== undefined
+      ? { averageSpeedKmh: x.averageSpeedKmh }
+      : {}),
+    ...(x.departure !== undefined ? { departure: x.departure } : {}),
     osrm: serverUrl(x.osrm),
     valhalla: serverUrl(x.valhalla),
     nominatim: serverUrl(x.nominatim),
@@ -165,7 +180,7 @@ export function localSections(steps: Step[], threshold = 500): Step[] {
       !/rodovia|highway|motorway|freeway/i.test(s.name),
   );
 }
-export function escapeXml(s: string): string {
+function escapeXml(s: string): string {
   return s
     .replace(
       /[<>&"']/g,

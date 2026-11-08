@@ -14,7 +14,7 @@
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="route-gpx" />
-    <link rel="canonical" href="https://t00ls-dev.github.io/route-gpx/" />
+    <link rel="canonical" href="https://route-gpx.t00ls.dev/" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
@@ -29,11 +29,11 @@
       property="og:description"
       content="Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
     />
-    <meta property="og:url" content="https://t00ls-dev.github.io/route-gpx/" />
+    <meta property="og:url" content="https://route-gpx.t00ls.dev/" />
     <meta property="og:locale" content="en_US" />
     <meta
       property="og:image"
-      content="https://t00ls-dev.github.io/route-gpx/social-card.png"
+      content="https://route-gpx.t00ls.dev/social-card.png"
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -52,7 +52,7 @@
     />
     <meta
       name="twitter:image"
-      content="https://t00ls-dev.github.io/route-gpx/social-card.png"
+      content="https://route-gpx.t00ls.dev/social-card.png"
     />
     <meta name="twitter:image:alt" content="route-gpx route planner" />
     <script type="application/ld+json">
@@ -60,7 +60,7 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "route-gpx",
-        "url": "https://t00ls-dev.github.io/route-gpx/",
+        "url": "https://route-gpx.t00ls.dev/",
         "description": "Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed.",
         "applicationCategory": "TravelApplication",
         "operatingSystem": "Any",
@@ -68,10 +68,10 @@
         "isAccessibleForFree": true,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "license": "https://github.com/t00ls-dev/route-gpx/blob/main/LICENSE",
-        "image": "https://t00ls-dev.github.io/route-gpx/social-card.png",
+        "image": "https://route-gpx.t00ls.dev/social-card.png",
         "softwareHelp": {
           "@type": "WebPage",
-          "url": "https://t00ls-dev.github.io/route-gpx/help.html"
+          "url": "https://route-gpx.t00ls.dev/help.html"
         }
       }
     </script>
@@ -195,6 +195,25 @@
           </div>
           <p id="speed-range" class="hint">1–200 km/h</p>
         </details>
+        <details id="weather-section">
+          <summary>Weather</summary>
+          <label for="departure">Departure date and time</label>
+          <input id="departure" type="datetime-local" />
+
+          <p id="weather-speed" class="hint"></p>
+
+          <button id="weather-retry" type="button" hidden>Try again</button>
+          <p
+            id="weather-status"
+            class="hint"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <div id="weather-result" hidden>
+            <p id="weather-period" class="hint" hidden></p>
+            <ol id="weather-details" aria-label="Weather along the route"></ol>
+          </div>
+        </details>
         <section id="summary" aria-label="Route summary"></section>
         <div class="gpx-name">
           <label for="route-name">GPX name</label>
@@ -240,6 +259,8 @@
               <option value="2025">EOX 2025 · CC BY-NC-SA 4.0</option>
               <option value="2016">EOX 2016 · CC BY 4.0</option>
             </select>
+            <label for="weather-server">Open-Meteo server</label
+            ><input id="weather-server" type="url" />
             <label for="photon">Photon server</label
             ><input id="photon" type="url" /><label for="region-url"
               >IP region service</label
@@ -262,10 +283,12 @@
         <footer>
           <span>Public, shared servers.</span>
           <a
+            id="github"
+            class="external-link"
             href="https://github.com/t00ls-dev/route-gpx"
             target="_blank"
             rel="noreferrer"
-            >GitHub ↗</a
+            >GitHub</a
           >
         </footer>
       </aside>
@@ -329,6 +352,14 @@
               2025 imagery is for non-commercial use. For commercial use, choose
               EOX 2016 in Settings.
             </p>
+            <label class="check"
+              ><input
+                id="radar-enabled"
+                role="menuitemcheckbox"
+                type="checkbox"
+                aria-checked="false"
+              /><span>Rain radar</span></label
+            >
           </div>
         </div>
         <div class="map-tools">
@@ -343,22 +374,26 @@
           aria-label="Your location"
           hidden
         >
-          <button id="close-location" type="button" aria-label="Close location">
-            ×
-          </button>
-          <p>
-            Your exact location is used only to center the map and never leaves
-            your device.
-          </p>
+          <div class="location-card-header">
+            <h2>Your location</h2>
+            <button
+              id="close-location"
+              type="button"
+              aria-label="Close location"
+            >
+              ×
+            </button>
+          </div>
           <p id="location-status" role="status"></p>
-          <button id="confirm-location" type="button">Continue</button>
           <div id="location-actions" hidden>
             <p>
               Route points are rounded to about 100 m before sharing or routing.
               Check the point on the map.
             </p>
-            <button id="location-start" type="button">Set as start</button>
-            <button id="location-stop" type="button">Add as stop</button>
+            <div class="location-action-buttons">
+              <button id="location-start" type="button">Set as start</button>
+              <button id="location-stop" type="button">Add as stop</button>
+            </div>
           </div>
         </section>
         <button id="fit" class="fit-button" type="button">◎ Fit route</button>

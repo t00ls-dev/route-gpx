@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-const base = 'http://127.0.0.1:5173/route-gpx/';
+import { defaults, encodeState } from '../src/core';
+const base = 'http://127.0.0.1:5173/';
 test('SEO metadata stays localized and excludes private route state', async ({
   page,
 }) => {
@@ -7,7 +8,7 @@ test('SEO metadata stays localized and excludes private route state', async ({
     r.fulfill({ status: 204 }),
   );
   await page.goto(base);
-  const canonical = 'https://t00ls-dev.github.io/route-gpx/';
+  const canonical = 'https://route-gpx.t00ls.dev/';
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
     'href',
     canonical,
@@ -41,7 +42,7 @@ test('SEO metadata stays localized and excludes private route state', async ({
   expect(schema.name).toBe('route-gpx');
   expect(schema.url).toBe(canonical);
 });
-test('manifest and icon files resolve inside the GitHub Pages project scope', async ({
+test('manifest and icon files resolve at the custom-domain root', async ({
   page,
   request,
 }) => {
@@ -54,8 +55,10 @@ test('manifest and icon files resolve inside the GitHub Pages project scope', as
   const response = await request.get(manifestUrl.href);
   expect(response.ok()).toBeTruthy();
   const manifest = await response.json();
-  expect(manifest.start_url).toBe('/route-gpx/');
-  expect(manifest.scope).toBe('/route-gpx/');
+  expect(manifest.id).toBe('/');
+  expect(manifest.display).toBe('browser');
+  expect(manifest.start_url).toBe('/');
+  expect(manifest.scope).toBe('/');
   for (const icon of manifest.icons) {
     const response = await request.get(new URL(icon.src, manifestUrl).href);
     expect(response.ok()).toBeTruthy();
@@ -77,5 +80,40 @@ test('manifest and icon files resolve inside the GitHub Pages project scope', as
 });
 
 test.beforeEach(async ({ page }) => {
+  await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
+
   await page.route('https://ipwho.is/**', (r) => r.fulfill({ status: 503 }));
+});
+
+test('help switches language and metadata while preserving the route in its return link', async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date('2026-11-08T10:00:00Z'));
+  const hash = encodeState({
+    ...defaults(),
+    departure: '2026-11-09T10:00:00.000Z',
+  });
+  await page.goto(base + 'help.html?lang=pt' + hash);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await expect(page.locator('#help-pt')).toBeVisible();
+  await expect(page.locator('#help-en')).toBeHidden();
+  await expect(page).toHaveTitle(/Ajuda/);
+  await expect(page.locator('#back')).toHaveAttribute(
+    'href',
+    './index.html' + hash,
+  );
+  await page.locator('#language').selectOption('en');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('#help-en')).toBeVisible();
+  await expect(page.locator('#help-pt')).toBeHidden();
+  await expect(page).toHaveTitle(/Route Planning/);
+  await expect(page.locator('#back')).toHaveAttribute(
+    'href',
+    './index.html' + hash,
+  );
+  expect(new URL(page.url()).hash).toBe(hash);
+  expect(new URL(page.url()).searchParams.get('lang')).toBe('en');
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('#help-pt')).toBeVisible();
+  await expect(page.locator('#back')).toHaveText('Voltar ao mapa');
 });

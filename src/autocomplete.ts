@@ -8,6 +8,8 @@ export function addressAutocomplete(
     center: () => Coord;
     valid: () => boolean;
     choose: (result: SearchResult) => void;
+    pending: () => void;
+    completed: (count: number) => void;
     failed: () => void;
   },
 ): () => void {
@@ -45,6 +47,7 @@ export function addressAutocomplete(
       return;
     const requestVersion = version;
     timer = setTimeout(() => {
+      config.pending();
       controller = new AbortController();
       void photonSearch(
         query,
@@ -77,6 +80,7 @@ export function addressAutocomplete(
             list.append(button);
           });
           input.setAttribute('aria-expanded', String(results.length > 0));
+          config.completed(results.length);
         })
         .catch((error) => {
           if (
@@ -89,6 +93,7 @@ export function addressAutocomplete(
     }, 300);
   });
   input.addEventListener('keydown', (event) => {
+    if (event.isComposing) return;
     const options = [
       ...list.querySelectorAll<HTMLButtonElement>('[role=option]'),
     ];
