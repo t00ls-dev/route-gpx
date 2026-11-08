@@ -4,7 +4,7 @@ This file is the single source of agent instructions. `CLAUDE.md` only imports i
 
 ## Purpose and scope
 
-route-gpx is a static route planner with GPX import/export, built with HTML, strict TypeScript, Vite and Leaflet. It runs in the browser. The working tree targets GitHub Pages at `https://route-gpx.t00ls.dev/` with a `/` base; activation is pending and the current production site still uses the Pages project URL. There is no application backend, account system, analytics or remote AI. Keep changes compatible with this architecture unless the task explicitly changes it.
+route-gpx is a static route planner with GPX import/export, built with HTML, strict TypeScript, Vite and Leaflet. It runs in the browser. It is published on GitHub Pages at the custom domain `https://route-gpx.t00ls.dev/` with a `/` base; the old project URL `https://t00ls-dev.github.io/route-gpx/` redirects there. There is no application backend, account system, analytics or remote AI. Keep changes compatible with this architecture unless the task explicitly changes it.
 
 Present the project as a route planner with GPX export. Keep public introductions, SEO and sharing assets neutral about transport mode and languages. Language support belongs in the interface selector and the two READMEs; do not promote it as a project tagline. Preserve accurate technical explanations of the routing services and their current driving profile where they explain behavior or configuration.
 
@@ -119,7 +119,7 @@ Use the existing authentication; do not create parallel credentials. Do not add 
 
 ## Hosting and publication
 
-The working tree targets the custom-domain root, but Pages still uses the project URL and the custom-domain certificate is pending. Completing activation is a separate authorized infrastructure task; do not publish this root-base build to the old project path. Preserve Vite's `/` base for the custom domain and the app/help build entries. A hosting-path change also requires reviewing manifest `id`/`start_url`/`scope`, canonical/social URLs, sitemap and docs; root-relative paths can break on a Pages project site.
+Pages serves the custom-domain root with an approved certificate and enforced HTTPS. Changing the Pages domain, DNS or HTTPS settings is a separate authorized infrastructure task. Preserve Vite's `/` base for the custom domain and the app/help build entries. A hosting-path change also requires reviewing manifest `id`/`start_url`/`scope`, canonical/social URLs, sitemap and docs; root-relative paths can break on a Pages project site.
 
 `.github/workflows/ci-pages.yml` runs checks for pull requests and main pushes. Preserve `pages: write` and `id-token: write`, the non-cancelling concurrency group and the current-main guard. Never rerun old workflow executions to publish; watch only the run belonging to the authorized new commit. Deployment follows a successful main build, and the current-main check prevents an older commit from publishing over a newer one. Preserve the existing non-cancelling workflow concurrency behavior.
 

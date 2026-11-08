@@ -4,15 +4,13 @@
 
 Plan routes and export the complete track as GPX.
 
-[Open the website](https://t00ls-dev.github.io/route-gpx/) · [Português](README.pt-BR.md) · [Help](https://t00ls-dev.github.io/route-gpx/help.html) · [MIT license](LICENSE)
+[Open the website](https://route-gpx.t00ls.dev/) · [Português](README.pt-BR.md) · [Help](https://route-gpx.t00ls.dev/help.html) · [MIT license](LICENSE)
 
 <p>
   <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml"><img src="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml/badge.svg?branch=main" alt="CI on main" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22.23.4-339933" alt="Node.js 22.23.4 or newer" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" /></a>
 </p>
-
-This document describes the current working tree. Weather/radar changes and custom-domain activation are not published yet; the linked production site may differ.
 
 ## Features
 
@@ -36,7 +34,7 @@ On small screens, map tools use a single column of icon buttons, including Undo,
 
 When supported by your browser, **Share GPX** opens the device share menu with the same named GPX file; cancelling is silent. **Download GPX** remains available. A desktop right-click (or Shift+F10 on the focused map) opens the point menu. Route drawing is simplified for the current zoom only; GPX, saved and imported geometry remain complete.
 
-For step-by-step instructions, use the [Help page](https://t00ls-dev.github.io/route-gpx/help.html).
+For step-by-step instructions, use the [Help page](https://route-gpx.t00ls.dev/help.html).
 
 ## Important behavior
 
@@ -151,7 +149,7 @@ The separate `node scripts/browser-check.mjs` acceptance script requires a runni
 
 ## Deployment
 
-The custom-domain root configuration in this working tree is prepared for `route-gpx.t00ls.dev`; domain activation and its HTTPS certificate are still pending. The current Pages setting still points to `https://t00ls-dev.github.io/route-gpx/`. Do not publish the root-base build there without completing the domain configuration. Saved routes are origin-specific: export a backup on the old origin before moving.
+The site is published at `https://route-gpx.t00ls.dev/` over HTTPS; the old `https://t00ls-dev.github.io/route-gpx/` address redirects there. Saved routes are origin-specific, so routes saved on the old address are not available on the new domain.
 
 GitHub Actions runs checks on pull requests and pushes to `main`. Successful builds of the current `main` commit deploy to GitHub Pages. Vite uses `/` as its base path for `https://route-gpx.t00ls.dev/`; if changing the hosting path, also update manifest paths, canonical and sharing URLs, sitemap and documentation. See [brand and hosting notes](docs/BRAND.md).
 

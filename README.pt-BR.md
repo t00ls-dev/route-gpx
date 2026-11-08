@@ -4,15 +4,13 @@
 
 Planeje rotas e exporte o traçado completo em GPX.
 
-[Abrir o site](https://t00ls-dev.github.io/route-gpx/) · [English](README.md) · [Ajuda](https://t00ls-dev.github.io/route-gpx/help.html) · [Licença MIT](LICENSE)
+[Abrir o site](https://route-gpx.t00ls.dev/) · [English](README.md) · [Ajuda](https://route-gpx.t00ls.dev/help.html) · [Licença MIT](LICENSE)
 
 <p>
   <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml"><img src="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci-pages.yml/badge.svg?branch=main" alt="CI da branch main" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22.23.4-339933" alt="Node.js 22.23.4 ou superior" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue" alt="Licença MIT" /></a>
 </p>
-
-Este documento descreve a árvore de trabalho atual. As alterações de clima/radar e a ativação do domínio próprio ainda não foram publicadas; o site de produção vinculado pode ser diferente.
 
 ## Recursos
 
@@ -36,7 +34,7 @@ Em telas pequenas, as ferramentas do mapa usam uma coluna de ícones, incluindo 
 
 Quando o navegador oferece suporte, **Compartilhar GPX** abre o menu de compartilhamento do aparelho com o mesmo arquivo GPX nomeado; cancelar não mostra erro. **Baixar GPX** continua disponível. O clique direito no desktop (ou Shift+F10 com o mapa em foco) abre o menu de pontos. Apenas o desenho da rota é simplificado para o zoom atual; a geometria do GPX e das rotas salvas e importadas permanece completa.
 
-Para instruções passo a passo, consulte a [página de Ajuda](https://t00ls-dev.github.io/route-gpx/help.html).
+Para instruções passo a passo, consulte a [página de Ajuda](https://route-gpx.t00ls.dev/help.html).
 
 ## Comportamentos importantes
 
@@ -151,7 +149,7 @@ O script separado de aceitação `node scripts/browser-check.mjs` exige um servi
 
 ## Publicação
 
-A configuração de raiz de domínio nesta árvore de trabalho está preparada para `route-gpx.t00ls.dev`; a ativação do domínio e seu certificado HTTPS ainda estão pendentes. O Pages continua apontando para `https://t00ls-dev.github.io/route-gpx/`. Não publique a build com base na raiz nesse endereço sem concluir a configuração do domínio. Rotas salvas pertencem à origem: exporte um backup na origem antiga antes da mudança.
+O site é publicado em `https://route-gpx.t00ls.dev/` com HTTPS; o endereço antigo `https://t00ls-dev.github.io/route-gpx/` redireciona para ele. Rotas salvas pertencem à origem, portanto as rotas salvas no endereço antigo não ficam disponíveis no domínio novo.
 
 O GitHub Actions executa verificações em pull requests e pushes para `main`. Builds bem-sucedidos do commit atual da `main` são publicados no GitHub Pages. O Vite usa `/` como caminho base para `https://route-gpx.t00ls.dev/`; ao mudar o caminho de hospedagem, atualize também os caminhos do manifest, URLs canônicas e de compartilhamento, sitemap e documentação. Veja as [notas sobre identidade e hospedagem](docs/BRAND.md).
 
