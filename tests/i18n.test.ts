@@ -1,5 +1,13 @@
-import { expect, it, afterEach } from 'vitest';
-import { setLanguage, t, translateDocument } from '../src/i18n';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  detectLanguage,
+  preferredLanguage,
+  rememberLanguage,
+  setLanguage,
+  storedLanguage,
+  t,
+  translateDocument,
+} from '../src/i18n';
 afterEach(() => {
   setLanguage('en');
   document.body.replaceChildren();
@@ -33,4 +41,30 @@ it('translates generated stop names and short status messages', () => {
   );
   setLanguage('en');
   expect(t('Stop 2')).toBe('Stop 2');
+});
+
+describe('language preference', () => {
+  afterEach(() => localStorage.clear());
+  it('detects the first supported browser language by prefix', () => {
+    expect(detectLanguage(['es-ES', 'pt-BR'])).toBe('pt');
+    expect(detectLanguage(['EN-gb', 'pt'])).toBe('en');
+  });
+  it('falls back to English when no browser language is supported', () => {
+    expect(detectLanguage(['es-ES', 'fr'])).toBe('en');
+    expect(detectLanguage([])).toBe('en');
+  });
+  it('prefers the stored choice over the browser languages', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['en-US']);
+    rememberLanguage('pt');
+    expect(storedLanguage()).toBe('pt');
+    expect(preferredLanguage()).toBe('pt');
+    vi.restoreAllMocks();
+  });
+  it('ignores invalid stored values', () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['pt-BR']);
+    localStorage.setItem('language', 'xx');
+    expect(storedLanguage()).toBeUndefined();
+    expect(preferredLanguage()).toBe('pt');
+    vi.restoreAllMocks();
+  });
 });

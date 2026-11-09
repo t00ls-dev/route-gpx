@@ -1,3 +1,4 @@
+import { isLanguage, preferredLanguage, rememberLanguage } from './i18n';
 import { updateSeo } from './seo';
 import './style.css';
 const select = document.getElementById('language') as HTMLSelectElement;
@@ -13,8 +14,10 @@ function apply() {
     './index.html' + location.hash;
   history.replaceState(null, '', `?lang=${lang}` + location.hash);
 }
-select.value =
-  new URLSearchParams(location.search).get('lang') ??
-  (navigator.language.startsWith('pt') ? 'pt' : 'en');
-select.onchange = apply;
+const linked = new URLSearchParams(location.search).get('lang');
+select.value = isLanguage(linked) ? linked : preferredLanguage();
+select.onchange = () => {
+  if (isLanguage(select.value)) rememberLanguage(select.value);
+  apply();
+};
 apply();
