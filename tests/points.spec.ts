@@ -401,3 +401,29 @@ test.beforeEach(async ({ page }) => {
     r.fulfill({ json: { features: [] } }),
   );
 });
+
+test('the chosen language survives the logo link, undo, reloads and shared links', async ({
+  page,
+}) => {
+  await setup(page);
+  await fillPair(page);
+  const routeStart = await page.locator('#location-0').inputValue();
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await page.locator('a.brand').click();
+  await expect(page.locator('#location-0')).toHaveValue('');
+  await expect(page.locator('#language')).toHaveValue('pt');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await page.locator('#undo').click();
+  await expect(page.locator('#location-0')).toHaveValue(routeStart);
+  await expect(page.locator('#language')).toHaveValue('pt');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await page.goto(base);
+  await expect(page.locator('#language')).toHaveValue('pt');
+  await page.goto(base + encodeState({ ...defaults(), language: 'en' }));
+  await expect(page.locator('#language')).toHaveValue('en');
+  await page.goto(base);
+  await expect(page.locator('#language')).toHaveValue('pt');
+  await page.goto(base + 'help.html');
+  await expect(page.locator('#language')).toHaveValue('pt');
+});

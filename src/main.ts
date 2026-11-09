@@ -20,7 +20,15 @@ import {
 } from './travel-time';
 import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
 import { UndoHistory } from './history';
-import { setLanguage, t, observeTranslations, type Language } from './i18n';
+import {
+  getLanguage,
+  observeTranslations,
+  preferredLanguage,
+  rememberLanguage,
+  setLanguage,
+  t,
+  type Language,
+} from './i18n';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './style.css';
@@ -74,7 +82,9 @@ try {
 } catch {
   status('This route link is invalid. Start a new route below.', true);
 }
-const undoHistory = new UndoHistory(state);
+/** Language is a preference, not a route edit, so undo never reverts it. */
+const routeSnapshot = (s: State): State => ({ ...s, language: undefined });
+const undoHistory = new UndoHistory(routeSnapshot(state));
 let drafts = new WeakMap<Point, string>();
 const dirty = new Set<Point>();
 const lookupVersions = new WeakMap<Point, number>();
@@ -146,12 +156,12 @@ function fit() {
 }
 function syncUrl() {
   updateSaveButton();
-  undoHistory.record(state);
+  undoHistory.record(routeSnapshot(state));
   const hash = encodeState(state);
   $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
   history.replaceState(null, '', hash);
   $<HTMLAnchorElement>('help').href =
-    './help.html?lang=' + (state.language ?? 'en') + hash;
+    './help.html?lang=' + getLanguage() + hash;
 }
 function settings() {
   weather.syncInputs();
@@ -736,7 +746,8 @@ $('undo').onclick = () => {
   const previous = undoHistory.undo();
   if (!previous) return;
   state = previous;
-  const restoredLanguage = state.language ?? 'en';
+  const restoredLanguage = state.language ?? getLanguage();
+  state.language = restoredLanguage;
   setLanguage(restoredLanguage);
   $<HTMLSelectElement>('language').value = restoredLanguage;
   drafts = new WeakMap();
@@ -921,7 +932,8 @@ $<HTMLInputElement>('import').onchange = () => {
 window.addEventListener('hashchange', () => {
   try {
     state = decodeState(location.hash, true);
-    const lang = state.language ?? 'en';
+    const lang = state.language ?? getLanguage();
+    state.language = lang;
     setLanguage(lang);
     settings();
     $<HTMLSelectElement>('language').value = lang;
@@ -957,8 +969,7 @@ $('apply-json').onclick = () => {
   }
 };
 
-const initialLanguage: Language =
-  state.language ?? (navigator.language.startsWith('pt') ? 'pt' : 'en');
+const initialLanguage: Language = state.language ?? preferredLanguage();
 state.language = initialLanguage;
 $<HTMLSelectElement>('language').value = initialLanguage;
 setLanguage(initialLanguage);
@@ -968,6 +979,7 @@ renderPoints();
 observeTranslations();
 $<HTMLSelectElement>('language').onchange = () => {
   const lang = $<HTMLSelectElement>('language').value as Language;
+  rememberLanguage(lang);
   state.language = lang;
   setLanguage(lang);
   settings();

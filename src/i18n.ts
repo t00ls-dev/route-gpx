@@ -2,6 +2,41 @@ import { updateSeo } from './seo';
 import type { IconName } from './icons';
 export type Language = 'en' | 'pt';
 let language: Language = 'en';
+const languageKey = 'language';
+export function isLanguage(value: unknown): value is Language {
+  return value === 'en' || value === 'pt';
+}
+export function getLanguage(): Language {
+  return language;
+}
+export function detectLanguage(
+  langs: readonly string[] = navigator.languages,
+): Language {
+  for (const lang of langs) {
+    const prefix = lang.toLowerCase().split('-')[0];
+    if (isLanguage(prefix)) return prefix;
+  }
+  return 'en';
+}
+export function storedLanguage(): Language | undefined {
+  try {
+    const value = localStorage.getItem(languageKey);
+    return isLanguage(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+export function rememberLanguage(lang: Language): void {
+  if (!isLanguage(lang)) return;
+  try {
+    localStorage.setItem(languageKey, lang);
+  } catch {
+    /* Optional preference. */
+  }
+}
+export function preferredLanguage(): Language {
+  return storedLanguage() ?? detectLanguage();
+}
 const pt: Record<string, string> = {
   'View weather': 'Ver clima',
   'Show on map': 'Mostrar no mapa',
