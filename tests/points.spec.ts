@@ -185,6 +185,80 @@ test('undo restores the geometry of each GPX import, even with equal points', as
   await page.locator('#undo').click();
   await expect(page.locator('#summary strong').first()).toHaveText(summaryA);
 });
+test('editing an imported track reroutes only the legs next to the edit', async ({
+  page,
+}) => {
+  await setup(page);
+  const routes: number[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('/route/v1/driving/'))
+      routes.push(
+        new URL(r.url()).pathname.split('/driving/')[1].split(';').length,
+      );
+  });
+  // A 30 km straight track with a 4 km out-and-back spur in the middle.
+  const track = [
+    ...Array.from({ length: 150 }, (_, i) => [-22.9, -43.4 + i * 0.002]),
+    ...Array.from({ length: 41 }, (_, i) => [
+      -22.9 + (20 - Math.abs(20 - i)) * 0.001,
+      -43.4 + 150 * 0.002,
+    ]),
+    ...Array.from({ length: 150 }, (_, i) => [
+      -22.9,
+      -43.4 + (150 + i) * 0.002,
+    ]),
+  ];
+  await page.locator('#import').setInputFiles({
+    name: 'spur.gpx',
+    mimeType: 'application/gpx+xml',
+    buffer: Buffer.from(
+      `<gpx><trk><name>Spur</name><trkseg>${track.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg></trk></gpx>`,
+    ),
+  });
+  await expect(page.locator('#download')).toBeEnabled();
+  const count = await page.locator('#points li').count();
+  expect(count).toBeGreaterThan(3);
+
+  await page.locator('.settings > summary').click();
+  await page.locator('#route-name').fill('Renamed spur');
+  await page.locator('#save-settings').click();
+  await expect(page.locator('#status')).toHaveText('Settings applied.');
+  await expect(page.locator('#download')).toBeEnabled();
+
+  await page.locator('#location-1').fill('-22.95, -43.39');
+  await page.locator('#location-1').press('Tab');
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  expect(routes).toEqual([3]);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#download').click(),
+  ]);
+  const gpx = await readFile((await download.path())!, 'utf8');
+  const exported = gpx.match(/<trkpt[^>]*\/>/g)!;
+  // Every point after the edited stop's next neighbour is the original track.
+  expect(exported.slice(-150)).toEqual(
+    track.slice(-150).map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`),
+  );
+  await expect(page.locator('#summary')).toContainText('Imported GPX + OSRM');
+  await expect(page.locator('#summary')).toContainText(
+    'Road summary covers only recalculated sections.',
+  );
+
+  // Undo returns to the renamed step with the exact imported track, no request.
+  await page.locator('#undo').click();
+  // Restored synchronously: a reroute would leave the download disabled.
+  expect(await page.locator('#download').isEnabled()).toBe(true);
+  await expect(page.locator('#summary')).toContainText('Imported GPX ·');
+  await expect(page.locator('#route-name')).toHaveValue('Renamed spur');
+  expect(routes).toEqual([3]);
+
+  // Calculate route asks the router for the whole route through every point.
+  await page.locator('#calculate').click();
+  await expect(page.locator('#summary')).toContainText('OSRM ·', {
+    timeout: 15000,
+  });
+  expect(routes).toEqual([3, count]);
+});
 test('invalid coordinates cannot enable a stale GPX download', async ({
   page,
 }) => {

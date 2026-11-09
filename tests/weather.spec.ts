@@ -231,6 +231,24 @@ test('clearly shows default and selected speeds, recalculates locally and suppor
   await expect(page.locator('#weather-speed')).toContainText('125 mph');
   expect(calls).toBe(0);
 });
+test('changing only the weather server refreshes weather without rerouting', async ({
+  page,
+}) => {
+  await setup(page);
+  await date(page);
+  await fetchWeather(page);
+  const hosts: string[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('/v1/forecast?')) hosts.push(new URL(r.url()).host);
+    if (r.url().includes('/route/v1/')) hosts.push('routing');
+  });
+  await page.locator('.settings > summary').click();
+  await page.locator('#weather-server').fill('https://weather.example.org');
+  await page.locator('#save-settings').click();
+  await expect(page.locator('#status')).toHaveText('Settings applied.');
+  await expect(page.locator('#weather-result')).toBeVisible({ timeout: 15000 });
+  expect(hosts).toEqual(['weather.example.org']);
+});
 test('changed departure refreshes automatically and obsolete responses cannot restore old weather', async ({
   page,
 }) => {

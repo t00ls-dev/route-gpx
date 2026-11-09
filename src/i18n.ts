@@ -287,8 +287,11 @@ const pt: Record<string, string> = {
   'Choose a place.': 'Escolha um lugar.',
   'GPX downloaded.': 'GPX baixado.',
   'Link copied.': 'Link copiado.',
-  'GPX imported. Edits recalculate the route.':
-    'GPX importado. Alterações recalculam a rota.',
+  'GPX imported. Edits recalculate only the changed sections.':
+    'GPX importado. Alterações recalculam só os trechos alterados.',
+  'Settings applied.': 'Configurações aplicadas.',
+  'Road summary covers only recalculated sections.':
+    'O resumo de vias cobre só os trechos recalculados.',
   'Import GPX': 'Importar GPX',
   'Route points': 'Pontos da rota',
   '↶ Round trip': '↶ Ida e volta',
