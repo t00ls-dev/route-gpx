@@ -6,7 +6,7 @@ This file is the single source of agent instructions. `CLAUDE.md` only imports i
 
 route-gpx is a static route planner with GPX import/export, built with HTML, strict TypeScript, Vite and Leaflet. It runs in the browser. It is published on GitHub Pages at the custom domain `https://route-gpx.t00ls.dev/` with a `/` base; the old project URL `https://t00ls-dev.github.io/route-gpx/` redirects there. There is no application backend, account system, analytics or remote AI. Keep changes compatible with this architecture unless the task explicitly changes it.
 
-Present the project as a route planner with GPX export. Keep public introductions, SEO and sharing assets neutral about transport mode and languages. Language support belongs in the interface selector and the two READMEs; do not promote it as a project tagline. Preserve accurate technical explanations of the routing services and their current driving profile where they explain behavior or configuration.
+Present the project as a route planner with GPX export. Keep public introductions, SEO and sharing assets neutral about transport mode and languages. Language support belongs in the interface selector and the README feature list; do not promote it as a project tagline. Preserve accurate technical explanations of the routing services and their current driving profile where they explain behavior or configuration.
 
 Route creation uses addresses, coordinates and map points. The route-description interpreter has been removed; keep this direct editing flow simple.
 
@@ -61,23 +61,23 @@ Radar is off by default, independent of departure, and uses only recent observat
 
 ## Interface, text and assets
 
-Do not add project UI screenshots to the repository or READMEs. Use the project logo for presentation; existing icon and social metadata brand assets are allowed. Keep local acceptance captures in an ignored `*.local/` directory.
+Do not add project UI screenshots to the repository or the README. Use the project logo for presentation; existing icon and social metadata brand assets are allowed. Keep local acceptance captures in an ignored `*.local/` directory.
 
 Never use emoji characters as authored interface icons or decoration. Use the shared inline SVG system in `src/icons.ts`, with a 24-unit viewBox, 2-unit strokes, rounded ends and `currentColor`. Apply it to weather cards/markers, alerts and controls. Decorative SVGs must be hidden from assistive technology; retain meaningful text and accessible names. Preserve user-provided route names and required copyright attribution as text.
 
 Use at least 16px text in editable touch controls to avoid iOS focus zoom; preserve pinch zoom. Keep the compact mobile layout, keyboard-accessible controls and high-contrast light theme, including when the OS prefers dark mode. Use the separate help page for detailed instructions.
 
-Keep English source keys and Portuguese translations together in `src/i18n.ts`; check both language directions. Keep redistributed dependency notices in `public/THIRD_PARTY_NOTICES.txt` and link them from both READMEs and help. Adding or changing an external service requires updating both READMEs, help, privacy disclosures and required source/license credits.
+Keep English source keys and Portuguese translations together in `src/i18n.ts`; check both language directions. Keep redistributed dependency notices in `public/THIRD_PARTY_NOTICES.txt` and link them from the README and help. Adding or changing an external service requires updating the README, help, privacy disclosures and required source/license credits.
 
-When changing English UI text, update its exact key or dynamic pattern in `src/i18n.ts` and verify switching back and forth. Translation caches original DOM text and selected attributes; do not replace this mechanism casually. Update both READMEs and help instructions when user-visible behavior changes.
+When changing English UI text, update its exact key or dynamic pattern in `src/i18n.ts` and verify switching back and forth. Translation caches original DOM text and selected attributes; do not replace this mechanism casually. Update the README and help instructions when user-visible behavior changes.
 
-### README parity and scope
+### Repository language and README scope
 
-Treat `README.md` and `README.pt-BR.md` as translations of the same document. Update both in the same change: keep the same sections, order, features, limitations, examples, commands and link destinations. Only the language should differ, including translated UI labels; the top language link points to the counterpart file. Do not make either README depend on the other for additional technical content.
+All repository documentation, templates, code comments, commit messages, pull request titles and bodies, and GitHub repository text must be in English only. Portuguese is supported only in the website interface, including `src/i18n.ts`, help and localized metadata. Preserve tests and acceptance scripts that exercise Portuguese UI text, language options that describe the website interface, and user-provided names and required attribution.
 
-Keep both READMEs focused on project purpose, main features, quick start, essential behavior/limitations and privacy, local development, validation, deployment overview and credits/license. Link to the help page or dedicated documentation for detailed instructions and infrastructure tutorials rather than expanding one README into a manual. Keep public introductions neutral as described above.
+Maintain a single English `README.md`. Keep the README focused on project purpose, main features, quick start, essential behavior/limitations and privacy, local development, validation, deployment overview and credits/license. Link to the help page or dedicated documentation for detailed instructions and infrastructure tutorials rather than expanding the README into a manual. Keep public introductions neutral as described above.
 
-When editing the READMEs, review them side by side for semantic parity, confirm that command blocks match, check local links and npm script names, and run `npm run format:check`. Structural checks support this review but do not replace checking the translation's meaning.
+When editing the README, check local links, documented paths, commands and npm script names against the repository, and run `npm run format:check`.
 
 For public-description changes, review `index.html` and `help.html` title/description, Open Graph and Twitter tags, JSON-LD, `src/seo.ts`, manifest, social card, README openings and related tests. Keep initial HTML and runtime metadata consistent.
 
@@ -85,7 +85,7 @@ Edit SVG brand sources, then run `node scripts/generate-brand.mjs` to regenerate
 
 ## Local validation
 
-Use Node.js 22 LTS 22.23.4 or newer, Node 24.15 or newer in the 24 line, or Node 26+ (CI uses Node 22.23.4), and `npm ci` for a reproducible install. The 24.15 minimum comes from jsdom 31 (unit-test environment), which requires Node `^22.22.2 || ^24.15.0 || >=26.0.0`; keep the `engines` field in `package.json` within the ranges required by the development dependencies, and update the READMEs and help when it changes. `npm run dev` serves the application at `http://localhost:5173/` by default; the help page is a second Vite entry.
+Use Node.js 22 LTS 22.23.4 or newer, Node 24.15 or newer in the 24 line, or Node 26+ (CI uses Node 22.23.4), and `npm ci` for a reproducible install. The 24.15 minimum comes from jsdom 31 (unit-test environment), which requires Node `^22.22.2 || ^24.15.0 || >=26.0.0`; keep the `engines` field in `package.json` within the ranges required by the development dependencies, and update the README and help when it changes. `npm run dev` serves the application at `http://localhost:5173/` by default; the help page is a second Vite entry.
 
 For application changes, run the CI checks:
 

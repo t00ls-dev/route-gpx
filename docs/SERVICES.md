@@ -1,6 +1,6 @@
 # Services, weather and privacy details
 
-[Português](SERVICES.pt-BR.md) · [Back to README](../README.md)
+[Back to README](../README.md)
 
 ## Weather
 

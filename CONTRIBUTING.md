@@ -28,8 +28,10 @@ The [Local development](README.md#local-development) and [Validation](README.md#
 
 ## Rules for changes
 
+Repository documentation, templates, code comments, commit messages, pull request titles and bodies, and GitHub repository text must be in English. Preserve Portuguese website interface text and tests, localized metadata, user-provided names and required attribution.
+
 - UI text changes update [`src/i18n.ts`](src/i18n.ts) with the English key and the Portuguese translation; check switching languages in both directions.
-- User-visible behavior changes update both READMEs ([`README.md`](README.md) and [`README.pt-BR.md`](README.pt-BR.md), kept in parity) and the help page ([`help.html`](help.html)).
+- User-visible behavior changes update the README ([`README.md`](README.md)) and the help page ([`help.html`](help.html)).
 - New or changed external services also update the privacy disclosures and credits (see [`docs/SERVICES.md`](docs/SERVICES.md)).
 - Do not commit UI screenshots or generated files.
 - Do not use emoji as interface icons; use the shared SVG icons in [`src/icons.ts`](src/icons.ts).
