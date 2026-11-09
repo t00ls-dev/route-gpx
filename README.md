@@ -4,7 +4,7 @@ Plan routes and export the complete track as GPX.
 
 <p>
   <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/t00ls-dev/route-gpx/ci.yml?branch=main&label=CI" alt="CI on main" /></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22.23.4-339933" alt="Node.js 22.23.4 or newer" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.23.4%2B%20%7C%2024.15%2B%20%7C%2026%2B-339933" alt="Node.js 22.23.4+, 24.15+ or 26+" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" /></a>
 </p>
 
@@ -69,7 +69,7 @@ npm run test:browser              # Playwright browser workflows
 npm run build                     # TypeScript check and production build
 ```
 
-The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser-check.mjs` runs live acceptance checks, writing only to the ignored `.browser-check.local/` folder.
+The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser-check.mjs` runs live acceptance checks against a local server (or a deployed site through `SITE_URL`), writing only to the ignored `.browser-check.local/` folder.
 
 ## Deployment
 
@@ -83,7 +83,7 @@ See the [contributing guide](CONTRIBUTING.md) before opening a pull request. Par
 
 Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), with passage times and risk summaries calculated here. Radar by [RainViewer](https://www.rainviewer.com/), personal and educational use. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
-The bundled Leaflet library uses the BSD 2-Clause license; its complete notice is included in [third-party notices](public/THIRD_PARTY_NOTICES.txt) and copied into the production build.
+The bundled Leaflet library uses the BSD 2-Clause license and [fflate](https://github.com/101arrowz/fflate) (route-link compression) uses the MIT license; their complete notices are included in [third-party notices](public/THIRD_PARTY_NOTICES.txt) and copied into the production build.
 
 Application code is licensed under [MIT](LICENSE). Data and dependencies retain their own licenses. No affiliation with the public service operators.
 
