@@ -1843,6 +1843,7 @@ html.map-touching body {
 }
 .weather-card-conditions,
 .weather-card-wind,
+.weather-card-uv,
 .weather-card-risks {
   display: flex;
   align-items: center;
@@ -1918,6 +1919,7 @@ html.map-touching body {
 
 .weather-card-conditions .button-icon,
 .weather-card-wind .button-icon,
+.weather-card-uv .button-icon,
 .weather-card-risks .button-icon {
   width: 16px;
   height: 16px;

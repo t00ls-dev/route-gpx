@@ -13,6 +13,7 @@ const hours = Array.from({ length: 4 }, (_, i): WeatherHour => ({
   windDirection: 90,
   gusts: 10,
   visibility: 20000,
+  uv: 3,
 }));
 it('reuses rounded coordinates and covered subranges without mixing endpoints or missing hours', () => {
   const cache = new WeatherCache();

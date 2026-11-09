@@ -111,6 +111,13 @@ for (const mobile of [false, true])
     await expect(page.locator('.weather-card-severity').first()).toHaveText(
       'Alert 3',
     );
+    // UV 7 from the fixture: shown with its WHO category, below the alert threshold.
+    await expect(page.locator('.weather-card-uv').first()).toHaveText(
+      'UV 7 · High',
+    );
+    await expect(page.locator('#weather-details').first()).not.toContainText(
+      'Very high UV',
+    );
     await expect(page.locator('.weather-marker')).toHaveCount(7);
     const marker = page.locator('.weather-marker').first();
     await expect(marker).toHaveAttribute('aria-label', /View weather.*Nov.*km/);
@@ -133,6 +140,9 @@ for (const mobile of [false, true])
     );
     await expect(page.locator('.weather-card-severity').first()).toHaveText(
       'Alerta 3',
+    );
+    await expect(page.locator('.weather-card-uv').first()).toHaveText(
+      'UV 7 · alto',
     );
     await expect(page.locator('#summary .stats-basis')).toHaveText(
       'A 60 km/h · sem paradas',

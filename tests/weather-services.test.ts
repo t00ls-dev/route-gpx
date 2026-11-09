@@ -206,6 +206,23 @@ it('validates wind directions and preserves unavailable directions without inven
   ).toBeNull();
 });
 
+it('reads the UV index, rejects negative values and tolerates a missing UV series', () => {
+  const response = weatherResponse(
+    new URL(weatherUrl('https://weather.test', points, start, end)),
+  );
+  expect(parseWeather(response, 2, start, end).hours[0][0].uv).toBe(7);
+  response[0].hourly.uv_index[0] = -1;
+  expect(() => parseWeather(response, 2, start, end)).toThrow('invalid');
+  // Some dates may lack UV: the rest of the forecast must still load.
+  const withoutUv = response.map((row) => {
+    const { uv_index: _omitted, ...hourly } = row.hourly;
+    void _omitted;
+    return { ...row, hourly };
+  });
+  const parsed = parseWeather(withoutUv, 2, start, end);
+  expect(parsed.hours[0][0].uv).toBeNull();
+  expect(parsed.hours[0][0].precipitation).toBe(12);
+});
 it('reuses covered points in different orders and fetches only missing distinct rounded coordinates', async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-11-09T12:00:00Z'));

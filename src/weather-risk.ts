@@ -8,6 +8,9 @@ export const WEATHER_THRESHOLDS = {
   strongGusts: 60,
   iceTemperature: 2,
   extremeHeat: 40,
+  /** WHO UV index categories: 8–10 very high, 11+ extreme. */
+  veryHighUv: 8,
+  extremeUv: 11,
 } as const;
 export interface WeatherRisk {
   severity: number;
@@ -40,10 +43,30 @@ export function classifyWeather(hours: WeatherHour[]): WeatherRisk[] {
       add('Cold / possible ice', 2);
     if (h.temperature !== null && h.temperature >= t.extremeHeat)
       add('Extreme heat', 2);
-    if (Object.values(h).some((v) => v === null))
+    if (h.uv !== null && h.uv >= t.extremeUv) add('Extreme UV', 2);
+    else if (h.uv !== null && h.uv >= t.veryHighUv) add('Very high UV', 1);
+    // UV is optional data: its absence alone is not reported.
+    if (
+      Object.entries(h).some(([key, value]) => key !== 'uv' && value === null)
+    )
       add('Some weather data unavailable', 1);
   }
   return [...risks]
     .map(([text, severity]) => ({ text, severity }))
     .sort((a, b) => b.severity - a.severity || a.text.localeCompare(b.text));
+}
+/** WHO UV index category for a rounded value. */
+export function uvCategory(
+  uv: number,
+): 'Low' | 'Moderate' | 'High' | 'Very high' | 'Extreme' {
+  const value = Math.round(uv);
+  return value <= 2
+    ? 'Low'
+    : value <= 5
+      ? 'Moderate'
+      : value <= 7
+        ? 'High'
+        : value <= 10
+          ? 'Very high'
+          : 'Extreme';
 }

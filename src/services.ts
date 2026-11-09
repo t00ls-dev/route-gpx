@@ -425,7 +425,10 @@ export const WEATHER_VARIABLES = {
   windDirection: 'wind_direction_10m',
   gusts: 'wind_gusts_10m',
   visibility: 'visibility',
+  uv: 'uv_index',
 } as const;
+/** Variables that may be missing (e.g. for some past dates) without failing the forecast. */
+const OPTIONAL_WEATHER_VARIABLES: ReadonlySet<string> = new Set(['uv_index']);
 export function weatherUrl(
   base: string,
   points: WeatherPoint[],
@@ -487,6 +490,11 @@ export function parseWeather(
       )
         throw invalid();
       for (const variable of Object.values(WEATHER_VARIABLES)) {
+        if (
+          h[variable] === undefined &&
+          OPTIONAL_WEATHER_VARIABLES.has(variable)
+        )
+          h[variable] = times.map(() => null);
         const values = h[variable];
         if (
           !Array.isArray(values) ||
@@ -507,9 +515,13 @@ export function parseWeather(
         if (
           (value.probability !== null &&
             (value.probability < 0 || value.probability > 100)) ||
-          [value.precipitation, value.wind, value.gusts, value.visibility].some(
-            (v) => v !== null && v < 0,
-          ) ||
+          [
+            value.precipitation,
+            value.wind,
+            value.gusts,
+            value.visibility,
+            value.uv,
+          ].some((v) => v !== null && v < 0) ||
           (value.windDirection !== null &&
             (value.windDirection < 0 || value.windDirection > 360)) ||
           (value.code !== null &&
