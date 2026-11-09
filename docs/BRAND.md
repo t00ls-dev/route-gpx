@@ -1,6 +1,6 @@
 # route-gpx identity
 
-Do not version project UI screenshots or embed them in READMEs. Use the project logo; keep local verification captures in an ignored `*.local/` folder.
+Do not version project UI screenshots or embed them in the README. Use the project logo; keep local verification captures in an ignored `*.local/` folder.
 
 The route mark connects two points with a bend, matching the app's purpose. The wordmark is **route-gpx**. Keep the interface light and compact.
 

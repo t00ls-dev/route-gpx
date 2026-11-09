@@ -2,8 +2,6 @@
 
 Plan routes and export the complete track as GPX.
 
-[Português](README.pt-BR.md)
-
 <p>
   <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/t00ls-dev/route-gpx/ci.yml?branch=main&label=CI" alt="CI on main" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22.23.4-339933" alt="Node.js 22.23.4 or newer" /></a>
@@ -22,6 +20,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 - **Rain radar:** optional recent radar imagery over the map.
 - **Map layers:** standard, topographic and satellite maps, with optional labels.
 - **Save and share:** route links, named routes saved in this browser and JSON backup import/export.
+- **Interface:** available in English and Portuguese.
 
 ## Quick start
 

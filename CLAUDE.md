@@ -9,5 +9,5 @@
 - Before reporting a task as finished, run the complete local validation defined in `AGENTS.md` (lint, format check, unit tests, build and browser tests) and report the real results, including failures and skipped checks.
 - Use plan mode before changes that touch the state/hash format (`src/core.ts`), IndexedDB storage (`src/saved-routes.ts`), routing, the CI workflow or repository rules and settings.
 - Do not commit, push, create branches or open pull requests without an explicit request. Never rerun old CI executions.
-- When adding a third-party service or map layer, also update `README.md`, `README.pt-BR.md`, `help.html`, privacy disclosures and credits, with English and Portuguese texts.
+- When adding a third-party service or map layer, also update `README.md`, `help.html`, privacy disclosures and credits. Repository text stays in English; Portuguese text remains required only for the website interface (`src/i18n.ts` and help).
 - Shared permissions live in `.claude/settings.json`; personal overrides go in the ignored `.claude/settings.local.json` or `CLAUDE.local.md`.
