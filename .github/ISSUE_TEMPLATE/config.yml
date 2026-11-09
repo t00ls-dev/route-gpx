@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Help page
+    url: https://route-gpx.t00ls.dev/help.html
+    about: Instructions for every control, gesture and shortcut.
+  - name: Security vulnerability
+    url: https://github.com/t00ls-dev/route-gpx/security/policy
+    about: Report vulnerabilities privately, never in public issues.
+  - name: Map data error
+    url: https://www.openstreetmap.org/fixthemap
+    about: Wrong roads, names or places come from OpenStreetMap and are fixed there.

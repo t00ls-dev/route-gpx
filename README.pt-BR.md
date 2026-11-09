@@ -74,7 +74,11 @@ O comando opcional `npm run test:integration` consulta o OSRM real, e `node scri
 
 ## Publicação
 
-O GitHub Actions executa verificações em pull requests e pushes para `main`, e builds bem-sucedidos do commit atual da `main` são publicados no GitHub Pages em `https://route-gpx.t00ls.dev/`. O Vite usa `/` como caminho base; consulte as [notas sobre identidade e hospedagem](docs/BRAND.md) antes de mudar o caminho de hospedagem.
+O GitHub Actions executa verificações em pull requests e pushes para `main`, e builds bem-sucedidos do commit atual da `main` são publicados no GitHub Pages em `https://route-gpx.t00ls.dev/`. As mudanças chegam à `main` somente por pull requests que passam no CI. O Vite usa `/` como caminho base; consulte as [notas sobre identidade e hospedagem](docs/BRAND.md) antes de mudar o caminho de hospedagem.
+
+## Contribuindo
+
+Consulte o [guia de contribuição](CONTRIBUTING.md) (em inglês) antes de abrir um pull request. A participação segue o [Código de Conduta](CODE_OF_CONDUCT.md) (em inglês), e vulnerabilidades de segurança são relatadas de forma privada conforme a [política de segurança](SECURITY.md) (em inglês).
 
 ## Créditos e licença
 
@@ -84,4 +88,4 @@ A biblioteca Leaflet distribuída usa a licença BSD de 2 cláusulas; seu aviso 
 
 O código da ferramenta é licenciado sob [MIT](LICENSE). Dados e dependências mantêm suas próprias licenças. Sem afiliação com os operadores dos serviços públicos.
 
-[Relatar problema ou contatar o mantenedor](https://github.com/t00ls-dev/route-gpx/issues) · [Relatar problema no mapa](https://www.openstreetmap.org/fixthemap)
+[Relatar problema ou contatar o mantenedor](https://github.com/t00ls-dev/route-gpx/issues/new/choose) · [Relatar vulnerabilidade de segurança de forma privada](https://github.com/t00ls-dev/route-gpx/security/advisories/new) · [Relatar problema no mapa](https://www.openstreetmap.org/fixthemap)

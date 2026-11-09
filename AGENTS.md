@@ -29,6 +29,8 @@ Route creation uses addresses, coordinates and map points. The route-description
 | `src/style.css`, `docs/BRAND.md`                                                    | Shared styling and brand guidance.                                                                                                           |
 | `public/`                                                                           | Static metadata, manifest, sitemap, SVG sources and generated brand images.                                                                  |
 
+Repository governance lives outside the application code: `CONTRIBUTING.md` (contributor workflow and rules), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md` (private vulnerability reporting and scope), `.github/ISSUE_TEMPLATE/` (bug and feature forms, contact links), `.github/pull_request_template.md` (PR checklist) and `.github/dependabot.yml` (weekly npm and GitHub Actions updates). Keep them in English and consistent with this file.
+
 Keep calculation and validation logic in the relevant module rather than adding it to DOM handlers. Follow the existing TypeScript modules and Prettier style; a UI change does not require introducing a framework.
 
 ## Contracts to preserve
@@ -117,10 +119,16 @@ Use the local `git` and `gh` executables for Git and GitHub operations. Do not r
 
 Use the existing authentication; do not create parallel credentials. Do not add authorship credits to Codex, Claude Code, OpenAI or Anthropic in commits, pull requests, code or documentation, including `Co-authored-by` trailers. Preserve existing licenses, mandatory legal attribution and repository history.
 
+`main` is protected by the `Protect main` repository ruleset: pull requests are required, merges are squash-only with linear history, the `Lint, test and build` CI check must pass on a branch that is up to date with `main`, and review conversations must be resolved. Force-pushes and deletion are blocked, and the ruleset has no bypass actors. Never push directly to `main` or try to work around these protections.
+
+Changes reach `main` only through pull requests. Create a focused branch named `<type>/<short-description>` (for example `fix/gpx-import-names`), push it, open the PR with `gh pr create` following `.github/pull_request_template.md`, watch its CI run and merge with `gh pr merge --squash --delete-branch` only when the merge is authorized. The PR title becomes the squash commit title, so write it in the history's concise imperative English style.
+
+Renaming the CI job breaks the required check; such a change must update the ruleset in the same authorized task. Changing, disabling or bypassing rulesets, merge settings or security features (Dependabot alerts and security updates, private vulnerability reporting) is a separate repository-administration task that needs its own authorization.
+
 ## Hosting and publication
 
 Pages serves the custom-domain root with an approved certificate and enforced HTTPS. Changing the Pages domain, DNS or HTTPS settings is a separate authorized infrastructure task. Preserve Vite's `/` base for the custom domain and the app/help build entries. A hosting-path change also requires reviewing manifest `id`/`start_url`/`scope`, canonical/social URLs, sitemap and docs; root-relative paths can break on a Pages project site.
 
 Two workflows handle checks and publication. `.github/workflows/ci.yml` (CI) runs the checks for pull requests, main pushes and manual dispatch with only `contents: read`, in the non-cancelling `ci-<ref>` concurrency group. `.github/workflows/deploy.yml` (Deploy) runs through `workflow_run` only after a CI run triggered by a push to `main` succeeds; it rebuilds that run's exact `head_sha` and publishes it to Pages. Preserve Deploy's `pages: write` and `id-token: write`, its non-cancelling `pages` concurrency group and its current-main guard, which skips publication when the commit is no longer the current `main` so an older commit cannot publish over a newer one. Keep Pages permissions out of CI and do not add a manual trigger to Deploy. Never rerun old workflow executions to publish; watch only the runs belonging to the authorized new commit.
 
-When publication is part of the task, make a focused commit in the history's concise imperative English style, push, follow the CI run for that commit and then the Deploy run it triggers with `gh run watch <id> --exit-status`, and distinguish successful checks from successful deployment. Confirm the requested behavior on the live site; do not infer it from a green build alone.
+When publication is part of the task, deliver the change through an authorized pull request as described above; the push to `main` comes from its squash merge. Then follow the CI run for the merge commit on `main` and the Deploy run it triggers with `gh run watch <id> --exit-status`, and distinguish successful checks from successful deployment. Confirm the requested behavior on the live site; do not infer it from a green build alone.
