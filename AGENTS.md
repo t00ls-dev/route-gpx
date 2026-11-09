@@ -85,7 +85,7 @@ Edit SVG brand sources, then run `node scripts/generate-brand.mjs` to regenerate
 
 ## Local validation
 
-Use Node.js 22 LTS 22.23.4 or newer, Node 24 or Node 26+ (CI uses Node 22.23.4) and `npm ci` for a reproducible install. `npm run dev` serves the application at `http://localhost:5173/` by default; the help page is a second Vite entry.
+Use Node.js 22 LTS 22.23.4 or newer, Node 24.15 or newer in the 24 line, or Node 26+ (CI uses Node 22.23.4), and `npm ci` for a reproducible install. The 24.15 minimum comes from jsdom 31 (unit-test environment), which requires Node `^22.22.2 || ^24.15.0 || >=26.0.0`; keep the `engines` field in `package.json` within the ranges required by the development dependencies, and update the READMEs and help when it changes. `npm run dev` serves the application at `http://localhost:5173/` by default; the help page is a second Vite entry.
 
 For application changes, run the CI checks:
 
