@@ -127,6 +127,8 @@ export function setupPointMenu(
   // A finger lifted outside the map must not leave page selection off.
   window.addEventListener('pointerup', () => touching(false));
   window.addEventListener('pointercancel', () => touching(false));
+  // Double tap and hold zooms (src/quick-zoom.ts); that hold is not a point choice.
+  map.on('quickzoomstart', () => press.cancel());
   map.on('movestart', () => {
     press.cancel();
     close();
