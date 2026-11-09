@@ -3,8 +3,11 @@ import process from 'node:process';
 export default defineConfig({
   testDir: 'tests',
   testMatch: '**/*.spec.ts',
+  fullyParallel: true,
+  // One worker per process; CI scales through shards (see ci.yml).
   workers: 1,
-  reporter: 'list',
+  // CI shards write blob reports that the merge-reports job combines.
+  reporter: process.env.CI ? 'blob' : 'list',
   use: {
     browserName: 'chromium',
     launchOptions: { args: ['--no-sandbox'] },

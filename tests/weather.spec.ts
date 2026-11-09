@@ -192,7 +192,9 @@ for (const failure of ['429', 'network', 'invalid', 'timeout'])
     await expect(page.locator('#download')).toBeEnabled();
     expect(calls).toBe(1);
     await page.locator('#weather-retry').click();
-    await page.clock.fastForward(61000);
+    // Pass only the 6 s weather queue spacing: advancing past the retry's 20 s
+    // request deadline would race the mocked response and time it out again.
+    await page.clock.fastForward(6500);
     await fetchWeather(page);
     expect(calls).toBe(2);
   });
