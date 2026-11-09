@@ -21,6 +21,7 @@ import {
   type Step,
   serverUrl,
   validCoord,
+  validRoute,
 } from './core';
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export class RequestQueue {
@@ -110,23 +111,41 @@ export async function osrmRoute(state: State): Promise<Route> {
         ? 'No driving route connects these points.'
         : `OSRM: ${d.code || 'invalid response'}`,
     );
-  const r = d.routes[0];
-  return {
-    segments: [r.geometry.coordinates.map(([lon, lat]) => [lat, lon])],
-    steps: r.legs.flatMap((l) =>
-      l.steps.map((s) => ({
-        name: s.name || 'Unnamed road',
-        ref: s.ref || '',
-        distance: s.distance,
-        duration: s.duration,
-        kind: s.maneuver?.type,
-      })),
-    ),
-    distance: r.distance,
-    duration: r.duration,
-    provider: 'OSRM',
-    snapped: d.waypoints.map((w) => [w.location[1], w.location[0]]),
-  };
+  return checkedRoute('OSRM', () => {
+    const r = d.routes[0];
+    if (d.waypoints.length !== state.points.length) throw new Error();
+    return {
+      segments: [r.geometry.coordinates.map(([lon, lat]) => [lat, lon])],
+      steps: r.legs.flatMap((l) =>
+        l.steps.map((s) => ({
+          name: s.name || 'Unnamed road',
+          ref: s.ref || '',
+          distance: s.distance,
+          duration: s.duration,
+          kind: s.maneuver?.type,
+        })),
+      ),
+      distance: r.distance,
+      duration: r.duration,
+      provider: 'OSRM',
+      snapped: d.waypoints.map((w) => [w.location[1], w.location[0]]),
+    };
+  });
+}
+/** Builds a route from untrusted router JSON; malformed shapes and values become one clear error. */
+function checkedRoute(
+  server: 'OSRM' | 'Valhalla',
+  build: () => unknown,
+): Route {
+  let route: unknown;
+  try {
+    route = build();
+  } catch {
+    route = undefined;
+  }
+  if (!validRoute(route))
+    throw new Error(`${server} returned an invalid route.`);
+  return route;
 }
 export function decodePolyline(str: string): Coord[] {
   let i = 0,
@@ -187,23 +206,25 @@ export async function valhallaRoute(state: State): Promise<Route> {
   if (!d.trip || d.trip.status !== 0)
     throw new Error(d.error || 'Valhalla could not find a route.');
   const t = d.trip;
-  const steps: Step[] = t.legs.flatMap((l) =>
-    l.maneuvers.map((m) => ({
-      name: m.street_names?.join(' / ') || 'Unnamed road',
-      ref: (m.street_names ?? [])
-        .filter((n) => /\b[A-Z]{1,3}[ -]?\d{1,4}\b/.test(n))
-        .join(';'),
-      distance: m.length * 1000,
-      duration: m.time,
-    })),
-  );
-  return {
-    segments: t.legs.map((l) => decodePolyline(l.shape)),
-    steps,
-    distance: t.summary.length * 1000,
-    duration: t.summary.time,
-    provider: 'Valhalla (fallback)',
-  };
+  return checkedRoute('Valhalla', () => {
+    const steps: Step[] = t.legs.flatMap((l) =>
+      l.maneuvers.map((m) => ({
+        name: m.street_names?.join(' / ') || 'Unnamed road',
+        ref: (m.street_names ?? [])
+          .filter((n) => /\b[A-Z]{1,3}[ -]?\d{1,4}\b/.test(n))
+          .join(';'),
+        distance: m.length * 1000,
+        duration: m.time,
+      })),
+    );
+    return {
+      segments: t.legs.map((l) => decodePolyline(l.shape)),
+      steps,
+      distance: t.summary.length * 1000,
+      duration: t.summary.time,
+      provider: 'Valhalla (fallback)',
+    };
+  });
 }
 export async function calculate(
   state: State,

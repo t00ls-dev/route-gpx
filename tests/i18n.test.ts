@@ -42,6 +42,18 @@ it('translates generated stop names and short status messages', () => {
     'Este link sugere outros servidores de rota: example.org. A rota usa os servidores padrão.',
   );
   expect(t('Use link servers')).toBe('Usar servidores do link');
+  expect(
+    t(
+      'No route available. Check the points or try again later. OSRM returned an invalid route. The fallback server also failed.',
+    ),
+  ).toBe(
+    'Rota indisponível. Confira os pontos ou tente mais tarde. O OSRM devolveu uma rota inválida. O servidor alternativo também falhou.',
+  );
+  expect(
+    t(
+      'No route available. Check the points or try again later. Server returned HTTP 500. The fallback server also failed.',
+    ),
+  ).toContain('O servidor respondeu HTTP 500.');
   expect(t('Keep default servers')).toBe('Manter servidores padrão');
   expect(t('Stop 2')).toBe('Parada 2');
   expect(t('Return to start')).toBe('Volta ao início');
