@@ -359,6 +359,13 @@ const pt: Record<string, string> = {
   'Imported route': 'Rota importada',
   'Imported GPX': 'GPX importado',
   'Valhalla (fallback)': 'Valhalla (alternativo)',
+  'Lock editing': 'Bloquear edição',
+  'Unlock editing': 'Desbloquear edição',
+  'Route locked. Map, export and sharing still work.':
+    'Rota bloqueada. Mapa, exportação e compartilhamento continuam funcionando.',
+  'Route locked. Unlock editing to change it.':
+    'Rota bloqueada. Desbloqueie a edição para alterá-la.',
+  'Editing unlocked.': 'Edição desbloqueada.',
   Start: 'Início',
   Destination: 'Destino',
   Via: 'Passagem',

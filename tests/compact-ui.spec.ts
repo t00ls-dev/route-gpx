@@ -53,6 +53,7 @@ for (const width of [320, 360, 390, 430]) {
               'Camadas do mapa',
               'Tela cheia',
               '◎ Ver rota',
+              'Bloquear edição',
               '↶ Desfazer',
             ]
           : [
@@ -60,9 +61,17 @@ for (const width of [320, 360, 390, 430]) {
               'Map layers',
               'Full screen',
               '◎ Fit route',
+              'Lock editing',
               '↶ Undo',
             ];
-      const ids = ['locate', 'layers-toggle', 'fullscreen', 'fit', 'undo'];
+      const ids = [
+        'locate',
+        'layers-toggle',
+        'fullscreen',
+        'fit',
+        'lock',
+        'undo',
+      ];
       let lastBottom = 0;
       for (let i = 0; i < ids.length; i++) {
         const locator = page.locator(`#${ids[i]}`);
@@ -85,19 +94,11 @@ for (const width of [320, 360, 390, 430]) {
             el.nextElementSibling?.classList.contains('speed-options'),
           ),
       ).toBe(true);
-      const zoom = (await page
-        .locator('.leaflet-control-zoom-out')
-        .boundingBox())!;
-      expect(zoom.y + zoom.height).toBeLessThanOrEqual(
+      // Phones zoom with pinch and double tap, so the map tools column has room.
+      await expect(page.locator('.leaflet-control-zoom')).toBeHidden();
+      expect(lastBottom).toBeLessThanOrEqual(
         (await page.locator('#route-panel').boundingBox())!.y,
       );
-      expect(
-        Math.abs(
-          zoom.x +
-            zoom.width -
-            ((await page.locator('#locate').boundingBox())!.x + 44),
-        ),
-      ).toBeLessThanOrEqual(2);
       expect((await page.locator('header').boundingBox())!.height).toBe(44);
       await expect(page.locator('#help')).toHaveAccessibleName(
         language === 'pt' ? 'Ajuda' : 'Help',
@@ -122,7 +123,7 @@ for (const width of [320, 360, 390, 430]) {
       expect(credit.width).toBe(44);
       expect(credit.height).toBe(44);
       expect(
-        Math.abs(credit.x + credit.width / 2 - (zoom.x + zoom.width / 2)),
+        Math.abs(credit.x + credit.width / 2 - (column.x + column.width / 2)),
       ).toBeLessThanOrEqual(1);
       const toggle = page.locator('.map-credits-toggle');
       await expect(toggle).toHaveAccessibleName(

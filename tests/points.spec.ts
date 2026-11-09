@@ -96,6 +96,81 @@ for (const mobile of [false, true]) {
       await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
       await expect(page.locator('.leaflet-marker-icon')).toHaveCount(2);
     });
+    test('the edit lock blocks route edits while viewing and download keep working', async ({
+      page,
+    }) => {
+      let routeRequests = 0;
+      page.on('request', (request) => {
+        if (request.url().includes('/route/v1/driving/')) routeRequests++;
+      });
+      await setup(page);
+      await fillPair(page);
+      const requestsBefore = routeRequests;
+      await expect(page.locator('.leaflet-marker-draggable')).toHaveCount(2);
+
+      await page.locator('#lock').click();
+      await expect(page.locator('#lock')).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await expect(page.locator('#lock-notice')).toBeVisible();
+      await expect(page.locator('#location-0')).toHaveJSProperty(
+        'readOnly',
+        true,
+      );
+      for (const id of ['add', 'reverse', 'roundtrip', 'undo', 'calculate'])
+        await expect(page.locator(`#${id}`)).toBeDisabled();
+      await expect(
+        page.getByRole('button', { name: 'Remove point 2' }),
+      ).toBeDisabled();
+      await expect(
+        page.getByRole('button', { name: 'Move point 2 up' }),
+      ).toBeDisabled();
+      await expect(page.locator('#import')).toBeDisabled();
+      await expect(page.locator('#apply-json')).toBeDisabled();
+      await expect(page.locator('.leaflet-marker-draggable')).toHaveCount(0);
+
+      // Map gestures that would place points report the lock instead.
+      if (mobile) await holdMap(page);
+      else {
+        await page.locator('#map').click({ position: { x: 130, y: 95 } });
+        await page
+          .locator('#map')
+          .click({ button: 'right', position: { x: 210, y: 140 } });
+        await page.locator('body').press('Control+z');
+      }
+      await expect(page.locator('#point-menu')).toBeHidden();
+      await expect(page.locator('#status')).toHaveText(
+        'Route locked. Unlock editing to change it.',
+      );
+      await expect(page.locator('#location-0')).toHaveValue(start);
+      await expect(page.locator('#location-1')).toHaveValue(end);
+
+      // Viewing and export stay available.
+      if (mobile) await page.locator('#map').press('+');
+      else await page.locator('.leaflet-control-zoom-in').click();
+      await page.locator('#fit').click();
+      const download = page.waitForEvent('download');
+      await page.locator('#download').click();
+      await download;
+      expect(routeRequests).toBe(requestsBefore);
+
+      await page.locator('#unlock').click();
+      await expect(page.locator('#lock')).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+      await expect(page.locator('#lock-notice')).toBeHidden();
+      await expect(page.locator('#location-0')).toHaveJSProperty(
+        'readOnly',
+        false,
+      );
+      await expect(page.locator('.leaflet-marker-draggable')).toHaveCount(2);
+      // Lock toggles are not undo steps: undo still reverts the last edit.
+      await page.locator('#undo').click();
+      await expect(page.locator('#location-1')).toHaveValue('');
+      await expect(page.locator('#location-0')).toHaveValue(start);
+    });
   });
 }
 test('address searches belong to their own point and do not fire while typing', async ({
