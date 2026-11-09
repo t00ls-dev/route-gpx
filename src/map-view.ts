@@ -10,9 +10,8 @@ import {
   approximatePoint,
 } from './location';
 import { approximateRegion, defaultRegionUrl, regionUrl } from './services';
+import { byId as element } from './dom';
 
-const element = <T extends HTMLElement = HTMLElement>(id: string) =>
-  document.getElementById(id) as T;
 export function setupMapView(
   map: L.Map,
   route: {

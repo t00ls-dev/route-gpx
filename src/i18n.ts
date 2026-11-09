@@ -38,6 +38,7 @@ export function preferredLanguage(): Language {
   return storedLanguage() ?? detectLanguage();
 }
 const pt: Record<string, string> = {
+  'Back to map': 'Voltar ao mapa',
   'View weather': 'Ver clima',
   'Show on map': 'Mostrar no mapa',
   Weather: 'Clima',
@@ -388,7 +389,11 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   ],
 ];
 export function t(value: string): string {
-  if (language === 'en') return value;
+  return translate(value, language);
+}
+/** Translates English source text into `lang` without changing the page language. */
+export function translate(value: string, lang: Language): string {
+  if (lang === 'en') return value;
   const normalized = value.trim().replace(/\s+/g, ' ');
   if (pt[normalized]) return pt[normalized];
   for (const [pattern, replace] of patterns) {

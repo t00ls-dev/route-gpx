@@ -156,6 +156,35 @@ test('undo restores a moved marker and a removed stop', async ({ page }) => {
   await page.locator('#undo').click();
   await expect(page.locator('#points li')).toHaveCount(3);
 });
+test('undo restores the geometry of each GPX import, even with equal points', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.goto(base);
+  const gpx = (lat: number, lon: number) =>
+    Buffer.from(
+      `<gpx><trk><name>Same trip</name><trkseg><trkpt lat="-22.9" lon="-43.2"/><trkpt lat="${lat}" lon="${lon}"/><trkpt lat="-23" lon="-43.4"/></trkseg></trk></gpx>`,
+    );
+  const load = async (buffer: Buffer) => {
+    await page.locator('#import').setInputFiles({
+      name: 'trip.gpx',
+      mimeType: 'application/gpx+xml',
+      buffer,
+    });
+    await expect(page.locator('#download')).toBeEnabled();
+  };
+  await load(gpx(-22.95, -43.3));
+  const summaryA = await page.locator('#summary strong').first().innerText();
+  await page.locator('#location-0').fill(start);
+  await page.locator('#location-0').press('Tab');
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await load(gpx(-22.5, -42.8));
+  const summaryB = await page.locator('#summary strong').first().innerText();
+  expect(summaryB).not.toBe(summaryA);
+  await page.locator('#undo').click();
+  await page.locator('#undo').click();
+  await expect(page.locator('#summary strong').first()).toHaveText(summaryA);
+});
 test('invalid coordinates cannot enable a stale GPX download', async ({
   page,
 }) => {
@@ -260,6 +289,32 @@ test('an older route link with a 500 km/h average retains its points', async ({
   await expect(page.locator('#use-average-speed')).not.toBeChecked();
   await expect(page.locator('#average-speed')).toBeDisabled();
   await expect(page.locator('#summary')).toContainText('49 min');
+});
+
+test('an invalid settings URL leaves every server unchanged', async ({
+  page,
+}) => {
+  await setup(page);
+  await fillPair(page);
+  const hash = new URL(page.url()).hash;
+  await page.locator('.settings > summary').click();
+  await page.locator('#valhalla').fill('https://example.org/valhalla');
+  await page.locator('#weather-server').fill('https://example.org/weather');
+  await page.locator('#nominatim').fill('not a server');
+  await page.locator('#save-settings').click();
+  await expect(page.locator('#status')).toHaveClass('error');
+  await expect(page.locator('#download')).toBeEnabled();
+  expect(new URL(page.url()).hash).toBe(hash);
+  expect(
+    await page.evaluate(() => localStorage.getItem('weather-server')),
+  ).toBeNull();
+  await page.locator('#nominatim').fill('https://example.org/nominatim');
+  await page.locator('#save-settings').click();
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  expect(new URL(page.url()).hash).not.toBe(hash);
+  expect(
+    await page.evaluate(() => localStorage.getItem('weather-server')),
+  ).toBe('https://example.org/weather');
 });
 
 test('a v1 route link still opens and is rewritten as a short v2 link', async ({

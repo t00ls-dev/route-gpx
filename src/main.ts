@@ -60,8 +60,7 @@ import { defaultView } from './default-view';
 import { setupMapLayers } from './map-layers';
 import { setupMapControls } from './map-controls';
 import { icon, iconControl } from './icons';
-const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
-  document.getElementById(id) as T;
+import { byId as $ } from './dom';
 const text = (tag: string, value: string, className = '') => {
   const e = document.createElement(tag);
   e.textContent = value;
@@ -85,11 +84,11 @@ try {
 }
 /** Language is a preference, not a route edit, so undo never reverts it. */
 const routeSnapshot = (s: State): State => ({ ...s, language: undefined });
-const undoHistory = new UndoHistory(routeSnapshot(state));
+/** Each undo step keeps the route shown for it, so undoing restores that exact geometry. */
+const undoHistory = new UndoHistory<State, Route>(routeSnapshot(state));
 let drafts = new WeakMap<Point, string>();
 const dirty = new Set<Point>();
 const lookupVersions = new WeakMap<Point, number>();
-const routeCache = new Map<string, Route>();
 const routingCache = new RoutingCache();
 let savedEntries: SavedRoute[] = [];
 let libraryRevision = 0;
@@ -550,8 +549,7 @@ map.on('zoomend', () => {
   if (current) drawRoute(current);
 });
 function renderRoute(route: Route) {
-  routeCache.set(encodeState(state), route);
-  if (routeCache.size > 50) routeCache.delete(routeCache.keys().next().value!);
+  undoHistory.attach(route);
   const locale = state.language === 'pt' ? 'pt-BR' : 'en';
   const duration = state.averageSpeedKmh
     ? travelTimeSeconds(route.distance, state.averageSpeedKmh)
@@ -757,7 +755,7 @@ $('undo').onclick = () => {
     0,
     state.points.findIndex((p) => !p.coord),
   );
-  const cached = routeCache.get(encodeState(state));
+  const cached = undoHistory.attachment;
   changed();
   if (cached) {
     clearTimeout(timer);
@@ -826,10 +824,14 @@ $<HTMLInputElement>('prefer').onchange = () => {
 };
 $('save-settings').onclick = () => {
   try {
-    weather.applyServer();
-    for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
-      state[key] = serverUrl($<HTMLInputElement>(key).value.trim());
-    photonUrl = serverUrl($<HTMLInputElement>('photon').value.trim());
+    // Validate every URL before applying any, so an invalid field changes nothing.
+    const servers = (['osrm', 'valhalla', 'nominatim'] as const).map(
+      (key) => [key, serverUrl($<HTMLInputElement>(key).value.trim())] as const,
+    );
+    const photon = serverUrl($<HTMLInputElement>('photon').value.trim());
+    weather.applyServer(); // Validates its own URL before changing anything.
+    for (const [key, url] of servers) state[key] = url;
+    photonUrl = photon;
     try {
       localStorage.setItem('photon-url', photonUrl);
     } catch {

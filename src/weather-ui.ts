@@ -1,4 +1,5 @@
 import { speedFromKmh } from './travel-time';
+import { byId as $ } from './dom';
 import L from 'leaflet';
 import { type Route, type State, serverUrl } from './core';
 import { t, weatherDescription } from './i18n';
@@ -26,8 +27,6 @@ export function setupWeather(
   getRoute: () => Route | null,
   syncState: () => void,
 ) {
-  const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
-    document.getElementById(id) as T;
   const departure = $<HTMLInputElement>('departure'),
     retry = $<HTMLButtonElement>('weather-retry');
   // Route editing pins stay above weather, including neighboring samples.

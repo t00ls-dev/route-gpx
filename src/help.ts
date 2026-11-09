@@ -1,4 +1,9 @@
-import { isLanguage, preferredLanguage, rememberLanguage } from './i18n';
+import {
+  isLanguage,
+  preferredLanguage,
+  rememberLanguage,
+  translate,
+} from './i18n';
 import { updateSeo } from './seo';
 import './style.css';
 const select = document.getElementById('language') as HTMLSelectElement;
@@ -7,8 +12,7 @@ function apply() {
   document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
   document.getElementById('help-en')!.hidden = lang !== 'en';
   document.getElementById('help-pt')!.hidden = lang !== 'pt';
-  document.getElementById('back')!.textContent =
-    lang === 'pt' ? 'Voltar ao mapa' : 'Back to map';
+  document.getElementById('back')!.textContent = translate('Back to map', lang);
   updateSeo(lang, 'help');
   (document.getElementById('back') as HTMLAnchorElement).href =
     './index.html' + location.hash;

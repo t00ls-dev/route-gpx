@@ -46,12 +46,34 @@ export class RequestQueue {
 }
 const routing = new RequestQueue(1500),
   searching = new RequestQueue(1100);
-async function json(url: string): Promise<unknown> {
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(30000),
+/**
+ * Every external request omits credentials and has a deadline. Routing and
+ * Nominatim receive the page origin as referrer, which the Nominatim usage
+ * policy asks applications to provide; other providers receive no referrer.
+ */
+function request(
+  url: string | URL,
+  timeoutMs: number,
+  options: {
+    signal?: AbortSignal;
+    sendOrigin?: boolean;
+    noStore?: boolean;
+  } = {},
+): Promise<Response> {
+  const deadline = AbortSignal.timeout(timeoutMs);
+  return fetch(url, {
     credentials: 'omit',
-    referrerPolicy: 'strict-origin-when-cross-origin',
+    referrerPolicy: options.sendOrigin
+      ? 'strict-origin-when-cross-origin'
+      : 'no-referrer',
+    ...(options.noStore ? { cache: 'no-store' as const } : {}),
+    signal: options.signal
+      ? AbortSignal.any([options.signal, deadline])
+      : deadline,
   });
+}
+async function json(url: string): Promise<unknown> {
+  const r = await request(url, 30000, { sendOrigin: true });
   if (!r.ok) throw new Error(`Server returned HTTP ${r.status}.`);
   return r.json();
 }
@@ -275,17 +297,10 @@ export function approximateRegion(
     } catch {
       /* Memory still limits attempts if storage is blocked. */
     }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
     try {
       const url = new URL(regionUrl(endpoint));
       url.searchParams.set('fields', 'success,latitude,longitude,city,region');
-      const response = await fetch(url.href, {
-        credentials: 'omit',
-        referrerPolicy: 'no-referrer',
-        cache: 'no-store',
-        signal: controller.signal,
-      });
+      const response = await request(url.href, 3000, { noStore: true });
       if (!response.ok) return null;
       const data = await response.json();
       if (
@@ -310,8 +325,6 @@ export function approximateRegion(
       };
     } catch {
       return null;
-    } finally {
-      clearTimeout(timeout);
     }
   })();
   return regionAttempt;
@@ -341,11 +354,7 @@ export async function photonSearch(
       lat: String(bias[0]),
       lon: String(bias[1]),
     }).toString();
-    const response = await fetch(url, {
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
-    });
+    const response = await request(url, 8000, { signal });
     if (!response.ok) throw new Error('Photon unavailable');
     const data = await response.json();
     if (!Array.isArray(data?.features))
@@ -553,12 +562,7 @@ export async function weatherForecast(
       )
         weatherUsage.shift();
       try {
-        const response = await fetch(url, {
-          credentials: 'omit',
-          cache: 'no-store',
-          referrerPolicy: 'no-referrer',
-          signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]),
-        });
+        const response = await request(url, 20000, { signal, noStore: true });
         if (response.status === 429)
           throw new Error('Weather usage limit reached. Try again later.');
         if (!response.ok) throw new Error('Weather unavailable. Try again.');
@@ -618,12 +622,7 @@ async function radarResponse(
 ): Promise<Response> {
   signal.throwIfAborted();
   try {
-    const response = await fetch(url, {
-      signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
-      credentials: 'omit',
-      cache: 'no-store',
-      referrerPolicy: 'no-referrer',
-    });
+    const response = await request(url, 15000, { signal, noStore: true });
     if (response.status === 429)
       throw new Error('Radar usage limit reached. Try again later.');
     if (!response.ok) throw new Error('Radar unavailable. Try again.');
