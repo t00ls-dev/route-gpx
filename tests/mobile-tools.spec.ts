@@ -45,6 +45,8 @@ test('touch tap does not add; holds choose start, stop and destination', async (
   await page.goto(base);
   await page.touchscreen.tap(205, 245);
   await expect(page.locator('.route-marker')).toHaveCount(0);
+  // A separate gesture: a hold right after a tap is the one-finger zoom.
+  await page.waitForTimeout(400);
   await holdMap(page);
   await expect(page.locator('#point-menu')).toBeVisible();
   await page
@@ -347,5 +349,82 @@ test('long press on the map cannot start a native text selection, but the panel 
   // The route-gpx point menu still opens on hold.
   await holdMap(page);
   await expect(page.locator('#point-menu')).toBeVisible();
+  await context.close();
+});
+test('one-finger zoom: double tap and drag down zooms in, up zooms out, without the point menu', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  const zooms: number[] = [];
+  await page.route('**/*', async (r) => {
+    const url = r.request().url();
+    const tile = url.match(/tile\.openstreetmap\.org\/(\d+)\//);
+    if (tile) zooms.push(Number(tile[1]));
+    if (url.startsWith('http://127.0.0.1')) await r.continue();
+    else await r.fulfill({ status: 204 });
+  });
+  await page.goto(base);
+  await expect.poll(() => zooms.length).toBeGreaterThan(0);
+  const box = (await page.locator('#map').boundingBox())!;
+  const x = box.x + 160,
+    y = box.y + 200;
+  const session = await context.newCDPSession(page);
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', ty = y) =>
+    session.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: type === 'touchEnd' ? [] : [{ x, y: ty }],
+    });
+  const quickZoom = async (dy: number) => {
+    await touch('touchStart');
+    await touch('touchEnd');
+    await page.waitForTimeout(80);
+    await touch('touchStart');
+    for (let step = 1; step <= 10; step++) {
+      await touch('touchMove', y + (dy * step) / 10);
+      await page.waitForTimeout(30);
+    }
+    await page.waitForTimeout(600); // Longer than the point menu's long press.
+    await touch('touchEnd');
+    await page.waitForTimeout(400);
+  };
+  const before = Math.max(...zooms);
+  zooms.length = 0;
+  await quickZoom(220);
+  await expect
+    .poll(() => Math.max(...zooms))
+    .toBeGreaterThanOrEqual(before + 2);
+  await expect(page.locator('#point-menu')).toBeHidden();
+  const zoomedIn = Math.max(...zooms);
+  zooms.length = 0;
+  await quickZoom(-220);
+  await expect
+    .poll(() => (zooms.length ? Math.min(...zooms) : Infinity))
+    .toBeLessThanOrEqual(zoomedIn - 2);
+  await expect(page.locator('#point-menu')).toBeHidden();
+  // Tap, then hold still: still the zoom gesture, never the point menu.
+  await touch('touchStart');
+  await touch('touchEnd');
+  await page.waitForTimeout(80);
+  zooms.length = 0;
+  await touch('touchStart');
+  await page.waitForTimeout(800);
+  await expect(page.locator('#point-menu')).toBeHidden();
+  await touch('touchEnd');
+  await page.waitForTimeout(600);
+  // Released without dragging: one level in, like a double tap.
+  await expect
+    .poll(() => (zooms.length ? Math.max(...zooms) : 0))
+    .toBeGreaterThan(0);
+  // A single long press still opens it.
+  await touch('touchStart');
+  await page.waitForTimeout(700);
+  await touch('touchEnd');
+  await expect(page.locator('#point-menu')).toBeVisible();
+  await session.detach();
   await context.close();
 });

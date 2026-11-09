@@ -63,6 +63,7 @@ import {
 } from './track-legs';
 import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
+import { setupQuickZoom } from './quick-zoom';
 import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
@@ -863,6 +864,8 @@ setupPointMenu(
   (coord) => setPoint(state.points[selected], selected, coord),
   () => !editBlocked(),
 );
+// After the point menu, so its long press exists when a quick zoom cancels it.
+setupQuickZoom(map);
 $('calculate').onclick = () => {
   if (editBlocked()) return;
   if (dirty.size || state.points.some((p) => !p.coord)) {
