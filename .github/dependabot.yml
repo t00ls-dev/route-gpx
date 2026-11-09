@@ -7,9 +7,14 @@ updates:
       day: monday
       time: '00:00'
       timezone: Etc/UTC
+    ignore:
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
     open-pull-requests-limit: 5
     groups:
       npm-minor-patch:
+        applies-to: version-updates
         update-types:
           - minor
           - patch
@@ -20,9 +25,10 @@ updates:
       day: monday
       time: '00:00'
       timezone: Etc/UTC
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
     groups:
       actions-minor-patch:
+        applies-to: version-updates
         update-types:
           - minor
           - patch
