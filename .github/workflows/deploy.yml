@@ -34,7 +34,7 @@ jobs:
             echo "publish=false" >> "$GITHUB_OUTPUT"
             echo "Skipping deployment: $HEAD_SHA is no longer the current main commit ($latest_sha)."
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: steps.current.outputs.publish == 'true'
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
