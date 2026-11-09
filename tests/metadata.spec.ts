@@ -25,7 +25,7 @@ test('SEO metadata stays localized and excludes private route state', async ({
   );
   await page.locator('#location-0').fill('-22.930929, -43.238286');
   await page.locator('#location-0').press('Tab');
-  await expect(page).toHaveURL(/#v1=/);
+  await expect(page).toHaveURL(/#v2=/);
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
     'href',
     canonical,

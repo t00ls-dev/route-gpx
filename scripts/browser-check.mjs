@@ -98,7 +98,7 @@ assert.ok(trackPoints > 500);
 if (geometryPoints) assert.equal(trackPoints, geometryPoints);
 assert.equal((xml.match(/<wpt /g) || []).length, 7);
 const shared = page.url();
-assert.ok(shared.includes('#v1='));
+assert.ok(shared.includes('#v2='));
 await page.locator('#language').selectOption('pt');
 await page.getByRole('heading', { name: 'Criar rota' }).waitFor();
 assert.equal(await page.locator('html').getAttribute('lang'), 'pt-BR');

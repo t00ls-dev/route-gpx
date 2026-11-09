@@ -1,10 +1,4 @@
-import {
-  decodeState,
-  encodeState,
-  validCoord,
-  type Route,
-  type State,
-} from './core';
+import { validateState, validCoord, type Route, type State } from './core';
 export interface SavedRoute {
   id: string;
   name: string;
@@ -123,7 +117,7 @@ export function parseRouteBackup(text: string): SavedRoute[] {
       row.name.length > 160
     )
       throw new Error('Invalid saved route name.');
-    const state = decodeState(encodeState(row.state), true);
+    const state = validateState(row.state, true);
     if (state.points.some((p) => !p.coord))
       throw new Error('Invalid saved route points.');
     const route = row.route;
