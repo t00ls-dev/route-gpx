@@ -32,3 +32,23 @@ it('bounds the undo history', () => {
   expect(h.undo()).toBe(1);
   expect(h.undo()).toBeNull();
 });
+it('restores the attachment of each step, even when two steps have equal values', () => {
+  const routeA = { track: 'A' },
+    routeB = { track: 'B' };
+  const h = new UndoHistory<{ point: number }, { track: string }>({ point: 1 });
+  h.attach(routeA);
+  h.record({ point: 2 });
+  expect(h.attachment).toBeUndefined();
+  h.record({ point: 1 });
+  h.attach(routeB);
+  expect(h.undo()).toEqual({ point: 2 });
+  expect(h.undo()).toEqual({ point: 1 });
+  expect(h.attachment).toBe(routeA);
+});
+it('keeps the attachment when an unchanged value is recorded again', () => {
+  const route = { track: 'A' };
+  const h = new UndoHistory<number, typeof route>(1);
+  h.attach(route);
+  h.record(1);
+  expect(h.attachment).toBe(route);
+});

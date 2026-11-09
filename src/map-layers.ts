@@ -7,8 +7,7 @@ import {
   type BaseLayer,
   type SatelliteVintage,
 } from './tile-layers';
-const element = <T extends HTMLElement = HTMLElement>(id: string) =>
-  document.getElementById(id) as T;
+import { byId as element } from './dom';
 export function setupMapLayers(map: L.Map) {
   const updateCredits = setupMapCredits(map);
   let active: BaseLayer = 'standard',
