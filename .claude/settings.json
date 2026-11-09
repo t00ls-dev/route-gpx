@@ -12,7 +12,6 @@
       "Bash(npm run test:browser *)",
       "Bash(npx playwright test *)",
       "Bash(npx knip *)",
-      "Bash(npx depcheck *)",
       "Bash(npx tsc --noEmit *)",
       "Bash(git status *)",
       "Bash(git diff *)",

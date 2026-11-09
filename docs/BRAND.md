@@ -18,6 +18,6 @@ Regenerate PNG files with `node scripts/generate-brand.mjs` (requires Chromium i
 
 The manifest supplies browser metadata and uses browser display mode. This is a web tool with no installation flow, service worker or offline cache. Routing and maps require an internet connection.
 
-SEO metadata is present in the initial HTML, with localized titles and descriptions after a language change. Canonical URLs and sharing images never include a route hash or user coordinates. The sitemap lists only the application and help page. `public/robots.txt` and the sitemap target the custom-domain root, https://route-gpx.t00ls.dev/. Activation and HTTPS provisioning are pending; production still uses the Pages project URL. Complete that configuration before publishing a root-base build.
+SEO metadata is present in the initial HTML, with localized titles and descriptions after a language change. Canonical URLs and sharing images never include a route hash or user coordinates. The sitemap lists only the application and help page. `public/robots.txt` and the sitemap target the custom-domain root, https://route-gpx.t00ls.dev/, which GitHub Pages serves with enforced HTTPS; the old project URL https://t00ls-dev.github.io/route-gpx/ redirects there.
 
 For a renamed repository or custom domain, update Vite's base, manifest `id`/`start_url`/`scope`, canonical and sharing URLs in both HTML files, and the sitemap.

@@ -4,7 +4,7 @@ Plan routes and export the complete track as GPX.
 
 <p>
   <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/t00ls-dev/route-gpx/ci.yml?branch=main&label=CI" alt="CI on main" /></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D22.23.4-339933" alt="Node.js 22.23.4 or newer" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.23.4%2B%20%7C%2024.15%2B%20%7C%2026%2B-339933" alt="Node.js 22.23.4+, 24.15+ or 26+" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" /></a>
 </p>
 
@@ -69,7 +69,7 @@ npm run test:browser              # Playwright browser workflows
 npm run build                     # TypeScript check and production build
 ```
 
-The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser-check.mjs` runs live acceptance checks, writing only to the ignored `.browser-check.local/` folder.
+The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser-check.mjs` runs live acceptance checks against a local server (or a deployed site through `SITE_URL`), writing only to the ignored `.browser-check.local/` folder.
 
 ## Deployment
 
