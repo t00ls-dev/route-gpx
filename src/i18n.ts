@@ -74,46 +74,11 @@ const pt: Record<string, string> = {
   'Weather along the route': 'Clima ao longo da rota',
   'Loading weather…': 'Buscando clima…',
   'Weather data license: CC BY 4.0': 'Licença dos dados do tempo: CC BY 4.0',
-  'RainViewer API terms': 'Termos da API RainViewer',
-  'Past two hours only. Zoom above level 7 adds no detail.':
-    'Somente as últimas duas horas. Zoom acima do nível 7 não acrescenta detalhes.',
-  'Legend and opacity': 'Legenda e opacidade',
   'Try again': 'Tentar novamente',
   'Updating weather…': 'Atualizando clima…',
   'Passage times exceed the fetched interval.':
     'Os horários de passagem ultrapassam o intervalo consultado.',
 
-  'Rain radar': 'Radar de chuva',
-  'Play or pause radar': 'Reproduzir ou pausar radar',
-  'Radar frame time': 'Horário da imagem do radar',
-  'Radar timeline': 'Linha do tempo do radar',
-  'Try radar again': 'Tentar radar novamente',
-  'Radar opacity': 'Opacidade do radar',
-  'Show coverage mask': 'Mostrar máscara de cobertura',
-  'Reflectivity (dBZ), not rainfall totals.':
-    'Refletividade (dBZ), não volume de chuva.',
-  'Radar reflectivity legend': 'Legenda de refletividade do radar',
-  'Shaded areas: no coverage in the approximate mask. Clear areas do not confirm dry weather.':
-    'Áreas sombreadas: sem cobertura na máscara aproximada. Áreas claras não confirmam tempo seco.',
-  'Recent observations, not a forecast.':
-    'Observações recentes, não previsão futura.',
-  'Radar by RainViewer': 'Radar por RainViewer',
-  'Loading radar images…': 'Carregando imagens do radar…',
-  'Radar images are over 30 minutes old.':
-    'As imagens do radar têm mais de 30 minutos.',
-  'Radar service returned an invalid response.':
-    'O serviço de radar retornou uma resposta inválida.',
-  'No recent radar images available. Try again later.':
-    'Nenhuma imagem recente de radar disponível. Tente mais tarde.',
-  'Radar usage limit reached. Try again later.':
-    'Limite de uso do radar atingido. Tente mais tarde.',
-  'Radar unavailable. Try again.': 'Radar indisponível. Tente novamente.',
-  'Radar request timed out. Try again.':
-    'O tempo da consulta ao radar esgotou. Tente novamente.',
-  'Radar network error. Check your connection and try again.':
-    'Falha de rede no radar. Confira a conexão e tente novamente.',
-  'Radar coverage unavailable. Try again.':
-    'Cobertura do radar indisponível. Tente novamente.',
   'Departure date and time': 'Data e hora de saída',
   'Weather data by Open-Meteo': 'Dados do tempo por Open-Meteo',
   'Passage times and risk summaries calculated by route-gpx.':

@@ -301,42 +301,6 @@
             >meteorological convention</a
           >.
         </p>
-        <h2>Rain radar</h2>
-        <p>
-          Enable Rain radar in Map layers. It is off by default, independent of
-          departure date. Play/pause or choose the time using the slider; expand
-          Legend and opacity for the legend, transparency and approximate
-          coverage mask. Disable in Map layers. Moving the map or hiding the tab
-          pauses playback. Route geometry stays intact and above the radar.
-        </p>
-        <p>
-          <a href="https://www.rainviewer.com/">Radar by RainViewer</a>,
-          personal and educational use only, without a key. The
-          <a href="https://www.rainviewer.com/api/weather-maps-api.html"
-            >specific API documentation</a
-          >
-          and
-          <a href="https://www.rainviewer.com/api/transition-faq.html"
-            >2026 transition</a
-          >
-          provide past two-hour observations at ten-minute intervals, native
-          zoom 7 and 100 requests/IP/minute. This is not a future forecast or
-          cloud animation. Mosaic generation times use the device timezone;
-          individual observations may be older. Images older than 30 minutes are
-          flagged. Reflectivity in dBZ is not exact rainfall volume. Shaded
-          areas show the provider's infrequently updated coverage mask; clear
-          areas do not prove dry weather.
-        </p>
-        <p>
-          Activation sends RainViewer your IP and visible map area, not your
-          route or departure date. Only the current visible frame is fetched.
-          Requests are spaced at least 800 ms apart, with cancellation and no
-          automatic retries. Already viewed images stay in bounded page memory
-          (64 images or 16 MB); metadata is cached for two minutes and refreshed
-          only on activation/retry. Nothing enters route links or storage. There
-          is no prefetching or offline caching. Page limits cannot enforce
-          shared-IP limits. Availability and coverage are not guaranteed.
-        </p>
         <h2>Travel time</h2>
         <p>
           Open Average speed, enable it and drag the slider. Values are 1, 5,
@@ -413,17 +377,15 @@
           IP region requests use https://ipwho.is/. Its free-endpoint
           documentation permits keyless commercial use, but general terms also
           contain account and redistribution clauses whose applicability should
-          be confirmed before scaling. Weather uses https://api.open-meteo.com;
-          radar metadata uses https://api.rainviewer.com and visible-frame
-          images use https://tilecache.rainviewer.com. Map images use
-          https://tile.openstreetmap.org, https://a.tile.opentopomap.org or
-          https://tiles.maps.eox.at, including the EOX label overlay. Only the
-          active layer and selected radar frame request images. GitHub Pages
-          receives requests for the site files. External providers receive the
-          request IP and normal browser metadata and may keep their own logs.
-          URL fragments are not sent in HTTP requests. Browser HTTP caching of
-          ordinary map tiles follows provider headers; there is no added offline
-          storage.
+          be confirmed before scaling. Weather uses https://api.open-meteo.com.
+          Map images use https://tile.openstreetmap.org,
+          https://a.tile.opentopomap.org or https://tiles.maps.eox.at, including
+          the EOX label overlay. Only the active layer requests images. GitHub
+          Pages receives requests for the site files. External providers receive
+          the request IP and normal browser metadata and may keep their own
+          logs. URL fragments are not sent in HTTP requests. Browser HTTP
+          caching of ordinary map tiles follows provider headers; there is no
+          added offline storage.
         </p>
         <h2>Open source</h2>
         <p>
@@ -436,9 +398,8 @@
             >OpenStreetMap contributors</a
           >. Built with Leaflet, OSRM, Valhalla, Nominatim and Photon. IP region
           by ipwho.is; maps by OpenTopoMap and EOX. Weather data by Open-Meteo
-          (CC BY 4.0); radar by RainViewer (personal and educational use).
-          Source and license links appear in the respective sections above and
-          in the
+          (CC BY 4.0). Source and license links appear in the respective
+          sections above and in the
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >services and privacy details</a
@@ -687,45 +648,6 @@
             >convenção meteorológica</a
           >.
         </p>
-        <h2>Radar de chuva</h2>
-        <p>
-          Ative Radar de chuva em Camadas do mapa. Ele vem desligado,
-          independente da data de saída. Reproduza/pause ou escolha o horário
-          pelo controle; expanda Legenda e opacidade para a legenda,
-          transparência e máscara aproximada de cobertura. Desative em Camadas
-          do mapa. Mover o mapa ou ocultar a aba pausa a reprodução. A geometria
-          da rota permanece intacta e sobre o radar.
-        </p>
-        <p>
-          <a href="https://www.rainviewer.com/">Radar por RainViewer</a>,
-          somente uso pessoal e educacional, sem chave. A
-          <a href="https://www.rainviewer.com/api/weather-maps-api.html"
-            >documentação específica da API</a
-          >
-          e a
-          <a href="https://www.rainviewer.com/api/transition-faq.html"
-            >transição de 2026</a
-          >
-          oferecem observações das últimas duas horas em passos de dez minutos,
-          zoom nativo 7 e 100 requisições/IP/minuto. Não é previsão futura nem
-          animação de nuvens. Os horários de geração do mosaico usam o fuso do
-          aparelho; observações individuais podem ser mais antigas. Imagens com
-          mais de 30 minutos são sinalizadas. Refletividade em dBZ não é volume
-          exato de chuva. Áreas sombreadas mostram a máscara de cobertura
-          atualizada com pouca frequência pelo provedor; áreas claras não
-          comprovam tempo seco.
-        </p>
-        <p>
-          Ativar envia ao RainViewer seu IP e a área visível do mapa, não a rota
-          nem a data de saída. Somente o quadro atual visível é buscado.
-          Consultas têm intervalo mínimo de 800 ms, com cancelamento e sem
-          repetições automáticas. Imagens já vistas ficam na memória limitada da
-          página (64 imagens ou 16 MB); metadados têm cache de dois minutos,
-          atualizado só ao ativar ou tentar novamente. Nada entra nos links ou
-          no armazenamento. Não há pré-carregamento nem cache offline. Limites
-          por página não controlam limites compartilhados por IP.
-          Disponibilidade e cobertura não são garantidas.
-        </p>
         <h2>Tempo de viagem</h2>
         <p>
           Abra Velocidade média, ative e arraste o controle. Os valores são 1,
@@ -807,17 +729,15 @@
           endpoint gratuito permite uso comercial sem chave, mas os termos
           gerais também contêm cláusulas de conta e redistribuição cuja
           aplicação deve ser confirmada antes de ampliar o uso. O clima usa
-          https://api.open-meteo.com; os metadados do radar usam
-          https://api.rainviewer.com e imagens do quadro visível usam
-          https://tilecache.rainviewer.com. Imagens do mapa usam
+          https://api.open-meteo.com. Imagens do mapa usam
           https://tile.openstreetmap.org, https://a.tile.opentopomap.org ou
           https://tiles.maps.eox.at, incluindo a sobreposição de rótulos EOX. Só
-          a camada ativa e o quadro de radar selecionado solicitam imagens. O
-          GitHub Pages recebe pedidos dos arquivos do site. Provedores externos
-          recebem o IP da requisição e metadados normais do navegador e podem
-          manter logs próprios. Fragmentos de URL não são enviados nas
-          requisições HTTP. O cache HTTP comum dos tiles segue os cabeçalhos dos
-          provedores; não há armazenamento offline adicional.
+          a camada ativa solicita imagens. O GitHub Pages recebe pedidos dos
+          arquivos do site. Provedores externos recebem o IP da requisição e
+          metadados normais do navegador e podem manter logs próprios.
+          Fragmentos de URL não são enviados nas requisições HTTP. O cache HTTP
+          comum dos tiles segue os cabeçalhos dos provedores; não há
+          armazenamento offline adicional.
         </p>
         <h2>Código aberto</h2>
         <p>
@@ -830,9 +750,8 @@
             >OpenStreetMap e colaboradores</a
           >. Feito com Leaflet, OSRM, Valhalla, Nominatim e Photon. Região por
           IP pelo ipwho.is; mapas por OpenTopoMap e EOX. Dados do tempo por
-          Open-Meteo (CC BY 4.0); radar por RainViewer (uso pessoal e
-          educacional). Links das fontes e licenças estão nas respectivas seções
-          acima e nos
+          Open-Meteo (CC BY 4.0). Links das fontes e licenças estão nas
+          respectivas seções acima e nos
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >detalhes de serviços e privacidade</a

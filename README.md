@@ -17,7 +17,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 - **Review:** distance, estimated duration and road references, in kilometers or miles, with an optional average speed.
 - **GPX:** import files up to 10 MB and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates.
-- **Rain radar:** optional recent radar imagery over the map.
+
 - **Map layers:** standard, topographic and satellite maps, with optional labels.
 - **Save and share:** route links, named routes saved in this browser and JSON backup import/export.
 - **Interface:** available in English and Portuguese.
@@ -41,13 +41,13 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 ## Privacy
 
 - No cookies, analytics or account.
-- Map, routing, search, weather and radar providers receive the locations each request needs and your IP address.
-- Weather is requested only after you choose a departure date; radar only when you enable it.
+- Map, routing, search and weather providers receive the locations each request needs and your IP address.
+- Weather is requested only after you choose a departure date, and only for the route.
 - Exact GPS coordinates stay in memory; using your location as a route point creates a coordinate rounded to about 100 m.
 - Approximate region detection by IP can be turned off in **Settings**.
 - Every service URL is configurable in **Settings**. Route links that suggest other routing or search servers open with the defaults until you choose **Use link servers**.
 
-Providers, limits, terms, weather sampling, radar and map layers are detailed in [services and privacy](docs/SERVICES.md).
+Providers, limits, terms, weather sampling and map layers are detailed in [services and privacy](docs/SERVICES.md).
 
 ## Local development
 
@@ -81,7 +81,7 @@ See the [contributing guide](CONTRIBUTING.md) before opening a pull request. Par
 
 ## Credits and license
 
-Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), with passage times and risk summaries calculated here. Radar by [RainViewer](https://www.rainviewer.com/), personal and educational use. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), with passage times and risk summaries calculated here. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
 The bundled Leaflet library uses the BSD 2-Clause license and [fflate](https://github.com/101arrowz/fflate) (route-link compression) uses the MIT license; their complete notices are included in [third-party notices](public/THIRD_PARTY_NOTICES.txt) and copied into the production build.
 

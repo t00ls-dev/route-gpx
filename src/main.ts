@@ -1,5 +1,4 @@
 import { RoutingCache } from './routing-cache';
-import { setupRadar } from './radar-ui';
 import { setupWeather } from './weather-ui';
 import {
   listSavedRoutes,
@@ -1298,6 +1297,5 @@ setupMapView(map, {
 });
 
 setupMapLayers(map);
-setupRadar(map);
 
 setupMapControls(map, zoom);

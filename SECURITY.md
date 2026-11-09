@@ -18,7 +18,7 @@ In scope: the code in this repository, its build and the GitHub Pages configurat
 - unsafe handling of configurable service URLs;
 - location data leaking outside the documented route, link and storage flows.
 
-Out of scope: problems in the third-party services the app uses (OSRM, Valhalla, Nominatim, Photon, map tile providers, Open-Meteo, RainViewer and ipwho.is). Please report those to their operators.
+Out of scope: problems in the third-party services the app uses (OSRM, Valhalla, Nominatim, Photon, map tile providers, Open-Meteo and ipwho.is). Please report those to their operators.
 
 ## Response
 

@@ -7,7 +7,7 @@ Thanks for your interest in improving route-gpx, a static route planner with GPX
 These limits are fixed. Proposals that break them will not be accepted:
 
 - It is a static site: no application backend, accounts, analytics, API keys or remote AI.
-- It relies on public services (OSRM, Valhalla, Nominatim, Photon, Open-Meteo, RainViewer and the map tile providers). Changes must respect their usage policies and the existing request spacing, debouncing and caching. Do not add bulk downloads, prefetching or retry loops.
+- It relies on public services (OSRM, Valhalla, Nominatim, Photon, Open-Meteo and the map tile providers). Changes must respect their usage policies and the existing request spacing, debouncing and caching. Do not add bulk downloads, prefetching or retry loops.
 - Routing currently uses a car profile only.
 
 For large or architectural changes, [open an issue](https://github.com/t00ls-dev/route-gpx/issues/new/choose) first so the approach can be discussed before you invest time in it.
