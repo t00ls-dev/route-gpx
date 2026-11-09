@@ -593,6 +593,23 @@ footer a {
 }
 .leaflet-container {
   font-family: inherit;
+  /* A long press on the map opens the point menu, not the browser's
+     copy/selection or image callout (as OpenLayers and MapLibre do). */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* iOS ignores -webkit-touch-callout in some versions: keep the finger off
+   the tile images (Leaflet listens on the map container), and switch off
+   selection on the whole page only while a finger is on the map. */
+.leaflet-container .leaflet-tile {
+  pointer-events: none;
+}
+html.map-touching,
+html.map-touching body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 /* Credits are anchored to the map, independently of Leaflet's control stack. */
 .planner .map-credits {

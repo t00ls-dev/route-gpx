@@ -279,3 +279,73 @@ test('empty suggestions offer an explicit Enter search and translate both ways',
     'No suggestions found. Press Enter to search with Nominatim.',
   );
 });
+test('long press on the map cannot start a native text selection, but the panel can', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.route('**/*', async (r) => {
+    if (r.request().url().startsWith('http://127.0.0.1')) await r.continue();
+    else await r.fulfill({ status: 204 });
+  });
+  await page.goto(base);
+  const result = await page.evaluate(() => {
+    const select = (node: Node) => {
+      const event = new Event('selectstart', {
+        bubbles: true,
+        cancelable: true,
+      });
+      node.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    const map = document.getElementById('map')!;
+    const label = document.createElement('span');
+    label.textContent = 'Map text';
+    map.append(label);
+    return {
+      mapStyle: getComputedStyle(map).userSelect,
+      panelStyle: getComputedStyle(document.getElementById('route-panel')!)
+        .userSelect,
+      mapText: select(label.firstChild!),
+      panelText: select(document.querySelector('#route-panel h1')!.firstChild!),
+    };
+  });
+  expect(result).toEqual({
+    mapStyle: 'none',
+    panelStyle: 'auto',
+    mapText: true,
+    panelText: false,
+  });
+  // Tile images never receive the finger (no iOS image callout), and page
+  // selection is off only while a finger is on the map.
+  expect(
+    await page.evaluate(() => {
+      const tile = document.createElement('img');
+      tile.className = 'leaflet-tile';
+      document.querySelector('.leaflet-tile-pane')!.append(tile);
+      return getComputedStyle(tile).pointerEvents;
+    }),
+  ).toBe('none');
+  const box = (await page.locator('#map').boundingBox())!;
+  const session = await context.newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: box.x + 150, y: box.y + 200 }],
+  });
+  await expect(page.locator('html')).toHaveClass(/map-touching/);
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchEnd',
+    touchPoints: [],
+  });
+  await expect(page.locator('html')).not.toHaveClass(/map-touching/);
+  await session.detach();
+  await page.waitForTimeout(400);
+  // The route-gpx point menu still opens on hold.
+  await holdMap(page);
+  await expect(page.locator('#point-menu')).toBeVisible();
+  await context.close();
+});

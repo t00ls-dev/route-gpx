@@ -86,7 +86,19 @@ export function setupPointMenu(
       /* Optional feedback. */
     }
   });
+  // The browser's own long-press menu and text selection never belong on
+  // the map surface; form fields and the route panel are unaffected.
+  container.addEventListener('contextmenu', (event) => {
+    if (matchMedia('(pointer: coarse)').matches) event.preventDefault();
+  });
+  container.addEventListener('selectstart', (event) => {
+    if (!(event.target as Element | null)?.closest?.('input,textarea'))
+      event.preventDefault();
+  });
+  const touching = (on: boolean) =>
+    document.documentElement.classList.toggle('map-touching', on);
   container.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch') touching(true);
     if (
       !matchMedia('(pointer: coarse)').matches ||
       event.pointerType === 'mouse' ||
@@ -108,9 +120,13 @@ export function setupPointMenu(
   const end = () => {
     press.cancel();
     pointerId = null;
+    touching(false);
   };
   container.addEventListener('pointerup', end);
   container.addEventListener('pointercancel', end);
+  // A finger lifted outside the map must not leave page selection off.
+  window.addEventListener('pointerup', () => touching(false));
+  window.addEventListener('pointercancel', () => touching(false));
   map.on('movestart', () => {
     press.cancel();
     close();
