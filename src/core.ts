@@ -536,7 +536,8 @@ export function importGpx(xml: string): {
       provider: 'Imported GPX',
     },
     points,
-    name: (all(doc, 'name')[0]?.textContent || 'Imported route').slice(0, 160),
+    // Empty when the file has no name; the interface supplies a localized default.
+    name: (all(doc, 'name')[0]?.textContent || '').slice(0, 160),
     indices,
   };
 }
