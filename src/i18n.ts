@@ -63,8 +63,6 @@ const pt: Record<string, string> = {
   'Calm wind': 'Vento calmo',
   'Wind unavailable': 'Vento indisponível',
   'Wind direction unavailable': 'Direção do vento indisponível',
-  'Past estimates': 'Estimativas do passado',
-  'Past estimates and forecast': 'Estimativas do passado e previsão',
   'Departure must be within the last 90 days.':
     'A saída deve estar nos últimos 90 dias.',
   'No alert': 'Sem alerta',
@@ -79,7 +77,6 @@ const pt: Record<string, string> = {
   'Passage times exceed the fetched interval.':
     'Os horários de passagem ultrapassam o intervalo consultado.',
 
-  'Departure date and time': 'Data e hora de saída',
   'Weather data by Open-Meteo': 'Dados do tempo por Open-Meteo',
   'Passage times and risk summaries calculated by route-gpx.':
     'Horários de passagem e resumos de risco calculados pelo route-gpx.',
@@ -332,6 +329,15 @@ const pt: Record<string, string> = {
     'Rota bloqueada. Desbloqueie a edição para alterá-la.',
   'Editing unlocked.': 'Edição desbloqueada.',
   Daylight: 'Luz do dia',
+  Departure: 'Saída',
+  Sunrise: 'Nascer do sol',
+  Sunset: 'Pôr do sol',
+  Distance: 'Distância',
+  Time: 'Tempo',
+  Arrival: 'Chegada',
+  'Router estimate · no stops': 'Estimativa do roteador · sem paradas',
+  'Set an average speed to estimate the time.':
+    'Defina uma velocidade média para estimar o tempo.',
   'Sun up all day': 'Sol o dia todo',
   'Sun down all day': 'Sem sol o dia todo',
   'None in the dark': 'Nada no escuro',
@@ -343,11 +349,6 @@ const pt: Record<string, string> = {
   Via: 'Passagem',
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
-  [
-    /^Weather speed: (.*?) (km\/h|mph)( \(default\))?\.$/,
-    (n, u, fallback) =>
-      `Velocidade utilizada: ${n} ${u}${fallback ? ' (padrão)' : ''}.`,
-  ],
   [
     /^Contains modified Copernicus Sentinel data (2016|2025)$/,
     (year) => `Contém dados Copernicus Sentinel modificados de ${year}`,
@@ -373,8 +374,6 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
       `Defina ${p === 'Start' ? 'o início' : p === 'Destination' ? 'o destino' : 'a ' + t(p).toLowerCase()} no mapa`,
   ],
 
-  [/^Sunrise (.+)$/, (time) => `Nascer ${time}`],
-  [/^Sunset (.+)$/, (time) => `Pôr ${time}`],
   [/^(.+) in the dark$/, (distance) => `${distance} no escuro`],
   [/^(.+) in civil twilight$/, (distance) => `${distance} no crepúsculo civil`],
   [
@@ -405,7 +404,7 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   ],
   [/^1 road section to review$/, () => '1 trecho para conferir'],
   [/^(\d+) road sections to review$/, (n) => `${n} trechos para conferir`],
-  [/^Roads \((\d+)\)$/, (n) => `Vias (${n})`],
+  [/^Itinerary \((\d+)\)$/, (n) => `Itinerário (${n})`],
 
   [/^(\d+) points$/, (n) => `${n} pontos`],
   [/^Select point (\d+)$/, (n) => `Selecionar ponto ${n}`],

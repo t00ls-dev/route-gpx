@@ -213,17 +213,15 @@
         </p>
         <h2>Departure and weather</h2>
         <p>
-          Choose Departure date and time in Weather. Once the route is ready,
-          weather loads automatically after a short pause. There is no request
-          without a date. Choosing a date sends sampled points and expected
-          dates/times to Open-Meteo. The interface shows the speed actually
-          used: 60 km/h by default, or the value enabled in Average speed,
-          displayed in km/h or mph. Adjust it for your journey. Stops and
-          traffic are excluded. All displayed times use the device timezone.
-          Departures in the last 90 UTC calendar days are accepted. Older
-          departures and arrival windows beyond 16 UTC calendar days including
-          today are rejected. Past dates show Past estimates, or Past estimates
-          and forecast if the journey crosses the current time. Past values are
+          Choose Departure in the route summary, which appears once the route is
+          ready. Then weather loads automatically after a short pause. There is
+          no request without a date. Choosing a date sends sampled points and
+          expected dates/times to Open-Meteo. Weather passage times use the
+          value enabled in Average speed, or 60 km/h when it is off. Adjust it
+          for your journey. Stops and traffic are excluded. All displayed times
+          use the device timezone. Departures in the last 90 UTC calendar days
+          are accepted. Older departures and arrival windows beyond 16 UTC
+          calendar days including today are rejected. For past dates, values are
           archived model estimates, not exact observations at each route point.
           Imported GPX works too. Samples include endpoints and waypoints,
           approximately every 20 km. Below 20 km/h, spacing is reduced to about
@@ -304,12 +302,12 @@
         </p>
         <h2>Daylight</h2>
         <p>
-          The route summary shows sunrise and sunset at the start. Without a
-          departure date it shows today's times; with one, it also shows how
-          much of the route falls in the dark. The Weather section lists the
-          dark sections with their passage times, the distance in civil
-          twilight, the latest departure that arrives before sunset and when
-          daylight starts at the start.
+          The route summary shows sunrise and sunset at the start, with a rising
+          and a setting sun icon. Without a departure date it shows today's
+          times; with one, it also shows how much of the route falls in the
+          dark. Open Daylight in the summary for the dark sections with their
+          passage times, the distance in civil twilight, the latest departure
+          that arrives before sunset and when daylight starts at the start.
         </p>
         <p>
           Everything is calculated on your device, with no request. Sunrise and
@@ -323,10 +321,16 @@
         </p>
         <h2>Travel time</h2>
         <p>
-          Open Average speed, enable it and drag the slider. Values are 1, 5,
-          10… up to 200 km/h or 130 mph. Switching units rounds to the nearest
-          position. The estimate excludes stops and traffic. Turn it off or
-          press × to use the router estimate.
+          Open Average speed in the route summary, enable it and drag the
+          slider. Values are 1, 5, 10… up to 200 km/h or 130 mph. Switching
+          units rounds to the nearest position. The estimate excludes stops and
+          traffic. Turn it off or press × to use the router estimate. The route
+          summary, right below Calculate route, holds the departure date and
+          shows the distance, the time and, when a departure is set, the arrival
+          time, with a line saying whether the time comes from the router or
+          from your average speed. Itinerary, below the summary, shows the
+          highway references, each road with its distance and the routing
+          provider.
         </p>
         <h2>Distance units and undo</h2>
         <p>
@@ -583,26 +587,25 @@
         </p>
         <h2>Saída e clima</h2>
         <p>
-          Escolha Data e hora de saída em Clima. Quando houver rota pronta, o
-          clima carrega automaticamente após uma breve pausa. Sem data não há
-          consulta. Escolher uma data envia pontos de amostragem e
-          datas/horários previstos ao Open-Meteo. A interface mostra a
-          velocidade usada: 60 km/h por padrão ou o valor ativado em Velocidade
-          média, exibido em km/h ou mph. Ajuste ao seu deslocamento. Paradas e
-          trânsito não são incluídos. Todos os horários usam o fuso do aparelho.
-          São aceitas saídas nos últimos 90 dias de calendário UTC. Saídas
-          anteriores e janelas de chegada além de 16 dias de calendário UTC
-          incluindo hoje são rejeitadas. Datas passadas mostram Estimativas do
-          passado, ou Estimativas do passado e previsão se a viagem atravessa o
-          momento atual. Os valores passados são estimativas arquivadas dos
-          modelos, não observações exatas em cada ponto da rota. Também funciona
-          com GPX importado. As amostras incluem origem, destino e passagens,
-          aproximadamente a cada 20 km. Abaixo de 20 km/h, o espaçamento é
-          reduzido para cerca de uma hora de deslocamento (5 km a 5 km/h, por
-          exemplo). O máximo de 20 pontos tem prioridade e pode exigir
-          intervalos maiores. Selecione um ícone de tempo no mapa para abrir seu
-          card de clima no painel. Selecionar um card centraliza o mapa no ponto
-          e recolhe o painel no celular; Enter e Espaço também funcionam.
+          Escolha Saída no resumo da rota, que aparece quando a rota está
+          pronta. Então o clima carrega automaticamente após uma breve pausa.
+          Sem data não há consulta. Escolher uma data envia pontos de amostragem
+          e datas/horários previstos ao Open-Meteo. Os horários de passagem do
+          clima usam o valor ativado em Velocidade média, ou 60 km/h quando ela
+          está desligada. Ajuste ao seu deslocamento. Paradas e trânsito não são
+          incluídos. Todos os horários usam o fuso do aparelho. São aceitas
+          saídas nos últimos 90 dias de calendário UTC. Saídas anteriores e
+          janelas de chegada além de 16 dias de calendário UTC incluindo hoje
+          são rejeitadas. Para datas passadas, os valores são estimativas
+          arquivadas dos modelos, não observações exatas em cada ponto da rota.
+          Também funciona com GPX importado. As amostras incluem origem, destino
+          e passagens, aproximadamente a cada 20 km. Abaixo de 20 km/h, o
+          espaçamento é reduzido para cerca de uma hora de deslocamento (5 km a
+          5 km/h, por exemplo). O máximo de 20 pontos tem prioridade e pode
+          exigir intervalos maiores. Selecione um ícone de tempo no mapa para
+          abrir seu card de clima no painel. Selecionar um card centraliza o
+          mapa no ponto e recolhe o painel no celular; Enter e Espaço também
+          funcionam.
         </p>
         <p>
           Alterar a velocidade recalcula localmente se houver cobertura; use
@@ -680,12 +683,12 @@
         </p>
         <h2>Luz do dia</h2>
         <p>
-          O resumo da rota mostra o nascer e o pôr do sol no início. Sem data de
-          saída, mostra os horários de hoje; com ela, mostra também quanto da
-          rota fica no escuro. A seção Clima lista os trechos no escuro com os
-          horários de passagem, a distância no crepúsculo civil, a saída mais
-          tarde que chega antes do pôr do sol e quando a luz do dia começa no
-          início.
+          O resumo da rota mostra o nascer e o pôr do sol no início, com ícones
+          de sol nascendo e se pondo. Sem data de saída, mostra os horários de
+          hoje; com ela, mostra também quanto da rota fica no escuro. Abra Luz
+          do dia no resumo para ver os trechos no escuro com os horários de
+          passagem, a distância no crepúsculo civil, a saída mais tarde que
+          chega antes do pôr do sol e quando a luz do dia começa no início.
         </p>
         <p>
           Tudo é calculado no seu aparelho, sem nenhuma requisição. O nascer e o
@@ -700,10 +703,15 @@
         </p>
         <h2>Tempo de viagem</h2>
         <p>
-          Abra Velocidade média, ative e arraste o controle. Os valores são 1,
-          5, 10… até 200 km/h ou 130 mph. A troca de unidade arredonda para a
-          posição mais próxima. A estimativa não inclui paradas nem trânsito.
-          Desative ou toque em × para usar a estimativa do roteador.
+          Abra Velocidade média no resumo da rota, ative e arraste o controle.
+          Os valores são 1, 5, 10… até 200 km/h ou 130 mph. A troca de unidade
+          arredonda para a posição mais próxima. A estimativa não inclui paradas
+          nem trânsito. Desative ou toque em × para usar a estimativa do
+          roteador. O resumo da rota, logo abaixo de Calcular rota, traz a data
+          de saída e mostra a distância, o tempo e, quando há saída, o horário
+          de chegada, com uma linha dizendo se o tempo vem do roteador ou da sua
+          velocidade média. Itinerário, abaixo do resumo, mostra as rodovias,
+          cada via com sua distância e o provedor de rotas.
         </p>
         <h2>Unidades de distância e desfazer</h2>
         <p>

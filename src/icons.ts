@@ -45,6 +45,10 @@ const paths = {
   info: '<path d="M12 11v6m-1-6h1m-1 6h2"/><circle cx="12" cy="7" r=".5"/>',
   close: '<path d="m5 5 14 14M19 5 5 19"/>',
   undo: '<path d="M3 10h11a6 6 0 0 1 0 12M3 10l5-5m-5 5 5 5"/>',
+  sunrise:
+    '<path d="M2 20h20M7 20a5 5 0 0 1 10 0M12 3v6M9 6l3-3 3 3M4.5 12.5 6 14M19.5 12.5 18 14"/>',
+  sunset:
+    '<path d="M2 20h20M7 20a5 5 0 0 1 10 0M12 9V3M9 6l3 3 3-3M4.5 12.5 6 14M19.5 12.5 18 14"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   unlock:
     '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',

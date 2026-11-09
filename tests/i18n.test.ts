@@ -195,8 +195,8 @@ describe('translation coverage', () => {
 
 it('translates the daylight phrases', () => {
   setLanguage('pt');
-  expect(t('Sunrise 05:42')).toBe('Nascer 05:42');
-  expect(t('Sunset 18:31')).toBe('Pôr 18:31');
+  expect(t('Sunrise')).toBe('Nascer do sol');
+  expect(t('Sunset')).toBe('Pôr do sol');
   expect(t('12 km in the dark')).toBe('12 km no escuro');
   expect(t('3,5 km in civil twilight')).toBe('3,5 km no crepúsculo civil');
   expect(

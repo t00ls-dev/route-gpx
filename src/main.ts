@@ -182,7 +182,10 @@ const weather = setupWeather(
   syncUrl,
 );
 // Registered after the weather handler, which stores the new departure first.
-$('departure').addEventListener('change', () => renderDaylight(state, current));
+$('departure').addEventListener('change', () => {
+  if (current) renderSummary(current);
+  else renderDaylight(state, null);
+});
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
 function fit() {
   if (zooming) {
@@ -416,7 +419,7 @@ function renderPoints() {
       weather.invalidate();
       updateSaveButton();
       line.clearLayers();
-      $('summary').replaceChildren();
+      clearSummary();
       $<HTMLButtonElement>('download').disabled = true;
       results.replaceChildren();
       input.removeAttribute('aria-invalid');
@@ -616,71 +619,88 @@ function drawRoute(route: Route) {
 map.on('zoomend', () => {
   if (current) drawRoute(current);
 });
-function renderRoute(route: Route) {
-  undoHistory.attach(route);
-  trackBase =
-    isImportedRoute(route) && state.points.every((p) => p.coord)
-      ? { route, points: state.points.map((p) => p.coord!) }
-      : null;
+function clearSummary() {
+  $('summary').hidden = true;
+  for (const id of ['summary-content', 'summary-notes', 'itinerary'])
+    $(id).replaceChildren();
+  renderDaylight(state, null);
+}
+/** Route summary card; departure, units, speed and language changes only re-render this. */
+function renderSummary(route: Route) {
   const locale = state.language === 'pt' ? 'pt-BR' : 'en';
   const duration = state.averageSpeedKmh
     ? travelTimeSeconds(route.distance, state.averageSpeedKmh)
     : route.duration;
   const minutes = duration === null ? null : Math.round(duration / 60);
-  drawRoute(route);
-  const summary = $('summary');
+  const summary = $('summary-content'),
+    notes = $('summary-notes'),
+    itinerary = $('itinerary');
+  $('summary').hidden = false;
   summary.replaceChildren();
-  const stats = document.createElement('div');
+  notes.replaceChildren();
+  itinerary.replaceChildren();
+  const departure = state.departure ? Date.parse(state.departure) : NaN;
+  const stats = document.createElement('dl');
   stats.className = 'stats';
-  stats.append(
-    text('strong', distanceLabel(route.distance, state.units, locale)),
-    text(
-      'strong',
-      minutes === null
-        ? '—'
-        : minutes < 60
-          ? `${minutes} min`
-          : `${Math.floor(minutes / 60)}h ${minutes % 60} min`,
-    ),
+  const stat = (label: string, value: string) => {
+    const item = document.createElement('div');
+    const term = text('dt', label);
+    const data = document.createElement('dd');
+    data.append(text('strong', value));
+    item.append(term, data);
+    stats.append(item);
+  };
+  stat('Distance', distanceLabel(route.distance, state.units, locale));
+  stat(
+    'Time',
+    minutes === null
+      ? '—'
+      : minutes < 60
+        ? `${minutes} min`
+        : `${Math.floor(minutes / 60)}h ${minutes % 60} min`,
   );
-  const daylight = document.createElement('div');
-  daylight.id = 'daylight-summary';
-  summary.append(
-    stats,
-    daylight,
-    text(
-      'p',
-      `${route.provider} · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString(locale)} points`,
-      'hint',
-    ),
-  );
-  renderDaylight(state, route);
+  if (duration !== null && Number.isFinite(departure)) {
+    const arrival = new Date(departure + duration * 1000);
+    stat(
+      'Arrival',
+      arrival.toDateString() === new Date(departure).toDateString()
+        ? arrival.toLocaleTimeString(locale, {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : arrival.toLocaleString(locale, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+    );
+  }
+  // The basis of the time estimate, next to the numbers it explains.
+  let basis = 'Set an average speed to estimate the time.';
   if (state.averageSpeedKmh) {
     const speed = speedFromKmh(
       state.averageSpeedKmh,
       state.units,
     ).toLocaleString(locale, { maximumFractionDigits: 1 });
-    summary.append(
-      text(
-        'p',
-        `At ${speed} ${state.units === 'imperial' ? 'mph' : 'km/h'} · no stops`,
-        'hint',
-      ),
-    );
-  }
+    basis = `At ${speed} ${state.units === 'imperial' ? 'mph' : 'km/h'} · no stops`;
+  } else if (duration !== null) basis = 'Router estimate · no stops';
+  const daylight = document.createElement('div');
+  daylight.id = 'daylight-summary';
+  summary.append(stats, text('p', basis, 'hint stats-basis'), daylight);
+  renderDaylight(state, route);
   const chips = document.createElement('div');
   chips.className = 'chips';
   const refs = highways(route.steps);
   refs.forEach((ref) => chips.append(text('span', ref)));
-  summary.append(chips);
   if (isMixedRoute(route) && route.steps.length)
-    summary.append(
+    notes.append(
       text('p', 'Road summary covers only recalculated sections.', 'hint'),
     );
   if (state.prefer) {
     const local = localSections(route.steps);
     if (local.length)
-      summary.append(
+      notes.append(
         text(
           'p',
           local.length === 1
@@ -690,12 +710,18 @@ function renderRoute(route: Route) {
         ),
       );
   }
+  // Street-by-street detail lives outside the summary card.
   const roads = document.createElement('details');
   roads.className = 'road-list';
   roads.append(
     text(
       'summary',
-      `Roads (${route.steps.filter((s) => s.distance > 0).length})`,
+      `Itinerary (${route.steps.filter((s) => s.distance > 0).length})`,
+    ),
+    text(
+      'p',
+      `${route.provider} · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString(locale)} points`,
+      'hint',
     ),
   );
   const ul = document.createElement('ul');
@@ -710,8 +736,8 @@ function renderRoute(route: Route) {
         li.className = 'local-road';
       ul.append(li);
     });
-  roads.append(ul);
-  summary.append(roads);
+  roads.append(chips, ul);
+  itinerary.append(roads);
   if (route.snapped) {
     const far = route.snapped
       .map((p, i) => ({
@@ -722,7 +748,7 @@ function renderRoute(route: Route) {
       }))
       .filter((p) => p.distance > 100);
     if (far.length)
-      summary.append(
+      notes.append(
         text(
           'p',
           `Check road positions: ${far.map((p) => `${p.index + 1} (${shortDistanceLabel(p.distance, state.units)})`).join(', ')}`,
@@ -730,6 +756,15 @@ function renderRoute(route: Route) {
         ),
       );
   }
+}
+function renderRoute(route: Route) {
+  undoHistory.attach(route);
+  trackBase =
+    isImportedRoute(route) && state.points.every((p) => p.coord)
+      ? { route, points: state.points.map((p) => p.coord!) }
+      : null;
+  drawRoute(route);
+  renderSummary(route);
   $<HTMLButtonElement>('download').disabled = false;
   updateSaveButton();
   weather.render();
@@ -748,8 +783,7 @@ function changed(preserveEditor = false, forceRouting = false) {
   } else renderPoints();
   settings();
   line.clearLayers();
-  $('summary').replaceChildren();
-  renderDaylight(state, null);
+  clearSummary();
   if (state.points.some((p) => !p.coord) || dirty.size) {
     status(
       !state.points[0].coord

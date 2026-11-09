@@ -80,21 +80,6 @@ export function setupWeather(
       passageTime(p, Date.parse(state.departure!), state.averageSpeedKmh ?? 60),
     );
   }
-  function speedLabel() {
-    const state = getState();
-    const value = speedFromKmh(
-      state.averageSpeedKmh ?? 60,
-      state.units,
-    ).toLocaleString(state.language === 'pt' ? 'pt-BR' : 'en', {
-      maximumFractionDigits: 1,
-    });
-    $('weather-speed').replaceChildren(
-      document.createTextNode(
-        `Weather speed: ${value} ${state.units === 'imperial' ? 'mph' : 'km/h'}${state.averageSpeedKmh === undefined ? ' (default)' : ''}.`,
-      ),
-    );
-  }
-  speedLabel();
   async function revealCard(card: HTMLElement) {
     if (document.fullscreenElement) {
       try {
@@ -120,7 +105,6 @@ export function setupWeather(
     });
   }
   function render() {
-    speedLabel();
     markers.clearLayers();
     if (!getState().departure) {
       $('weather-result').hidden = true;
@@ -188,15 +172,6 @@ export function setupWeather(
         hour: '2-digit',
         minute: '2-digit',
       });
-    const period = $('weather-period');
-    period.hidden = passage[0] >= Date.now();
-    period.replaceChildren(
-      document.createTextNode(
-        passage.at(-1)! < Date.now()
-          ? 'Past estimates'
-          : 'Past estimates and forecast',
-      ),
-    );
     const details = $('weather-details');
     details.replaceChildren();
     points.forEach((point, i) => {
@@ -350,12 +325,18 @@ export function setupWeather(
     retry.hidden = true;
     message('');
   }
+  // Date errors show next to the field, which lives in the route summary.
+  const dateError = (value: string) => {
+    $('departure-error').replaceChildren(document.createTextNode(value));
+    if (value) departure.setAttribute('aria-invalid', 'true');
+    else departure.removeAttribute('aria-invalid');
+  };
   departure.onchange = () => {
     invalidate();
     const value = departure.value;
     if (!value) {
       delete getState().departure;
-      departure.removeAttribute('aria-invalid');
+      dateError('');
       message('');
       syncState();
       return;
@@ -365,12 +346,12 @@ export function setupWeather(
     const error = departureError(iso);
     if (error) {
       delete getState().departure;
-      departure.setAttribute('aria-invalid', 'true');
-      message(error, true);
+      dateError(error);
+      message('');
       syncState();
       return;
     }
-    departure.removeAttribute('aria-invalid');
+    dateError('');
     getState().departure = iso;
     syncState();
     schedule();
@@ -478,7 +459,6 @@ export function setupWeather(
     invalidate,
     render,
     syncInputs() {
-      speedLabel();
       departure.value = getState().departure
         ? localDateTime(getState().departure!)
         : '';
