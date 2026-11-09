@@ -325,6 +325,8 @@ const pt: Record<string, string> = {
     'Rota bloqueada. Desbloqueie a edição para alterá-la.',
   'Editing unlocked.': 'Edição desbloqueada.',
   Daylight: 'Luz do dia',
+  'Very high UV': 'UV muito alto',
+  'Extreme UV': 'UV extremo',
   Departure: 'Saída',
   Sunrise: 'Nascer do sol',
   Sunset: 'Pôr do sol',
@@ -381,6 +383,11 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   [
     /^Daylight at the start from (.+)\.$/,
     (time) => `Luz do dia no início a partir de ${time}.`,
+  ],
+  [
+    /^UV (\d+) · (Low|Moderate|High|Very high|Extreme)$/,
+    (value, category) =>
+      `UV ${value} · ${({ Low: 'baixo', Moderate: 'moderado', High: 'alto', 'Very high': 'muito alto', Extreme: 'extremo' } as Record<string, string>)[category]}`,
   ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],

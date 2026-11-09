@@ -270,14 +270,18 @@
           hour, rounded outward. Rain: ≥60% probability or ≥1 mm/h; heavy rain
           ≥10 mm/h; thunderstorm codes 95/96/99; fog codes 45/48 or visibility
           ≤1,000 m; gusts ≥60 km/h; cold/possible ice ≤2 °C or freezing codes;
-          extreme heat ≥40 °C. Alerts are ordered by severity; missing data is
-          flagged. Real forecast accuracy has not been evaluated.
+          extreme heat ≥40 °C; very high UV index ≥8 and extreme ≥11. Alerts are
+          ordered by severity; missing data is flagged. Real forecast accuracy
+          has not been evaluated.
         </p>
         <p>
           Each sampled point has one card combining weather and risk, without a
-          separate alert list. Alert 1, 2 and 3 use yellow, orange and red plus
-          text labels; no-alert cards are neutral. All cards use the main panel
-          scroll.
+          separate alert list. In daylight the card also shows the UV index with
+          its WHO category (low 0–2, moderate 3–5, high 6–7, very high 8–10,
+          extreme 11+); it is a model estimate for open sky, without shade or
+          reflection, and is omitted when the service has no value. Alert 1, 2
+          and 3 use yellow, orange and red plus text labels; no-alert cards are
+          neutral. All cards use the main panel scroll.
         </p>
         <p>
           Cards use matching outline SVG icons; map markers use colored,
@@ -653,15 +657,19 @@
           probabilidade ≥60% ou ≥1 mm/h; chuva forte ≥10 mm/h; códigos de
           trovoada 95/96/99; códigos de neblina 45/48 ou visibilidade ≤1.000 m;
           rajadas ≥60 km/h; frio/possível gelo ≤2 °C ou códigos de congelamento;
-          calor extremo ≥40 °C. Alertas são ordenados por gravidade; dados
-          ausentes são sinalizados. A precisão real da previsão não foi
-          avaliada.
+          calor extremo ≥40 °C; índice UV muito alto ≥8 e extremo ≥11. Alertas
+          são ordenados por gravidade; dados ausentes são sinalizados. A
+          precisão real da previsão não foi avaliada.
         </p>
         <p>
           Cada ponto amostrado tem um único card com condições e riscos, sem
-          lista separada de alertas. Alerta 1, 2 e 3 usam amarelo, laranja e
-          vermelho, além de rótulos; sem alerta, o card é neutro. Todos usam a
-          rolagem do painel principal.
+          lista separada de alertas. Durante o dia, o card também mostra o
+          índice UV com a categoria da OMS (baixo 0–2, moderado 3–5, alto 6–7,
+          muito alto 8–10, extremo 11+); é uma estimativa do modelo para céu
+          aberto, sem sombra nem reflexo, e é omitido quando o serviço não tem o
+          valor. Alerta 1, 2 e 3 usam amarelo, laranja e vermelho, além de
+          rótulos; sem alerta, o card é neutro. Todos usam a rolagem do painel
+          principal.
         </p>
         <p>
           Os cards usam ícones SVG em traço no mesmo estilo; o mapa usa ícones

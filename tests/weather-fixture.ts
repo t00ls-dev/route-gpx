@@ -20,6 +20,7 @@ export function weatherResponse(url: URL) {
         wind_direction_10m: time.map(() => 90),
         wind_gusts_10m: time.map(() => 65),
         visibility: time.map(() => 10000),
+        uv_index: time.map(() => 7),
       },
     }));
 }

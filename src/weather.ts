@@ -22,6 +22,8 @@ export interface WeatherHour {
   windDirection: number | null;
   gusts: number | null;
   visibility: number | null;
+  /** UV index, mean of the preceding hour; optional (null when the provider has none). */
+  uv: number | null;
 }
 export interface WeatherForecast {
   hours: WeatherHour[][];

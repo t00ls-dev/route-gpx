@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { type Route, type State, serverUrl } from './core';
 import { t, weatherDescription } from './i18n';
 import { distanceLabel } from './units';
-import { classifyWeather } from './weather-risk';
+import { classifyWeather, uvCategory } from './weather-risk';
 import { windRelation, windStrength, windFlowDirection } from './weather-wind';
 import { icon, centerIcon } from './icons';
 import { weatherForecast } from './services';
@@ -223,6 +223,19 @@ export function setupWeather(
         ),
       );
       detail.append(header, conditions, wind);
+      // UV only while the sun counts (rounded index 1 or more).
+      if (hour.uv !== null && Math.round(hour.uv) >= 1) {
+        const uv = document.createElement('span');
+        uv.className = 'weather-card-uv';
+        uv.dataset.category = uvCategory(hour.uv);
+        uv.append(
+          icon('weather-sun'),
+          document.createTextNode(
+            t(`UV ${Math.round(hour.uv)} · ${uvCategory(hour.uv)}`),
+          ),
+        );
+        detail.append(uv);
+      }
       const extraRisks = risks.filter((risk) => risk.text !== weather.text);
       if (extraRisks.length) {
         const warnings = document.createElement('span');
