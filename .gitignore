@@ -7,4 +7,4 @@ blob-report/
 all-blob-reports/
 coverage/
 CLAUDE.local.md
-.claude/settings.local.json
+.claude/

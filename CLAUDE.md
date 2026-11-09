@@ -10,4 +10,4 @@
 - Use plan mode before changes that touch the state/hash format (`src/core.ts`), IndexedDB storage (`src/saved-routes.ts`), routing, the CI workflow or repository rules and settings.
 - Do not commit, push, create branches or open pull requests without an explicit request. Never rerun old CI executions.
 - When adding a third-party service or map layer, also update `README.md`, `help.html`, privacy disclosures and credits. Repository text stays in English; Portuguese text remains required only for the website interface (`src/i18n.ts` and help).
-- Shared permissions live in `.claude/settings.json`; personal overrides go in the ignored `.claude/settings.local.json` or `CLAUDE.local.md`.
+- Claude Code settings and permissions are not versioned: they live in the user-level `~/.claude/settings.json`. The `.claude/` directory is ignored; personal project notes go in the ignored `CLAUDE.local.md`.
