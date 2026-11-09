@@ -8,7 +8,7 @@
   "scope": "/",
   "display": "browser",
   "background_color": "#ffffff",
-  "theme_color": "#126447",
+  "theme_color": "#ffffff",
   "categories": ["navigation", "travel", "utilities"],
   "icons": [
     {
