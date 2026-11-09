@@ -2,12 +2,6 @@
 
 Plan routes and export the complete track as GPX.
 
-<p>
-  <a href="https://github.com/t00ls-dev/route-gpx/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/t00ls-dev/route-gpx/ci.yml?branch=main&label=CI" alt="CI on main" /></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/Node.js-22.23.4%2B%20%7C%2024.15%2B%20%7C%2026%2B-339933" alt="Node.js 22.23.4+, 24.15+ or 26+" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" /></a>
-</p>
-
 A static web tool that turns addresses, coordinates and map points into a GPX 1.1 file with the complete track and named waypoints, with no account, API key or application backend.
 
 ## Features
