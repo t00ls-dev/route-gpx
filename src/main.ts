@@ -44,6 +44,7 @@ import {
   meters,
   parseCoordinates,
   serverUrl,
+  validateState,
   type Coord,
   type Point,
   type Route,
@@ -954,10 +955,10 @@ $('export-json').onclick = () => {
 };
 $('apply-json').onclick = () => {
   try {
-    const parsed = JSON.parse(
+    const parsed: unknown = JSON.parse(
       $<HTMLTextAreaElement>('state-json').value,
-    ) as State;
-    state = decodeState(encodeState(parsed));
+    );
+    state = validateState(parsed);
     selected = 0;
     changed();
     fit();

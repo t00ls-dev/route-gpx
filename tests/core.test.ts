@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { deflateSync, inflateSync, strFromU8, strToU8 } from 'fflate';
 import {
   defaults,
   parseCoordinates,
   encodeState,
+  encodeStateV1,
   decodeState,
+  validateState,
   highways,
   generateGpx,
   importGpx,
@@ -83,6 +86,169 @@ describe('URL state', () => {
     const s = defaults();
     s.osrm = 'javascript:alert(1)';
     expect(() => decodeState(encodeState(s))).toThrow();
+  });
+});
+describe('short v2 links', () => {
+  const toLink = (payload: unknown) =>
+    '#v2=' +
+    btoa(
+      Array.from(deflateSync(strToU8(JSON.stringify(payload))), (b) =>
+        String.fromCharCode(b),
+      ).join(''),
+    )
+      .replaceAll('+', '-')
+      .replaceAll('/', '_')
+      .replace(/=+$/, '');
+  const payloadOf = (hash: string) =>
+    JSON.parse(
+      strFromU8(
+        inflateSync(
+          Uint8Array.from(
+            atob(hash.slice(4).replaceAll('-', '+').replaceAll('_', '/')),
+            (c) => c.charCodeAt(0),
+          ),
+        ),
+      ),
+    );
+  const sample = () => {
+    const s = defaults();
+    s.name = 'Observatório / Casa';
+    s.language = 'pt';
+    s.averageSpeedKmh = 20;
+    s.departure = '2026-11-08T09:00:00.000Z';
+    s.points = [
+      {
+        name: 'Rua André Ricardo, Nova Iguaçu, Rio de Janeiro, Brasil',
+        coord: [-22.6916306, -43.4588722],
+      },
+      {
+        name: 'Parada Costa Verde, Rodovia Governador Mário Covas, Itaguaí, Rio de Janeiro, Brasil',
+        coord: [-22.8853404, -43.8347194],
+      },
+      { name: 'Observatório Nuclear, 522', coord: [-23.0058113, -44.4657886] },
+      { name: 'Stop 4', coord: [-22.667042962969365, -43.841988444328315] },
+      {
+        name: 'Rua André Ricardo, Vila Iguaçuana',
+        coord: [-22.6916306, -43.4588722],
+      },
+    ];
+    return s;
+  };
+  it('writes v2 links and roundtrips every option', () => {
+    const s = sample();
+    s.units = 'imperial';
+    s.averageSpeedKmh = 16.09344; // 10 mph, already on the imperial speed step
+    s.prefer = false;
+    s.points.splice(1, 0, { name: 'Draft', coord: null });
+    const hash = encodeState(s);
+    expect(hash.startsWith('#v2=')).toBe(true);
+    const back = decodeState(hash);
+    expect(back.points[1]).toEqual({ name: 'Draft', coord: null });
+    expect(back.points[4].coord).toEqual([-22.667043, -43.841988]);
+    expect({ ...back, points: [] }).toEqual({ ...s, points: [] });
+  });
+  it('is much shorter than the v1 link for a typical route', () => {
+    const s = sample();
+    expect(encodeStateV1(s).length).toBeGreaterThan(1000);
+    expect(encodeState(s).length).toBeLessThan(400);
+  });
+  it('omits default servers and keeps custom ones', () => {
+    const s = defaults();
+    expect(payloadOf(encodeState(s))).toEqual([
+      [['Start'], ['Destination']],
+      1,
+      '',
+      'm',
+    ]);
+    s.valhalla = 'https://example.org/valhalla';
+    expect(payloadOf(encodeState(s)).at(-1)).toEqual([
+      '',
+      'https://example.org/valhalla',
+      '',
+    ]);
+    expect(decodeState(encodeState(s))).toEqual(s);
+  });
+  it('still reads v1 links', () => {
+    const s = sample();
+    expect(decodeState(encodeStateV1(s))).toEqual(s);
+  });
+  it.each([
+    ['not deflate', '#v2=invalid!'],
+    ['not an array', toLink({ points: [] })],
+    ['a bad point', toLink([[['A', 1, 2], 'B'], 1, ''])],
+    [
+      'coordinates outside Earth',
+      toLink([
+        [
+          ['A', 100, 0],
+          ['B', 0, 0],
+        ],
+        1,
+        '',
+      ]),
+    ],
+    [
+      'a non-boolean option',
+      toLink([
+        [
+          ['A', 1, 2],
+          ['B', 0, 0],
+        ],
+        2,
+        '',
+      ]),
+    ],
+    [
+      'a script server',
+      toLink([
+        [
+          ['A', 1, 2],
+          ['B', 0, 0],
+        ],
+        1,
+        '',
+        0,
+        0,
+        0,
+        0,
+        ['javascript:alert(1)', '', ''],
+      ]),
+    ],
+    [
+      'malformed servers',
+      toLink([
+        [
+          ['A', 1, 2],
+          ['B', 0, 0],
+        ],
+        1,
+        '',
+        0,
+        0,
+        0,
+        0,
+        'x',
+      ]),
+    ],
+  ])('rejects %s', (_, hash) => expect(() => decodeState(hash)).toThrow());
+  it('rejects oversized links and payloads', () => {
+    expect(() => decodeState('#v2=' + 'A'.repeat(8000))).toThrow();
+    const bomb = toLink([
+      [
+        ['A'.repeat(300000), 1, 2],
+        ['B', 0, 0],
+      ],
+      1,
+      '',
+    ]);
+    expect(bomb.length).toBeLessThan(8000);
+    expect(() => decodeState(bomb)).toThrow('invalid or too large');
+  });
+  it('validates editor and backup state without rounding coordinates', () => {
+    const s = sample();
+    expect(validateState(JSON.parse(JSON.stringify(s)))).toEqual(s);
+    expect(() => validateState(null)).toThrow();
+    expect(() => validateState({ ...s, points: [] })).toThrow();
   });
 });
 describe('road references', () => {
