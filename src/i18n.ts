@@ -39,6 +39,8 @@ export function preferredLanguage(): Language {
 }
 const pt: Record<string, string> = {
   'Back to map': 'Voltar ao mapa',
+  'Use link servers': 'Usar servidores do link',
+  'Keep default servers': 'Manter servidores padrão',
   'View weather': 'Ver clima',
   'Show on map': 'Mostrar no mapa',
   Weather: 'Clima',
@@ -382,6 +384,11 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (n, d) => `Mover ponto ${n} para ${d === 'up' ? 'cima' : 'baixo'}`,
   ],
   [/^(\d+)\. (Start|Destination|Via)$/, (n, kind) => `${n}. ${pt[kind]}`],
+  [
+    /^This link suggests other routing servers: (.+)\. The route uses the default servers\.$/,
+    (hosts) =>
+      `Este link sugere outros servidores de rota: ${hosts}. A rota usa os servidores padrão.`,
+  ],
   [
     /^No route available\. Check the points or try again later\. (.*?) The fallback server also failed\.$/,
     (p) =>

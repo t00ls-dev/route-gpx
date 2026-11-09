@@ -40,6 +40,7 @@ import {
   generateGpx,
   highways,
   importGpx,
+  linkServerOverrides,
   localSections,
   meters,
   parseCoordinates,
@@ -48,6 +49,7 @@ import {
   type Coord,
   type Point,
   type Route,
+  type ServerUrls,
   type State,
 } from './core';
 import { calculate, searchAddress, defaultPhotonUrl } from './services';
@@ -77,11 +79,46 @@ function status(message: string, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
 }
+let linkServers: ServerUrls | null = null;
+/**
+ * Servers suggested by a link are used only after an explicit choice: the
+ * route opens with the default servers, so a crafted link cannot send the
+ * visitor's requests elsewhere.
+ */
+function fromLink(next: State): State {
+  linkServers = linkServerOverrides(next);
+  $('server-notice').hidden = !linkServers;
+  if (!linkServers) return next;
+  const initial = defaults();
+  const hosts = (['osrm', 'valhalla', 'nominatim'] as const)
+    .filter((key) => next[key] !== initial[key])
+    .map((key) => new URL(next[key]).host);
+  $('server-notice-text').textContent =
+    `This link suggests other routing servers: ${[...new Set(hosts)].join(', ')}. The route uses the default servers.`;
+  return {
+    ...next,
+    osrm: initial.osrm,
+    valhalla: initial.valhalla,
+    nominatim: initial.nominatim,
+  };
+}
 try {
-  state = decodeState(location.hash, true);
+  state = fromLink(decodeState(location.hash, true));
 } catch {
   status('This route link is invalid. Start a new route below.', true);
 }
+$('use-link-servers').onclick = () => {
+  if (!linkServers) return;
+  Object.assign(state, linkServers);
+  linkServers = null;
+  $('server-notice').hidden = true;
+  settings();
+  changed();
+};
+$('keep-default-servers').onclick = () => {
+  linkServers = null;
+  $('server-notice').hidden = true;
+};
 /** Language is a preference, not a route edit, so undo never reverts it. */
 const routeSnapshot = (s: State): State => ({ ...s, language: undefined });
 /** Each undo step keeps the route shown for it, so undoing restores that exact geometry. */
@@ -934,7 +971,7 @@ $<HTMLInputElement>('import').onchange = () => {
 };
 window.addEventListener('hashchange', () => {
   try {
-    state = decodeState(location.hash, true);
+    state = fromLink(decodeState(location.hash, true));
     const lang = state.language ?? getLanguage();
     state.language = lang;
     setLanguage(lang);

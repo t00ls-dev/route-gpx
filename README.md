@@ -45,7 +45,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 - Weather is requested only after you choose a departure date; radar only when you enable it.
 - Exact GPS coordinates stay in memory; using your location as a route point creates a coordinate rounded to about 100 m.
 - Approximate region detection by IP can be turned off in **Settings**.
-- Every service URL is configurable in **Settings**.
+- Every service URL is configurable in **Settings**. Route links that suggest other routing or search servers open with the defaults until you choose **Use link servers**.
 
 Providers, limits, terms, weather sampling, radar and map layers are detailed in [services and privacy](docs/SERVICES.md).
 

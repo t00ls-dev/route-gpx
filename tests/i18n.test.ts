@@ -34,6 +34,15 @@ it('switches existing content and placeholders without overwriting typed place n
 
 it('translates generated stop names and short status messages', () => {
   setLanguage('pt');
+  expect(
+    t(
+      'This link suggests other routing servers: example.org. The route uses the default servers.',
+    ),
+  ).toBe(
+    'Este link sugere outros servidores de rota: example.org. A rota usa os servidores padrão.',
+  );
+  expect(t('Use link servers')).toBe('Usar servidores do link');
+  expect(t('Keep default servers')).toBe('Manter servidores padrão');
   expect(t('Stop 2')).toBe('Parada 2');
   expect(t('Return to start')).toBe('Volta ao início');
   expect(t('Check road positions: 2 (150 m)')).toBe(

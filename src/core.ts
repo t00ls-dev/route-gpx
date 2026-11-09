@@ -184,6 +184,14 @@ function decodeV2(text: string): unknown {
     nominatim: server(2),
   };
 }
+export type ServerUrls = Pick<State, (typeof SERVER_KEYS)[number]>;
+/** All three servers when any differs from the defaults, or null when a state uses only defaults. */
+export function linkServerOverrides(state: State): ServerUrls | null {
+  const initial = defaults();
+  return SERVER_KEYS.some((key) => state[key] !== initial[key])
+    ? { osrm: state.osrm, valhalla: state.valhalla, nominatim: state.nominatim }
+    : null;
+}
 export function decodeState(hash: string, resetInvalidSpeed = false): State {
   if (!hash || hash === '#') return defaults();
   if (hash.startsWith('#v2=') && hash.length <= MAX_V2_LINK)
