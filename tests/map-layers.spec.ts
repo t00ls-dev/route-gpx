@@ -140,12 +140,7 @@ test('mobile layers stay accessible without overlapping other map controls or th
   const box = (await page.locator('#layers-toggle').boundingBox())!;
   expect(box.width).toBeGreaterThanOrEqual(44);
   expect(box.height).toBeGreaterThanOrEqual(44);
-  for (const selector of [
-    '#locate',
-    '#fullscreen',
-    '#panel-toggle',
-    '.leaflet-control-zoom-in',
-  ]) {
+  for (const selector of ['#locate', '#fullscreen', '#panel-toggle', '#lock']) {
     const other = (await page.locator(selector).boundingBox())!;
     expect(
       box.x + box.width <= other.x ||
@@ -268,7 +263,8 @@ test('GPX import during a running zoom takes precedence over that view', async (
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(base);
-  await page.locator('.leaflet-control-zoom-in').click();
+  // Phones have no zoom buttons; the map keyboard shortcut starts the same zoom.
+  await page.locator('#map').press('+');
   await page.locator('#import').setInputFiles('docs/example.gpx');
   await expect(page.locator('#download')).toBeEnabled();
   const bounds = (await page.locator('#map').boundingBox())!;

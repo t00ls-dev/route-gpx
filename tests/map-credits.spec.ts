@@ -45,8 +45,9 @@ for (const [width, height] of [
       await expect(toggle).toHaveAttribute('aria-haspopup', 'dialog');
       const button = (await toggle.boundingBox())!;
       const map = (await page.locator('#map').boundingBox())!;
+      // Phones hide the zoom buttons; the credits sit below the map tools instead.
       const zoom = (await page
-        .locator('.leaflet-control-zoom-out')
+        .locator(width < 760 ? '#undo' : '.leaflet-control-zoom-out')
         .boundingBox())!;
       expect(button.width).toBeGreaterThanOrEqual(44);
       expect(button.height).toBeGreaterThanOrEqual(44);
@@ -54,7 +55,9 @@ for (const [width, height] of [
         Math.abs(button.x + button.width / 2 - zoom.x - zoom.width / 2),
       ).toBeLessThanOrEqual(1);
       expect(button.y).toBeGreaterThanOrEqual(zoom.y + zoom.height);
-      expect(map.x + map.width - button.x - button.width).toBe(12);
+      expect(map.x + map.width - button.x - button.width).toBe(
+        width < 760 ? 10 : 12,
+      );
       expect(map.y + map.height - button.y - button.height).toBe(
         width < 760
           ? (await page.locator('#panel-toggle').boundingBox())!.height + 10

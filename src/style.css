@@ -353,8 +353,22 @@ label[for] {
   margin: 10px 0;
   border-radius: 3px;
 }
-#server-notice p {
+#server-notice p,
+.lock-notice p {
   margin: 0;
+}
+.lock-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.file-button:has(input:disabled) {
+  color: #586673;
+}
+.file-button input:disabled {
+  cursor: not-allowed;
 }
 .notice-actions {
   display: flex;
@@ -553,6 +567,8 @@ footer a {
 }
 @media (max-width: 759px) {
   .planner .map-credits {
+    /* Centered under the map tools column, which phones show without zoom. */
+    right: calc(10px + env(safe-area-inset-right, 0px));
     bottom: calc(
       var(--route-handle-height, 48px) + 10px + env(safe-area-inset-bottom, 0px)
     );
@@ -1377,7 +1393,9 @@ footer a {
   border: 2px solid var(--green);
 }
 #fullscreen[aria-pressed='false'] .icon-minimize,
-#fullscreen[aria-pressed='true'] .icon-maximize {
+#fullscreen[aria-pressed='true'] .icon-maximize,
+#lock[aria-pressed='false'] .icon-lock,
+#lock[aria-pressed='true'] .icon-unlock {
   display: none;
 }
 .point-controls {
@@ -1466,14 +1484,15 @@ footer a {
   .map-action-control {
     width: 44px;
   }
+  /* Phones zoom with pinch and double tap; the column keeps room for map tools. */
+  .planner .leaflet-control-zoom {
+    display: none;
+  }
   .planner .map-action-control > button,
   .planner .map-action-control .layer-control > button {
     width: 44px;
     height: 44px;
     padding: 0;
-  }
-  .planner .leaflet-top .leaflet-control-zoom {
-    margin-top: 6px;
   }
   .map-action-control #layers-menu {
     width: min(210px, calc(100vw - 76px));
@@ -1531,7 +1550,7 @@ footer a {
     top: calc(44px + env(safe-area-inset-top));
   }
   .map-action-control {
-    grid-template-columns: repeat(5, 44px);
+    grid-template-columns: repeat(6, 44px);
     width: fit-content;
     gap: 4px;
   }
