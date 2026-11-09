@@ -58,6 +58,30 @@ describe('track legs', () => {
     expect(route.steps).toHaveLength(1);
     expect(route.snapped).toHaveLength(4);
   });
+  it('keeps a segment gap in kept legs and joins it in a rerouted one', async () => {
+    const a = line(10),
+      b = line(10, -23);
+    const points = [a[0], a[5], b[5], b[9]];
+    const base = { route: imported([a, b]), points };
+    // Editing the destination reroutes only b5 → end; the gap leg is kept.
+    const end: Coord = [-23.01, -43.19];
+    const calls: Coord[][] = [];
+    const kept = await routeKeepingLegs(
+      stateFor([a[0], a[5], b[5], end]),
+      base,
+      router(calls),
+    );
+    expect(calls).toEqual([[b[5], end]]);
+    expect(kept!.segments).toEqual([a, [...b.slice(0, 6), end]]);
+    // Moving a5 reroutes a0 → moved → b5, so the router joins the gap.
+    const moved: Coord = [-22.95, -43.195];
+    const joined = await routeKeepingLegs(
+      stateFor([a[0], moved, b[5], b[9]]),
+      base,
+      router([]),
+    );
+    expect(joined!.segments).toEqual([[a[0], moved, ...b.slice(5)]]);
+  });
   it('keeps the exact track when nothing changed and needs no request', async () => {
     const t = line(30);
     const points = [t[0], t[15], t[29]];
