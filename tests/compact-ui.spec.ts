@@ -87,13 +87,8 @@ for (const width of [320, 360, 390, 430]) {
       }
       await expect(page.locator('.map-action-control #undo')).toHaveCount(1);
       await expect(page.locator('#example')).toHaveCount(0);
-      expect(
-        await page
-          .locator('.saved-routes')
-          .evaluate((el) =>
-            el.nextElementSibling?.classList.contains('speed-options'),
-          ),
-      ).toBe(true);
+      // Average speed belongs to the route summary card, with the departure.
+      await expect(page.locator('#summary .speed-options')).toHaveCount(1);
       // Phones zoom with pinch and double tap, so the map tools column has room.
       await expect(page.locator('.leaflet-control-zoom')).toBeHidden();
       expect(lastBottom).toBeLessThanOrEqual(

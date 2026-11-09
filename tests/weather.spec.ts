@@ -132,12 +132,12 @@ for (const mobile of [false, true])
     await expect(page.locator('.weather-card-severity').first()).toHaveText(
       'Alerta 3',
     );
-    await expect(page.locator('#weather-speed')).toContainText(
-      'Velocidade utilizada: 60 km/h',
+    await expect(page.locator('#summary .stats-basis')).toHaveText(
+      'A 60 km/h · sem paradas',
     );
     await page.locator('#language').selectOption('en');
-    await expect(page.locator('#weather-speed')).toContainText(
-      'Weather speed: 60 km/h',
+    await expect(page.locator('#summary .stats-basis')).toHaveText(
+      'At 60 km/h · no stops',
     );
     expect(calls).toBe(1);
   });
@@ -151,7 +151,7 @@ test('daylight shows today without a departure, dark sections for an evening dep
   });
   const line = page.locator('#daylight-summary .daylight-line');
   await expect(line).toContainText(
-    /Today at the start: Sunrise \d\d:\d\d [AP]M · Sunset \d\d:\d\d [AP]M/,
+    /Today at the start: Sunrise \d\d:\d\d [AP]M Sunset \d\d:\d\d [AP]M/,
   );
   await expect(page.locator('#daylight-summary')).toContainText(
     'Choose a departure date to see dark sections.',
@@ -160,7 +160,7 @@ test('daylight shows today without a departure, dark sections for an evening dep
   // About 1 h 51 min at 60 km/h from 16:30 UTC; the equator gets dark near 18:06.
   await date(page, '2026-11-08T16:30');
   await expect(line).toContainText(
-    /Sunrise \d\d:\d\d [AP]M · Sunset \d\d:\d\d [AP]M · [\d.]+ km in the dark/,
+    /Sunrise \d\d:\d\d [AP]M Sunset \d\d:\d\d [AP]M · [\d.]+ km in the dark/,
   );
   const details = page.locator('#daylight-details');
   await expect(details).toBeVisible();
@@ -168,6 +168,14 @@ test('daylight shows today without a departure, dark sections for an evening dep
     /Dark from [\d.]+ km \(.+\) to 111\.2 km/,
   );
   await expect(details).toContainText(/Leave by .+ to arrive before sunset\./);
+  // 1 h 51 min at the 60 km/h set by the test, after a 16:30 UTC departure.
+  await expect(page.locator('#summary dt')).toHaveText([
+    'Distance',
+    'Time',
+    'Arrival',
+  ]);
+  await expect(page.locator('#summary dd').nth(2)).toHaveText('06:21 PM');
+  await expect(page.locator('#summary')).toContainText('At 60 km/h · no stops');
   await expect(details).toContainText(
     /Daylight at the start from \d\d:\d\d [AP]M\./,
   );
@@ -176,9 +184,10 @@ test('daylight shows today without a departure, dark sections for an evening dep
   await expect(details).not.toContainText('Dark from');
   await page.locator('#language').selectOption('pt');
   await expect(line).toContainText(
-    /Nascer \d\d:\d\d · Pôr \d\d:\d\d · Nada no escuro/,
+    /Nascer do sol \d\d:\d\d Pôr do sol \d\d:\d\d · Nada no escuro/,
   );
   await expect(details).toContainText('Luz do dia');
+  await expect(page.locator('#summary dt').nth(2)).toHaveText('Chegada');
   await expect(details).toContainText(
     /Saia até .+ para chegar antes do pôr do sol\./,
   );
@@ -197,7 +206,11 @@ test('no date or invalid dates never request weather', async ({ page }) => {
     ['2026-11-24T10:00', '16-day'],
   ]) {
     await date(page, value);
-    await expect(page.locator('#weather-status')).toContainText(message);
+    await expect(page.locator('#departure-error')).toContainText(message);
+    await expect(page.locator('#departure')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
   }
   await date(page, '');
   await page.locator('#route-name').fill('No weather');
@@ -243,12 +256,13 @@ for (const failure of ['429', 'network', 'invalid', 'timeout'])
     await fetchWeather(page);
     expect(calls).toBe(2);
   });
-test('clearly shows default and selected speeds, recalculates locally and supports slow/fast travel and miles', async ({
+test('selected speeds recalculate weather locally and support slow/fast travel and miles', async ({
   page,
 }) => {
   await setup(page, false, null);
-  await expect(page.locator('#weather-speed')).toContainText(
-    '60 km/h (default)',
+  // An imported GPX has no router time; weather still uses 60 km/h.
+  await expect(page.locator('#summary .stats-basis')).toHaveText(
+    'Set an average speed to estimate the time.',
   );
   await date(page);
   await fetchWeather(page);
@@ -263,7 +277,9 @@ test('clearly shows default and selected speeds, recalculates locally and suppor
   await page.locator('.speed-options > summary').click();
   await page.locator('#use-average-speed').check();
   await page.locator('#average-speed').fill('30');
-  await expect(page.locator('#weather-speed')).toContainText('30 km/h.');
+  await expect(page.locator('#summary .stats-basis')).toHaveText(
+    'At 30 km/h · no stops',
+  );
   await expect(page.locator('.weather-marker').last()).not.toHaveAttribute(
     'aria-label',
     before!,
@@ -272,10 +288,10 @@ test('clearly shows default and selected speeds, recalculates locally and suppor
   await expect(page.locator('#weather-status')).toContainText('exceed');
   await expect(page.locator('#weather-retry')).toBeVisible();
   await page.locator('#average-speed').fill('200');
-  await expect(page.locator('#weather-speed')).toContainText('200 km/h');
+  await expect(page.locator('#summary .stats-basis')).toContainText('200 km/h');
   await expect(page.locator('#weather-result')).toBeVisible();
   await page.locator('#units').selectOption('imperial');
-  await expect(page.locator('#weather-speed')).toContainText('125 mph');
+  await expect(page.locator('#summary .stats-basis')).toContainText('125 mph');
   expect(calls).toBe(0);
 });
 test('changing only the weather server refreshes weather without rerouting', async ({
@@ -548,7 +564,7 @@ test('slower travel adds hourly samples automatically and faster travel reuses t
   await expect(page.locator('#weather-result')).toBeVisible();
   await page.locator('#average-speed').fill('15');
   await page.clock.fastForward(6500);
-  await expect(page.locator('#weather-speed')).toContainText('15 km/h');
+  await expect(page.locator('#summary .stats-basis')).toContainText('15 km/h');
   await expect(page.locator('.weather-card')).toHaveCount(9, {
     timeout: 15000,
   });
@@ -558,7 +574,7 @@ test('slower travel adds hourly samples automatically and faster travel reuses t
   await expect(page.locator('.weather-card').nth(1)).toContainText('15 km');
   await page.locator('#average-speed').fill('60');
   await expect(page.locator('#weather-result')).toBeVisible();
-  await expect(page.locator('#weather-speed')).toContainText('60 km/h');
+  await expect(page.locator('#summary .stats-basis')).toContainText('60 km/h');
   expect(requests).toHaveLength(2);
 });
 
@@ -583,23 +599,14 @@ for (const mixed of [false, true])
       expect(requests[0].searchParams.get('start_hour')).toBe(
         '2026-08-08T23:00',
       );
-    await expect(page.locator('#weather-period')).toHaveText(
-      mixed ? 'Past estimates and forecast' : 'Past estimates',
-    );
     await expect(page.locator('.weather-card')).toHaveCount(7);
     await page.locator('#language').selectOption('pt');
     await expect(page.locator('#weather-section > summary')).toHaveText(
       'Clima',
     );
-    await expect(page.locator('#weather-period')).toHaveText(
-      mixed ? 'Estimativas do passado e previsão' : 'Estimativas do passado',
-    );
     await page.locator('#language').selectOption('en');
     await expect(page.locator('#weather-section > summary')).toHaveText(
       'Weather',
-    );
-    await expect(page.locator('#weather-period')).toHaveText(
-      mixed ? 'Past estimates and forecast' : 'Past estimates',
     );
     expect(decodeState(new URL(page.url()).hash).departure).toBe(
       mixed ? '2026-11-07T09:00:00.000Z' : '2026-08-09T00:00:00.000Z',

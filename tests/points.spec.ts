@@ -69,6 +69,21 @@ for (const mobile of [false, true]) {
       await fillPair(page);
       await expect(page.locator('.leaflet-marker-icon')).toHaveCount(2);
       await expect(page.locator('#summary')).toContainText('42 km');
+      await expect(page.locator('#summary dt')).toHaveText([
+        'Distance',
+        'Time',
+      ]);
+      await expect(page.locator('#summary')).toContainText(
+        'Router estimate · no stops',
+      );
+      // Street-by-street detail sits below the summary card, not inside it.
+      await expect(
+        page.locator('#summary .road-list, #summary .chips'),
+      ).toHaveCount(0);
+      await expect(page.locator('#itinerary .chips')).toHaveText('BR-101');
+      await expect(page.locator('#itinerary summary')).toHaveText(
+        'Itinerary (1)',
+      );
       await page.locator('#undo').click();
       await expect(page.locator('#location-1')).toHaveValue('');
       await expect(page.locator('#location-0')).toHaveValue(start);
@@ -314,7 +329,7 @@ test('editing an imported track reroutes only the legs next to the edit', async 
   expect(exported.slice(-150)).toEqual(
     track.slice(-150).map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`),
   );
-  await expect(page.locator('#summary')).toContainText('Imported GPX + OSRM');
+  await expect(page.locator('#itinerary')).toContainText('Imported GPX + OSRM');
   await expect(page.locator('#summary')).toContainText(
     'Road summary covers only recalculated sections.',
   );
@@ -323,13 +338,13 @@ test('editing an imported track reroutes only the legs next to the edit', async 
   await page.locator('#undo').click();
   // Restored synchronously: a reroute would leave the download disabled.
   expect(await page.locator('#download').isEnabled()).toBe(true);
-  await expect(page.locator('#summary')).toContainText('Imported GPX ·');
+  await expect(page.locator('#itinerary')).toContainText('Imported GPX ·');
   await expect(page.locator('#route-name')).toHaveValue('Renamed spur');
   expect(routes).toEqual([3]);
 
   // Calculate route asks the router for the whole route through every point.
   await page.locator('#calculate').click();
-  await expect(page.locator('#summary')).toContainText('OSRM ·', {
+  await expect(page.locator('#itinerary')).toContainText('OSRM ·', {
     timeout: 15000,
   });
   expect(routes).toEqual([3, count]);

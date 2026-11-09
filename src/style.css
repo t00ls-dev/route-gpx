@@ -312,16 +312,77 @@ label[for] {
   height: 18px;
   margin: 0;
 }
+#summary:not(:empty) {
+  margin: 10px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
 .stats {
   display: flex;
-  align-items: baseline;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+}
+.stats dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.stats dd {
+  margin: 0;
 }
 .stats strong {
   font-size: 25px;
   font-weight: 650;
   letter-spacing: -0.6px;
 }
+.departure-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+}
+.departure-field label {
+  margin: 0;
+}
+#departure-error:empty {
+  display: none;
+}
+.sun-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.daylight-line {
+  flex-wrap: wrap;
+}
+/* Controls inside the summary card read as one list of rows. */
+#summary > details,
+#summary > .route-options,
+#summary > .departure-field {
+  margin: 0;
+  border-top: 1px solid #e2e7eb;
+  padding-block: 2px;
+}
+#summary > .route-options,
+#summary > .departure-field {
+  padding-block: 8px;
+}
+#summary > details > summary {
+  font-size: 13px;
+  color: #145e49;
+  min-height: 40px;
+  line-height: 40px;
+}
+#summary > details[open] {
+  padding-bottom: 10px;
+}
+.stats-basis {
+  margin-top: 2px;
+}
+
 .hint {
   font-size: 12px;
   color: var(--muted);
@@ -376,8 +437,11 @@ label[for] {
   gap: 7px;
   margin-top: 8px;
 }
-.road-list {
-  border-bottom: 1px solid #e2e7eb;
+#itinerary {
+  margin: 0 0 8px;
+}
+.road-list > summary {
+  color: #145e49;
 }
 .road-list ul {
   max-height: 220px;
@@ -419,7 +483,6 @@ label[for] {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  border-top: 1px solid #e2e7eb;
   padding-top: 4px;
 }
 .file-button {
@@ -997,7 +1060,6 @@ footer a {
   max-width: 120px;
 }
 .saved-routes {
-  border-bottom: 1px solid var(--border);
   margin: 0 0 16px;
 }
 .saved-routes > summary {
@@ -1570,9 +1632,6 @@ footer a {
 
 #weather-section {
   min-width: 0;
-  margin: 12px 0;
-  border-block: 1px solid var(--border);
-  padding-block: 12px;
 }
 #weather-section input[type='datetime-local'] {
   max-width: 100%;
@@ -1700,10 +1759,6 @@ footer a {
   margin: 8px 0;
   font-size: 13px;
 }
-.daylight-heading {
-  margin: 0 0 4px;
-  font-weight: 600;
-}
 .daylight-details ul {
   margin: 0;
   padding-left: 18px;
@@ -1712,10 +1767,7 @@ footer a {
   display: none;
 }
 
-#weather-section > label[for='departure'] {
-  margin: 4px 0;
-}
-#weather-section > #departure {
+.departure-field > #departure {
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
@@ -1802,7 +1854,7 @@ footer a {
 }
 
 @media (max-width: 759px) {
-  #weather-section > #departure {
+  .departure-field > #departure {
     width: calc(100% - 4px);
     max-width: calc(100% - 4px);
   }

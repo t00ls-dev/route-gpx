@@ -12,6 +12,12 @@ const DEFAULT_SPEED_KMH = 60;
  * the route summary) and the details below the departure date. Text stays in
  * English source form, one text node per phrase, for the DOM translator.
  */
+const phrase = (value: string) => {
+  const span = document.createElement('span');
+  span.textContent = value;
+  return span;
+};
+
 export function renderDaylight(
   state: State,
   route: Route | null,
@@ -48,37 +54,52 @@ export function renderDaylight(
   const day = new Date(planned ? departure : now);
   day.setHours(12, 0, 0, 0);
   const sun = sunTimes(day.getTime(), start);
-  const sunPhrases = sun.polar
-    ? [sun.polar === 'day' ? 'Sun up all day' : 'Sun down all day']
-    : [`Sunrise ${clock(sun.sunrise!)}`, `Sunset ${clock(sun.sunset!)}`];
-
-  const phrases = [...sunPhrases];
   let result: ReturnType<typeof routeDaylight> | null = null;
-  if (planned) {
+  if (planned)
     result = routeDaylight(
       route,
       departure,
       state.averageSpeedKmh ?? DEFAULT_SPEED_KMH,
     );
-    phrases.push(
-      result.nightDistance > 0
-        ? `${distance(result.nightDistance)} in the dark`
-        : 'None in the dark',
-    );
-  }
   if (line) {
     const text = document.createElement('p');
     text.className = 'daylight-line';
-    text.append(icon('weather-sun'));
-    if (!planned)
+    if (!planned) text.append(phrase('Today at the start:'));
+    if (sun.polar)
       text.append(
-        document.createTextNode('Today at the start:'),
-        document.createTextNode(' '),
+        phrase(sun.polar === 'day' ? 'Sun up all day' : 'Sun down all day'),
       );
-    phrases.forEach((phrase, i) => {
-      if (i) text.append(document.createTextNode(' · '));
-      text.append(document.createTextNode(phrase));
-    });
+    else
+      for (const [kind, time] of [
+        ['sunrise', sun.sunrise!],
+        ['sunset', sun.sunset!],
+      ] as const) {
+        // Icon for sight, words for screen readers and the tooltip.
+        const label = kind === 'sunrise' ? 'Sunrise' : 'Sunset';
+        const item = document.createElement('span');
+        item.className = 'sun-time';
+        item.title = label;
+        const name = document.createElement('span');
+        name.className = 'sr-only';
+        name.textContent = label;
+        item.append(
+          icon(kind),
+          name,
+          document.createTextNode(` ${clock(time)}`),
+        );
+        text.append(document.createTextNode(' '), item);
+      }
+    if (result)
+      text.append(
+        document.createTextNode(' '),
+        phrase('·'),
+        document.createTextNode(' '),
+        phrase(
+          result.nightDistance > 0
+            ? `${distance(result.nightDistance)} in the dark`
+            : 'None in the dark',
+        ),
+      );
     line.replaceChildren(text);
     if (!planned) {
       const hint = document.createElement('p');
