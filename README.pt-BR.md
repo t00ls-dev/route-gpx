@@ -53,7 +53,7 @@ Provedores, limites, termos, amostragem do clima, radar e camadas do mapa estão
 ## Desenvolvimento local
 
 ```sh
-npm ci            # instala com Node.js 22.23.4+ (Node 24 e 26+ também são aceitos)
+npm ci            # instala com Node.js 22.23.4+ (Node 24.15+ e 26+ também são aceitos)
 npm run dev       # serve em http://localhost:5173/
 npm run build     # verifica tipos e compila a versão de produção
 npm run preview   # visualiza o build de produção
