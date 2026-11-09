@@ -331,6 +331,9 @@ const pt: Record<string, string> = {
   'GPX point without coordinates.': 'Ponto do GPX sem coordenadas.',
   'The GPX contains invalid coordinates.':
     'O GPX contém coordenadas inválidas.',
+  'OSRM returned an invalid route.': 'O OSRM devolveu uma rota inválida.',
+  'Valhalla returned an invalid route.':
+    'O Valhalla devolveu uma rota inválida.',
   'No driving route connects these points.':
     'Não há rota de carro conectando estes pontos.',
   'Use an HTTP(S) server URL without credentials, query or hash.':
@@ -392,7 +395,11 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   [
     /^No route available\. Check the points or try again later\. (.*?) The fallback server also failed\.$/,
     (p) =>
-      `Rota indisponível. Confira os pontos ou tente mais tarde. ${p} O servidor alternativo também falhou.`,
+      `Rota indisponível. Confira os pontos ou tente mais tarde. ${translate(p, 'pt')} O servidor alternativo também falhou.`,
+  ],
+  [
+    /^Server returned HTTP (\d+)\.$/,
+    (code) => `O servidor respondeu HTTP ${code}.`,
   ],
 ];
 export function t(value: string): string {

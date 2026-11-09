@@ -1,4 +1,4 @@
-import { validateState, validCoord, type Route, type State } from './core';
+import { validateState, validRoute, type Route, type State } from './core';
 export interface SavedRoute {
   id: string;
   name: string;
@@ -90,9 +90,6 @@ export function exportRouteBackup(records: SavedRoute[]): string {
     2,
   );
 }
-function validNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
-}
 export function parseRouteBackup(text: string): SavedRoute[] {
   if (text.length > 50_000_000)
     throw new Error('Choose a backup smaller than 50 MB.');
@@ -121,29 +118,7 @@ export function parseRouteBackup(text: string): SavedRoute[] {
     if (state.points.some((p) => !p.coord))
       throw new Error('Invalid saved route points.');
     const route = row.route;
-    if (
-      !route ||
-      !Array.isArray(route.segments) ||
-      !route.segments.length ||
-      !route.segments.every(
-        (s) => Array.isArray(s) && s.length >= 2 && s.every(validCoord),
-      ) ||
-      !validNumber(route.distance) ||
-      (route.duration !== null && !validNumber(route.duration)) ||
-      typeof route.provider !== 'string' ||
-      !Array.isArray(route.steps) ||
-      !route.steps.every(
-        (s) =>
-          s &&
-          typeof s.name === 'string' &&
-          typeof s.ref === 'string' &&
-          validNumber(s.distance) &&
-          validNumber(s.duration),
-      ) ||
-      (route.snapped !== undefined &&
-        (!Array.isArray(route.snapped) || !route.snapped.every(validCoord)))
-    )
-      throw new Error('Invalid saved route geometry.');
+    if (!validRoute(route)) throw new Error('Invalid saved route geometry.');
     const now = new Date().toISOString();
     const date = (value: unknown) =>
       typeof value === 'string' && Number.isFinite(Date.parse(value))

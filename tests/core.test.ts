@@ -8,6 +8,7 @@ import {
   decodeState,
   validateState,
   linkServerOverrides,
+  validRoute,
   highways,
   generateGpx,
   importGpx,
@@ -250,6 +251,45 @@ describe('short v2 links', () => {
     expect(validateState(JSON.parse(JSON.stringify(s)))).toEqual(s);
     expect(() => validateState(null)).toThrow();
     expect(() => validateState({ ...s, points: [] })).toThrow();
+  });
+});
+describe('route validation', () => {
+  const good = (): Route => ({
+    segments: [
+      [
+        [-22.9, -43.1],
+        [-22.91, -43.11],
+      ],
+    ],
+    steps: [{ name: 'Road', ref: '', distance: 10, duration: 1, kind: 'turn' }],
+    distance: 10,
+    duration: null,
+    provider: 'OSRM',
+    snapped: [[-22.9, -43.1]],
+  });
+  it('accepts a complete route', () => expect(validRoute(good())).toBe(true));
+  it.each<[string, (r: Route) => void]>([
+    ['coordinates outside Earth', (r) => (r.segments[0][0] = [91, 0])],
+    ['NaN coordinates', (r) => (r.segments[0][1] = [Number.NaN, 0])],
+    ['a one-point segment', (r) => (r.segments[0] = [[-22.9, -43.1]])],
+    ['a negative distance', (r) => (r.distance = -1)],
+    [
+      'a non-string step name',
+      (r) => ((r.steps[0] as { name: unknown }).name = 1),
+    ],
+    [
+      'a non-string step kind',
+      (r) => ((r.steps[0] as { kind: unknown }).kind = 1),
+    ],
+    ['invalid snapped points', (r) => (r.snapped = [[0, 200]])],
+  ])('rejects %s', (_, change) => {
+    const r = good();
+    change(r);
+    expect(validRoute(r)).toBe(false);
+  });
+  it('rejects non-objects', () => {
+    expect(validRoute(null)).toBe(false);
+    expect(validRoute('route')).toBe(false);
   });
 });
 describe('link server overrides', () => {

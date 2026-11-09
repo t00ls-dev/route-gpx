@@ -62,6 +62,36 @@ export function validCoord(v: unknown): v is Coord {
     Math.abs(v[1]) <= 180
   );
 }
+const validAmount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+/** Shape check for routes from routers and backups before they are drawn, saved or exported. */
+export function validRoute(value: unknown): value is Route {
+  const route = value as Route | null;
+  return (
+    !!route &&
+    typeof route === 'object' &&
+    Array.isArray(route.segments) &&
+    route.segments.length > 0 &&
+    route.segments.every(
+      (s) => Array.isArray(s) && s.length >= 2 && s.every(validCoord),
+    ) &&
+    validAmount(route.distance) &&
+    (route.duration === null || validAmount(route.duration)) &&
+    typeof route.provider === 'string' &&
+    Array.isArray(route.steps) &&
+    route.steps.every(
+      (s) =>
+        !!s &&
+        typeof s.name === 'string' &&
+        typeof s.ref === 'string' &&
+        validAmount(s.distance) &&
+        validAmount(s.duration) &&
+        (s.kind === undefined || typeof s.kind === 'string'),
+    ) &&
+    (route.snapped === undefined ||
+      (Array.isArray(route.snapped) && route.snapped.every(validCoord)))
+  );
+}
 export function parseCoordinates(text: string): Coord | null {
   const match = text
     .trim()

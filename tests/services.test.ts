@@ -109,6 +109,85 @@ describe('routing adapters', () => {
     expect(r.steps[0].ref).toBe('BR-101');
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+  const valhalla = (length: unknown = 1) => ({
+    trip: {
+      status: 0,
+      summary: { length, time: 90 },
+      legs: [
+        {
+          shape: '??_c`|@_gayB',
+          maneuvers: [
+            { street_names: ['BR-101'], length: 1, time: 90, type: 1 },
+          ],
+        },
+      ],
+    },
+  });
+  const brokenOsrm = (change: (x: typeof osrm) => void) => {
+    const copy = structuredClone(osrm);
+    change(copy);
+    return copy;
+  };
+  it.each([
+    [
+      'coordinates outside Earth',
+      brokenOsrm((x) => {
+        x.routes[0].geometry.coordinates[1] = [-44, -123];
+      }),
+    ],
+    [
+      'non-numeric coordinates',
+      brokenOsrm((x) => {
+        (x.routes[0].geometry.coordinates[0] as unknown[]) = ['a', 'b'];
+      }),
+    ],
+    [
+      'missing legs',
+      brokenOsrm((x) => {
+        delete (x.routes[0] as { legs?: unknown }).legs;
+      }),
+    ],
+    [
+      'a negative distance',
+      brokenOsrm((x) => {
+        x.routes[0].distance = -1;
+      }),
+    ],
+    [
+      'a waypoint count that does not match the request',
+      brokenOsrm((x) => {
+        x.waypoints.pop();
+      }),
+    ],
+  ])('rejects OSRM responses with %s', async (_, body) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(body)));
+    await expect(osrmRoute(state())).rejects.toThrow(
+      'OSRM returned an invalid route.',
+    );
+  });
+  it('falls back to Valhalla when OSRM returns an invalid route', async () => {
+    vi.useFakeTimers();
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        response(
+          brokenOsrm((x) => {
+            x.routes[0].duration = Number.NaN;
+          }),
+        ),
+      )
+      .mockResolvedValueOnce(response(valhalla()));
+    vi.stubGlobal('fetch', fetch);
+    const promise = calculate(state());
+    await vi.runAllTimersAsync();
+    expect((await promise).provider).toContain('Valhalla');
+  });
+  it('rejects Valhalla responses with invalid values', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(valhalla('x'))));
+    await expect(valhallaRoute(state())).rejects.toThrow(
+      'Valhalla returned an invalid route.',
+    );
+  });
   it('reports an unavailable fallback', async () => {
     vi.stubGlobal(
       'fetch',
