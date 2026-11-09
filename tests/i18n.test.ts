@@ -192,3 +192,21 @@ describe('translation coverage', () => {
     ).toContain('O Valhalla não encontrou uma rota.');
   });
 });
+
+it('translates the daylight phrases', () => {
+  setLanguage('pt');
+  expect(t('Sunrise 05:42')).toBe('Nascer 05:42');
+  expect(t('Sunset 18:31')).toBe('Pôr 18:31');
+  expect(t('12 km in the dark')).toBe('12 km no escuro');
+  expect(t('3,5 km in civil twilight')).toBe('3,5 km no crepúsculo civil');
+  expect(
+    t('Dark from 30 km (8 de nov., 18:31) to 42 km (8 de nov., 18:55)'),
+  ).toBe('No escuro de 30 km (8 de nov., 18:31) a 42 km (8 de nov., 18:55)');
+  expect(t('Leave by 8 de nov., 17:35 to arrive before sunset.')).toBe(
+    'Saia até 8 de nov., 17:35 para chegar antes do pôr do sol.',
+  );
+  expect(t('Daylight at the start from 05:42.')).toBe(
+    'Luz do dia no início a partir de 05:42.',
+  );
+  expect(t('Today at the start:')).toBe('Hoje no início:');
+});

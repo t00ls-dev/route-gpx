@@ -331,6 +331,13 @@ const pt: Record<string, string> = {
   'Route locked. Unlock editing to change it.':
     'Rota bloqueada. Desbloqueie a edição para alterá-la.',
   'Editing unlocked.': 'Edição desbloqueada.',
+  Daylight: 'Luz do dia',
+  'Sun up all day': 'Sol o dia todo',
+  'Sun down all day': 'Sem sol o dia todo',
+  'None in the dark': 'Nada no escuro',
+  'Today at the start:': 'Hoje no início:',
+  'Choose a departure date to see dark sections.':
+    'Escolha a data de saída para ver os trechos no escuro.',
   Start: 'Início',
   Destination: 'Destino',
   Via: 'Passagem',
@@ -366,6 +373,23 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
       `Defina ${p === 'Start' ? 'o início' : p === 'Destination' ? 'o destino' : 'a ' + t(p).toLowerCase()} no mapa`,
   ],
 
+  [/^Sunrise (.+)$/, (time) => `Nascer ${time}`],
+  [/^Sunset (.+)$/, (time) => `Pôr ${time}`],
+  [/^(.+) in the dark$/, (distance) => `${distance} no escuro`],
+  [/^(.+) in civil twilight$/, (distance) => `${distance} no crepúsculo civil`],
+  [
+    /^Dark from (.+) \((.+)\) to (.+) \((.+)\)$/,
+    (from, start, to, end) =>
+      `No escuro de ${from} (${start}) a ${to} (${end})`,
+  ],
+  [
+    /^Leave by (.+) to arrive before sunset\.$/,
+    (time) => `Saia até ${time} para chegar antes do pôr do sol.`,
+  ],
+  [
+    /^Daylight at the start from (.+)\.$/,
+    (time) => `Luz do dia no início a partir de ${time}.`,
+  ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],

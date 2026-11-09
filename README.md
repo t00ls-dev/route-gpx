@@ -14,7 +14,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 
 - **Plan:** set start, destination and stops with addresses, coordinates, map clicks or your location.
 - **Edit:** move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits.
-- **Review:** distance, estimated duration and road references, in kilometers or miles, with an optional average speed.
+- **Review:** distance, estimated duration and road references, in kilometers or miles, with an optional average speed, plus sunrise, sunset and sections in the dark for a departure time.
 - **GPX:** import files up to 10 MB and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates.
 

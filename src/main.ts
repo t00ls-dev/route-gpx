@@ -1,5 +1,6 @@
 import { RoutingCache } from './routing-cache';
 import { setupWeather } from './weather-ui';
+import { renderDaylight } from './daylight-ui';
 import {
   listSavedRoutes,
   saveNamedRoute,
@@ -180,6 +181,8 @@ const weather = setupWeather(
   () => current,
   syncUrl,
 );
+// Registered after the weather handler, which stores the new departure first.
+$('departure').addEventListener('change', () => renderDaylight(state, current));
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
 function fit() {
   if (zooming) {
@@ -640,14 +643,18 @@ function renderRoute(route: Route) {
           : `${Math.floor(minutes / 60)}h ${minutes % 60} min`,
     ),
   );
+  const daylight = document.createElement('div');
+  daylight.id = 'daylight-summary';
   summary.append(
     stats,
+    daylight,
     text(
       'p',
       `${route.provider} · ${route.segments.reduce((n, s) => n + s.length, 0).toLocaleString(locale)} points`,
       'hint',
     ),
   );
+  renderDaylight(state, route);
   if (state.averageSpeedKmh) {
     const speed = speedFromKmh(
       state.averageSpeedKmh,
@@ -742,6 +749,7 @@ function changed(preserveEditor = false, forceRouting = false) {
   settings();
   line.clearLayers();
   $('summary').replaceChildren();
+  renderDaylight(state, null);
   if (state.points.some((p) => !p.coord) || dirty.size) {
     status(
       !state.points[0].coord
