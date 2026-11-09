@@ -5,8 +5,11 @@ import {
   snapSpeed,
   speedToKmh,
   speedFromKmh,
+  storedSpeedKmh,
+  rememberSpeedKmh,
+  DEFAULT_SPEED_KMH,
 } from '../src/travel-time';
-import { defaults, decodeState, encodeState } from '../src/core';
+import { defaults, decodeState, encodeState, encodeStateV1 } from '../src/core';
 it('calculates trip time in both systems, including 130 mph', () => {
   expect(travelTimeSeconds(42000, 60)).toBeCloseTo(2520);
   expect(travelTimeSeconds(160934.4, speedToKmh(60, 'imperial'))).toBeCloseTo(
@@ -26,38 +29,36 @@ it('uses rounded practical bounds for each unit system', () => {
   expect(snapSpeed(500, 'imperial')).toBe(130);
   expect(snapSpeed(speedFromKmh(200, 'imperial'), 'imperial')).toBe(125);
 });
-it('validates shared averages using the selected unit system', () => {
-  for (const units of ['metric', 'imperial'] as const) {
-    const bounds = speedInputBounds(units);
-    for (const speed of [1, bounds.max]) {
-      const s = defaults();
-      s.units = units;
-      s.averageSpeedKmh = speedToKmh(speed, units);
-      expect(decodeState(encodeState(s)).averageSpeedKmh).toBeCloseTo(
-        s.averageSpeedKmh,
-      );
-    }
-    for (const speed of [0.5, bounds.max + 1, 500, NaN, Infinity]) {
-      const s = defaults();
-      s.units = units;
-      s.averageSpeedKmh = speedToKmh(speed, units);
-      expect(() => decodeState(encodeState(s))).toThrow();
-    }
+it('remembers the average speed on the device, with a 60 km/h default', () => {
+  localStorage.clear();
+  expect(storedSpeedKmh()).toBe(DEFAULT_SPEED_KMH);
+  rememberSpeedKmh(25);
+  expect(storedSpeedKmh()).toBe(25);
+  // 130 mph is valid even though it exceeds 200 km/h.
+  rememberSpeedKmh(speedToKmh(130, 'imperial'));
+  expect(storedSpeedKmh()).toBeCloseTo(209.21472);
+  for (const invalid of ['0', '500', 'fast', '']) {
+    localStorage.setItem('average-speed', invalid);
+    expect(storedSpeedKmh()).toBe(DEFAULT_SPEED_KMH);
   }
+  localStorage.clear();
 });
-it('snaps legacy fractional speeds to the nearest slider position', () => {
+it('keeps links free of the average speed', () => {
   const s = defaults();
-  s.averageSpeedKmh = 61.5;
-  expect(decodeState(encodeState(s)).averageSpeedKmh).toBe(60);
+  s.departure = '2026-11-08T09:00:00.000Z';
+  // The former speed slot (index 5) stays 0 so later positions are unchanged.
+  expect(decodeState(encodeState(s))).toEqual(s);
 });
-it('retains points in older links with out-of-range speeds', () => {
+it('ignores any speed in older links without discarding their points', () => {
   const s = defaults();
   s.points = [
     { name: 'Start', coord: [-22.93, -43.23] },
     { name: 'End', coord: [-23.05, -43.53] },
   ];
-  s.averageSpeedKmh = 500;
-  const restored = decodeState(encodeState(s), true);
-  expect(restored.points).toEqual(s.points);
-  expect(restored.averageSpeedKmh).toBeUndefined();
+  for (const averageSpeedKmh of [20, 61.5, 500, -1, 'fast']) {
+    const legacy = encodeStateV1({ ...s, averageSpeedKmh } as typeof s);
+    const restored = decodeState(legacy);
+    expect(restored.points).toEqual(s.points);
+    expect(restored).not.toHaveProperty('averageSpeedKmh');
+  }
 });

@@ -30,7 +30,6 @@ it('keys only routing inputs, retaining order, preference and providers', () => 
         name: 'Renamed',
         units: 'imperial',
         language: 'pt',
-        averageSpeedKmh: 80,
         departure: '2026-11-08T10:00:00.000Z',
         points: state.points.map((p) => ({ ...p, name: 'Other' })),
       },

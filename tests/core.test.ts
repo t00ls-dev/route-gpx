@@ -118,7 +118,6 @@ describe('short v2 links', () => {
     const s = defaults();
     s.name = 'Observatório / Casa';
     s.language = 'pt';
-    s.averageSpeedKmh = 20;
     s.departure = '2026-11-08T09:00:00.000Z';
     s.points = [
       {
@@ -141,7 +140,6 @@ describe('short v2 links', () => {
   it('writes v2 links and roundtrips every option', () => {
     const s = sample();
     s.units = 'imperial';
-    s.averageSpeedKmh = 16.09344; // 10 mph, already on the imperial speed step
     s.prefer = false;
     s.points.splice(1, 0, { name: 'Draft', coord: null });
     const hash = encodeState(s);
@@ -153,7 +151,7 @@ describe('short v2 links', () => {
   });
   it('is much shorter than the v1 link for a typical route', () => {
     const s = sample();
-    expect(encodeStateV1(s).length).toBeGreaterThan(1000);
+    expect(encodeStateV1(s).length).toBeGreaterThan(900);
     expect(encodeState(s).length).toBeLessThan(400);
   });
   it('omits default servers and keeps custom ones', () => {

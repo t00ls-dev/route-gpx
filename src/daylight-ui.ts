@@ -4,9 +4,6 @@ import { icon } from './icons';
 import { distanceLabel } from './units';
 import { routeDaylight, sunTimes } from './daylight';
 
-/** Same constant speed as weather passage times when none is configured. */
-const DEFAULT_SPEED_KMH = 60;
-
 /**
  * Fills the daylight line in the route summary (`#daylight-summary`, created by
  * the route summary) and the details below the departure date. Text stays in
@@ -21,6 +18,8 @@ const phrase = (value: string) => {
 export function renderDaylight(
   state: State,
   route: Route | null,
+  /** The same average speed as time, arrival and weather. */
+  speedKmh: number,
   now = Date.now(),
 ): void {
   const details = $('daylight-details'),
@@ -55,12 +54,7 @@ export function renderDaylight(
   day.setHours(12, 0, 0, 0);
   const sun = sunTimes(day.getTime(), start);
   let result: ReturnType<typeof routeDaylight> | null = null;
-  if (planned)
-    result = routeDaylight(
-      route,
-      departure,
-      state.averageSpeedKmh ?? DEFAULT_SPEED_KMH,
-    );
+  if (planned) result = routeDaylight(route, departure, speedKmh);
   if (line) {
     const text = document.createElement('p');
     text.className = 'daylight-line';
