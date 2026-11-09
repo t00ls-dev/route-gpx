@@ -74,7 +74,11 @@ The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser
 
 ## Deployment
 
-GitHub Actions runs checks on pull requests and pushes to `main`, and successful builds of the current `main` commit deploy to GitHub Pages at `https://route-gpx.t00ls.dev/`. Vite uses `/` as its base path; see the [brand and hosting notes](docs/BRAND.md) before changing the hosting path.
+GitHub Actions runs checks on pull requests and pushes to `main`, and successful builds of the current `main` commit deploy to GitHub Pages at `https://route-gpx.t00ls.dev/`. Changes reach `main` only through pull requests that pass CI. Vite uses `/` as its base path; see the [brand and hosting notes](docs/BRAND.md) before changing the hosting path.
+
+## Contributing
+
+See the [contributing guide](CONTRIBUTING.md) before opening a pull request. Participation follows the [Code of Conduct](CODE_OF_CONDUCT.md), and security vulnerabilities are reported privately as described in the [security policy](SECURITY.md).
 
 ## Credits and license
 
@@ -84,4 +88,4 @@ The bundled Leaflet library uses the BSD 2-Clause license; its complete notice i
 
 Application code is licensed under [MIT](LICENSE). Data and dependencies retain their own licenses. No affiliation with the public service operators.
 
-[Report a bug or contact the maintainer](https://github.com/t00ls-dev/route-gpx/issues) · [Report a map issue](https://www.openstreetmap.org/fixthemap)
+[Report a bug or contact the maintainer](https://github.com/t00ls-dev/route-gpx/issues/new/choose) · [Report a security vulnerability privately](https://github.com/t00ls-dev/route-gpx/security/advisories/new) · [Report a map issue](https://www.openstreetmap.org/fixthemap)

@@ -1,0 +1,76 @@
+name: Bug report
+description: Report something that does not work as expected.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Privacy:** share links and GPX files contain the locations of your route. Only share routes you are comfortable making public, or reproduce the problem with an example route.
+
+        For map data errors (wrong roads, names or places), use [OpenStreetMap's Fix the map](https://www.openstreetmap.org/fixthemap). For security vulnerabilities, follow the [security policy](https://github.com/t00ls-dev/route-gpx/security/policy) instead.
+  - type: checkboxes
+    id: searched
+    attributes:
+      label: Existing issues
+      options:
+        - label: I searched the existing issues and this bug has not been reported.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Enter ... in Start
+        2. Click ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected vs. actual behavior
+      description: What did you expect to happen, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: browser-os
+    attributes:
+      label: Browser and operating system
+      placeholder: Firefox 140 on Windows 11
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Desktop
+        - Mobile
+        - Both
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Interface language
+      options:
+        - English
+        - Português
+    validations:
+      required: true
+  - type: input
+    id: share-link
+    attributes:
+      label: Share link (optional)
+      description: Only include a link to a route you are comfortable making public.
+  - type: textarea
+    id: gpx
+    attributes:
+      label: GPX file (optional)
+      description: Attach a GPX file if the problem involves import or export. It contains the route's locations, so only attach one you are comfortable making public.
