@@ -12,6 +12,7 @@ import {
   highways,
   generateGpx,
   importGpx,
+  controlIndices,
   localSections,
   filename,
   type Route,
@@ -362,6 +363,23 @@ describe('GPX 1.1', () => {
     expect(result.route.segments).toEqual(route.segments);
     expect(result.route.duration).toBeNull();
     expect(result.points[0].coord).toEqual(route.segments[0][0]);
+  });
+  it('places control points on loops and long straight sections', () => {
+    const straight: [number, number][] = Array.from({ length: 400 }, (_, i) => [
+      -22.9,
+      -43.2 + i * 0.001,
+    ]);
+    // Out-and-back spur: leaves the straight line and returns to it.
+    const spur: [number, number][] = Array.from({ length: 41 }, (_, i) => [
+      -22.9 + (20 - Math.abs(20 - i)) * 0.001,
+      -43.2 + 0.2,
+    ]);
+    const track = [...straight.slice(0, 200), ...spur, ...straight.slice(200)];
+    const picked = controlIndices(track);
+    expect(picked).toContain(220);
+    expect(picked.length).toBeLessThanOrEqual(20);
+    expect(picked).toEqual([...picked].sort((a, b) => a - b));
+    expect(controlIndices(straight).length).toBeGreaterThanOrEqual(3);
   });
   it.each([
     '<html/>',

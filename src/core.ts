@@ -371,6 +371,76 @@ export function meters(a: Coord, b: Coord): number {
     Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(lon / 2) ** 2;
   return 6371000 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
+/**
+ * Interior track indices for control points of an imported track without
+ * waypoints. Douglas–Peucker picks the vertices farthest from the line between
+ * neighbours first, so loops, out-and-back spurs and large bends get a point
+ * and a full reroute follows the original shape; long straight gaps are then
+ * split by distance.
+ */
+export function controlIndices(
+  flat: Coord[],
+  max = 20,
+  tolerance = 50,
+  maxSpacing = 10_000,
+): number[] {
+  // Short tracks (under 50 points) keep only their endpoints, as before.
+  if (flat.length < 50) return [];
+  const rad = Math.PI / 180,
+    k = Math.cos(flat[0][0] * rad) * 6371000 * rad;
+  const xy = flat.map(([lat, lon]) => [lon * k, lat * 6371000 * rad]);
+  const deviation = (p: number[], a: number[], b: number[]) => {
+    const dx = b[0] - a[0],
+      dy = b[1] - a[1],
+      len = dx * dx + dy * dy;
+    const t = len
+      ? Math.max(
+          0,
+          Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len),
+        )
+      : 0;
+    return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+  };
+  const farthest = (a: number, b: number) => {
+    let best = -1,
+      distance = 0;
+    for (let i = a + 1; i < b; i++) {
+      const d = deviation(xy[i], xy[a], xy[b]);
+      if (d > distance) [best, distance] = [i, d];
+    }
+    return { best, distance };
+  };
+  const keep = [0, flat.length - 1];
+  while (keep.length - 2 < max) {
+    let pick = { best: -1, distance: tolerance };
+    for (let n = 0; n < keep.length - 1; n++) {
+      const f = farthest(keep[n], keep[n + 1]);
+      if (f.distance > pick.distance) pick = f;
+    }
+    if (pick.best < 0) break;
+    keep.push(pick.best);
+    keep.sort((a, b) => a - b);
+  }
+  const along = [0];
+  for (let i = 1; i < flat.length; i++)
+    along.push(along[i - 1] + meters(flat[i - 1], flat[i]));
+  while (keep.length - 2 < max) {
+    let gap = 0;
+    for (let n = 1; n < keep.length - 1; n++)
+      if (
+        along[keep[n + 1]] - along[keep[n]] >
+        along[keep[gap + 1]] - along[keep[gap]]
+      )
+        gap = n;
+    const [a, b] = [keep[gap], keep[gap + 1]];
+    if (along[b] - along[a] <= maxSpacing || b - a < 2) break;
+    const middle = (along[a] + along[b]) / 2;
+    let j = a + 1;
+    while (j < b - 1 && along[j] < middle) j++;
+    keep.splice(gap + 1, 0, j);
+  }
+  return keep.slice(1, -1);
+}
 export function importGpx(xml: string): {
   route: Route;
   points: Point[];
@@ -423,19 +493,17 @@ export function importGpx(xml: string): {
     ...inner,
     { name: 'Destination', coord: flat.at(-1)! },
   ];
-  // With no waypoints, sample control points; original geometry stays intact until edited.
-  if (!inner.length) {
-    for (let i = 1; i <= Math.min(10, Math.floor(flat.length / 50)); i++) {
-      const j = Math.round(
-        (i * (flat.length - 1)) /
-          (Math.min(10, Math.floor(flat.length / 50)) + 1),
-      );
-      points.splice(points.length - 1, 0, {
-        name: `Stop ${i}`,
+  // With no waypoints, place control points where the track shape needs them;
+  // original geometry stays intact until edited.
+  if (!inner.length)
+    points.splice(
+      1,
+      0,
+      ...controlIndices(flat).map((j, i) => ({
+        name: `Stop ${i + 1}`,
         coord: flat[j],
-      });
-    }
-  }
+      })),
+    );
   return {
     route: {
       segments,

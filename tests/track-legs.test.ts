@@ -1,0 +1,100 @@
+import { describe, expect, it } from 'vitest';
+import { defaults, type Coord, type Route, type State } from '../src/core';
+import { routeKeepingLegs, splitLegs } from '../src/track-legs';
+
+const line = (n: number, lat = -22.9): Coord[] =>
+  Array.from({ length: n }, (_, i) => [lat, -43.2 + i * 0.001] as Coord);
+const imported = (segments: Coord[][]): Route => ({
+  segments,
+  steps: [],
+  distance: 1,
+  duration: null,
+  provider: 'Imported GPX',
+});
+const stateFor = (points: Coord[]): State => ({
+  ...defaults(),
+  points: points.map((coord, i) => ({ name: `P${i}`, coord })),
+});
+const router = (calls: Coord[][]) => async (s: State) => {
+  const coords = s.points.map((p) => p.coord!);
+  calls.push(coords);
+  return {
+    segments: [coords],
+    steps: [{ name: 'Road', ref: '', distance: 5, duration: 1 }],
+    distance: 5,
+    duration: 1,
+    provider: 'OSRM',
+    snapped: coords,
+  } satisfies Route;
+};
+
+describe('track legs', () => {
+  it('splits a track at its points and keeps segment gaps inside a leg', () => {
+    const a = line(4),
+      b = line(3, -23);
+    const legs = splitLegs([a, b], [a[0], a[2], b[2]])!;
+    expect(legs).toEqual([[a.slice(0, 3)], [a.slice(2), b]]);
+  });
+  it('rejects points that are not on the track or out of order', () => {
+    const t = line(10);
+    expect(splitLegs([t], [t[0], [-23.5, -43], t[9]])).toBeNull();
+    expect(splitLegs([t], [t[0], t[8], t[3], t[9]])).toBeNull();
+  });
+  it('reroutes only the legs next to a moved point', async () => {
+    const t = line(30);
+    const points = [t[0], t[10], t[20], t[29]];
+    const base = { route: imported([t]), points };
+    const moved: Coord = [-22.95, -43.19];
+    const calls: Coord[][] = [];
+    const route = (await routeKeepingLegs(
+      stateFor([t[0], moved, t[20], t[29]]),
+      base,
+      router(calls),
+    ))!;
+    expect(calls).toEqual([[t[0], moved, t[20]]]);
+    expect(route.segments).toEqual([[t[0], moved, ...t.slice(20)]]);
+    expect(route.provider).toBe('Imported GPX + OSRM');
+    expect(route.duration).toBeNull();
+    expect(route.steps).toHaveLength(1);
+    expect(route.snapped).toHaveLength(4);
+  });
+  it('keeps the exact track when nothing changed and needs no request', async () => {
+    const t = line(30);
+    const points = [t[0], t[15], t[29]];
+    const calls: Coord[][] = [];
+    const route = await routeKeepingLegs(
+      stateFor(points),
+      { route: imported([t]), points },
+      router(calls),
+    );
+    expect(calls).toEqual([]);
+    expect(route!.segments).toEqual([t]);
+  });
+  it('reuses rerouted legs on the next edit', async () => {
+    const t = line(30);
+    const points = [t[0], t[10], t[20], t[29]];
+    const moved: Coord = [-22.95, -43.19];
+    const first = (await routeKeepingLegs(
+      stateFor([t[0], moved, t[20], t[29]]),
+      { route: imported([t]), points },
+      router([]),
+    ))!;
+    const calls: Coord[][] = [];
+    const end: Coord = [-22.96, -43.17];
+    await routeKeepingLegs(
+      stateFor([t[0], moved, t[20], end]),
+      { route: first, points: [t[0], moved, t[20], t[29]] },
+      router(calls),
+    );
+    expect(calls).toEqual([[t[20], end]]);
+  });
+  it('lets the caller route everything when no leg survives', async () => {
+    const t = line(10);
+    const result = await routeKeepingLegs(
+      stateFor([t[9], t[0]]),
+      { route: imported([t]), points: [t[0], t[9]] },
+      router([]),
+    );
+    expect(result).toBeNull();
+  });
+});

@@ -195,8 +195,11 @@
           Set GPX name above the download button to name the file and track.
           Leave it empty to use the start and destination. Download GPX exports
           the complete road geometry and your stops. Import preserves the
-          original geometry until you edit a point. Shared links store points
-          and settings, then recalculate against current road data; they do not
+          original geometry. A track without waypoints gets stops where its
+          shape needs them (loops, out-and-back sections and large bends).
+          Editing a point recalculates only the sections next to it; the rest of
+          the imported track stays exact. Shared links store points and
+          settings, then recalculate against current road data; they do not
           embed an imported track.
         </p>
         <p>
@@ -587,9 +590,12 @@ npm run test:browser -- --shard=2/2</code></pre>
           Defina Nome do GPX acima do botão de download para nomear o arquivo e
           o trajeto. Se ficar vazio, usa origem e destino. O botão “Baixar GPX”
           exporta o trajeto completo e suas paradas. Importar preserva a
-          geometria original até você editar um ponto. Links compartilhados
-          guardam pontos e opções e recalculam com os dados atuais; não incluem
-          a geometria original de um arquivo importado.
+          geometria original. Um trajeto sem paradas ganha paradas onde o
+          formato precisa delas (laços, idas e voltas e curvas grandes). Editar
+          um ponto recalcula só os trechos vizinhos; o resto do trajeto
+          importado continua exato. Links compartilhados guardam pontos e opções
+          e recalculam com os dados atuais; não incluem a geometria original de
+          um arquivo importado.
         </p>
         <p>
           Ida e volta adiciona o retorno ao itinerário. Em vias de pistas

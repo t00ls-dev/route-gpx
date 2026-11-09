@@ -54,6 +54,7 @@ import {
 } from './core';
 import { calculate, searchAddress, defaultPhotonUrl } from './services';
 import { simplifyTrack } from './simplify';
+import { isImportedRoute, routeKeepingLegs } from './track-legs';
 import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { addressAutocomplete } from './autocomplete';
@@ -127,6 +128,8 @@ let drafts = new WeakMap<Point, string>();
 const dirty = new Set<Point>();
 const lookupVersions = new WeakMap<Point, number>();
 const routingCache = new RoutingCache();
+/** The last displayed imported track and the points it was shown for. */
+let trackBase: { route: Route; points: Coord[] } | null = null;
 let savedEntries: SavedRoute[] = [];
 let libraryRevision = 0;
 let savingRoute = false;
@@ -587,6 +590,10 @@ map.on('zoomend', () => {
 });
 function renderRoute(route: Route) {
   undoHistory.attach(route);
+  trackBase =
+    isImportedRoute(route) && state.points.every((p) => p.coord)
+      ? { route, points: state.points.map((p) => p.coord!) }
+      : null;
   const locale = state.language === 'pt' ? 'pt-BR' : 'en';
   const duration = state.averageSpeedKmh
     ? travelTimeSeconds(route.distance, state.averageSpeedKmh)
@@ -713,18 +720,30 @@ function changed(preserveEditor = false, forceRouting = false) {
   status('Updating…');
   const version = revision;
   const snapshot = structuredClone(state);
+  const base = trackBase;
   timer = setTimeout(() => {
     status('Calculating…');
     $<HTMLButtonElement>('calculate').disabled = true;
-    const cached = forceRouting ? undefined : routingCache.get(snapshot);
-    void (
-      cached
+    const isCurrent = () => version === revision;
+    const route = (s: State) => {
+      const cached = forceRouting ? undefined : routingCache.get(s);
+      return cached
         ? Promise.resolve(cached)
-        : calculate(snapshot, () => version === revision)
+        : calculate(s, isCurrent).then((r) => {
+            if (isCurrent()) routingCache.set(s, r);
+            return r;
+          });
+    };
+    // Imported tracks keep every unchanged leg; only edited legs are rerouted.
+    void (
+      base
+        ? routeKeepingLegs(snapshot, base, route).then(
+            (r) => r ?? route(snapshot),
+          )
+        : route(snapshot)
     )
       .then((route) => {
         if (version !== revision) return;
-        if (!cached) routingCache.set(snapshot, route);
         current = route;
         renderRoute(route);
         status('Route ready.');
@@ -867,6 +886,7 @@ $('save-settings').onclick = () => {
     );
     const photon = serverUrl($<HTMLInputElement>('photon').value.trim());
     weather.applyServer(); // Validates its own URL before changing anything.
+    const reroute = servers.some(([key, url]) => state[key] !== url);
     for (const [key, url] of servers) state[key] = url;
     photonUrl = photon;
     try {
@@ -875,7 +895,13 @@ $('save-settings').onclick = () => {
       /* Optional preference. */
     }
     state.name = $<HTMLInputElement>('route-name').value.trim();
-    changed();
+    // Only a routing server change needs a new route; names and search servers do not.
+    if (reroute) changed();
+    else {
+      settings();
+      syncUrl();
+      status('Settings applied.');
+    }
   } catch (e) {
     status((e as Error).message, true);
   }
@@ -962,7 +988,7 @@ $<HTMLInputElement>('import').onchange = () => {
       settings();
       renderRoute(current);
       fit();
-      status('GPX imported. Edits recalculate the route.');
+      status('GPX imported. Edits recalculate only the changed sections.');
     })
     .catch((e) => status((e as Error).message, true))
     .finally(() => {
