@@ -83,7 +83,7 @@ See the [contributing guide](CONTRIBUTING.md) before opening a pull request. Par
 
 Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), with passage times and risk summaries calculated here. Radar by [RainViewer](https://www.rainviewer.com/), personal and educational use. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
-The bundled Leaflet library uses the BSD 2-Clause license; its complete notice is included in [third-party notices](public/THIRD_PARTY_NOTICES.txt) and copied into the production build.
+The bundled Leaflet library uses the BSD 2-Clause license and [fflate](https://github.com/101arrowz/fflate) (route-link compression) uses the MIT license; their complete notices are included in [third-party notices](public/THIRD_PARTY_NOTICES.txt) and copied into the production build.
 
 Application code is licensed under [MIT](LICENSE). Data and dependencies retain their own licenses. No affiliation with the public service operators.
 

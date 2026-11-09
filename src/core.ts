@@ -5,6 +5,7 @@ import {
   speedFromKmh,
   snapSpeed,
 } from './travel-time';
+import { deflateSync, inflateSync, strFromU8, strToU8 } from 'fflate';
 export type Coord = [number, number]; // latitude, longitude
 export interface Point {
   name: string;
@@ -90,24 +91,115 @@ export function serverUrl(text: string): string {
     throw new Error('Use HTTPS for a server accessed from this site.');
   return u.href.replace(/\/$/, '');
 }
-export function encodeState(state: State): string {
-  const bytes = new TextEncoder().encode(JSON.stringify(state));
-  return (
-    '#v1=' +
-    btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''))
-      .replaceAll('+', '-')
-      .replaceAll('/', '_')
-      .replace(/=+$/, '')
+const toBase64Url = (bytes: Uint8Array) =>
+  btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(''))
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replace(/=+$/, '');
+const fromBase64Url = (text: string) =>
+  Uint8Array.from(atob(text.replaceAll('-', '+').replaceAll('_', '/')), (c) =>
+    c.charCodeAt(0),
   );
+const SERVER_KEYS = ['osrm', 'valhalla', 'nominatim'] as const;
+const MAX_V1_LINK = 60000;
+const MAX_V2_LINK = 8000;
+const MAX_V2_JSON_BYTES = 256 * 1024;
+const roundCoordinate = (n: number) => Math.round(n * 1e6) / 1e6;
+const INVALID_LINK = 'This route link is invalid or too large.';
+/** Legacy `#v1=` writer: base64url JSON of the complete State. Links in this format stay readable. */
+export function encodeStateV1(state: State): string {
+  return '#v1=' + toBase64Url(new TextEncoder().encode(JSON.stringify(state)));
+}
+/**
+ * `#v2=` link: base64url raw DEFLATE of a positional JSON array
+ * `[points, prefer, name, units, language, speed, departure, servers]`.
+ * Points are `[name, lat, lon]` (6 decimals) or `[name]`; absent options are 0
+ * and trailing ones are dropped; servers are omitted when all are defaults and
+ * otherwise use "" for each default. Decoding reuses `validateState`.
+ */
+export function encodeState(state: State): string {
+  const initial = defaults();
+  const servers = SERVER_KEYS.map((key) =>
+    state[key] === initial[key] ? '' : state[key],
+  );
+  const payload: unknown[] = [
+    state.points.map((p) =>
+      p.coord
+        ? [p.name, roundCoordinate(p.coord[0]), roundCoordinate(p.coord[1])]
+        : [p.name],
+    ),
+    state.prefer === true ? 1 : state.prefer === false ? 0 : state.prefer,
+    state.name,
+    state.units === 'imperial'
+      ? 'i'
+      : state.units === 'metric'
+        ? 'm'
+        : (state.units ?? 0),
+    state.language ?? 0,
+    state.averageSpeedKmh ?? 0,
+    state.departure ?? 0,
+    servers.some(Boolean) ? servers : 0,
+  ];
+  while (payload.at(-1) === 0) payload.pop();
+  return (
+    '#v2=' +
+    toBase64Url(deflateSync(strToU8(JSON.stringify(payload)), { level: 9 }))
+  );
+}
+/** Maps a `#v2=` payload back to the State shape; anything unexpected is left for `validateState` to reject. */
+function decodeV2(text: string): unknown {
+  // fflate truncates to the output buffer, so one spare byte detects oversized payloads.
+  const out = new Uint8Array(MAX_V2_JSON_BYTES + 1);
+  const bytes = inflateSync(fromBase64Url(text), { out });
+  if (bytes.length > MAX_V2_JSON_BYTES) throw new Error(INVALID_LINK);
+  const x: unknown = JSON.parse(strFromU8(bytes));
+  if (!Array.isArray(x) || !Array.isArray(x[0])) throw new Error(INVALID_LINK);
+  const [points, prefer, name, units, language, speed, departure, servers] =
+    x as unknown[];
+  if (servers !== undefined && servers !== 0 && !Array.isArray(servers))
+    throw new Error(INVALID_LINK);
+  const optional = (value: unknown) =>
+    value === 0 || value === undefined ? undefined : value;
+  const initial = defaults();
+  const server = (index: number) =>
+    Array.isArray(servers) && servers[index] !== ''
+      ? servers[index]
+      : initial[SERVER_KEYS[index]];
+  return {
+    version: 1,
+    points: (points as unknown[]).map((p) =>
+      Array.isArray(p)
+        ? { name: p[0], coord: p.length === 1 ? null : p.slice(1) }
+        : p,
+    ),
+    prefer: prefer === 1 ? true : prefer === 0 ? false : prefer,
+    name,
+    units:
+      units === 'm' ? 'metric' : units === 'i' ? 'imperial' : optional(units),
+    language: optional(language),
+    averageSpeedKmh: optional(speed),
+    departure: optional(departure),
+    osrm: server(0),
+    valhalla: server(1),
+    nominatim: server(2),
+  };
 }
 export function decodeState(hash: string, resetInvalidSpeed = false): State {
   if (!hash || hash === '#') return defaults();
-  if (!hash.startsWith('#v1=') || hash.length > 60000)
-    throw new Error('This route link is invalid or too large.');
-  const raw = atob(hash.slice(4).replaceAll('-', '+').replaceAll('_', '/'));
-  const x = JSON.parse(
-    new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0))),
-  ) as State;
+  if (hash.startsWith('#v2=') && hash.length <= MAX_V2_LINK)
+    return validateState(decodeV2(hash.slice(4)), resetInvalidSpeed);
+  if (!hash.startsWith('#v1=') || hash.length > MAX_V1_LINK)
+    throw new Error(INVALID_LINK);
+  return validateState(
+    JSON.parse(new TextDecoder().decode(fromBase64Url(hash.slice(4)))),
+    resetInvalidSpeed,
+  );
+}
+/** Validates untrusted state from links, the JSON editor or backups. */
+export function validateState(raw: unknown, resetInvalidSpeed = false): State {
+  if (!raw || typeof raw !== 'object')
+    throw new Error('This route link contains invalid points or options.');
+  const x = { ...raw } as State;
   if (
     x.averageSpeedKmh !== undefined &&
     !isValidAverageSpeedKmh(x.averageSpeedKmh, x.units)

@@ -1,5 +1,5 @@
 import { holdMap } from './map-helpers';
-import { defaults, encodeState } from '../src/core';
+import { defaults, encodeState, encodeStateV1 } from '../src/core';
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
 const base = 'http://127.0.0.1:5173/';
@@ -260,6 +260,26 @@ test('an older route link with a 500 km/h average retains its points', async ({
   await expect(page.locator('#use-average-speed')).not.toBeChecked();
   await expect(page.locator('#average-speed')).toBeDisabled();
   await expect(page.locator('#summary')).toContainText('49 min');
+});
+
+test('a v1 route link still opens and is rewritten as a short v2 link', async ({
+  page,
+}) => {
+  await setup(page);
+  const state = defaults();
+  state.name = 'Legacy link';
+  state.points = [
+    { name: 'Start', coord: [-22.930929, -43.238286] },
+    { name: 'Destination', coord: [-23.05016, -43.53524] },
+  ];
+  const legacy = encodeStateV1(state);
+  await page.goto(base + legacy);
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('#location-0')).toHaveValue(start);
+  await expect(page.locator('#location-1')).toHaveValue(end);
+  await expect(page.locator('#route-name')).toHaveValue('Legacy link');
+  await expect(page).toHaveURL(/#v2=/);
+  expect(new URL(page.url()).hash.length).toBeLessThan(legacy.length);
 });
 
 test('GPX name is visible and names the downloaded file, metadata and track', async ({
