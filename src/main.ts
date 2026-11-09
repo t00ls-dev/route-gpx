@@ -655,7 +655,13 @@ function renderRoute(route: Route) {
     const local = localSections(route.steps);
     if (local.length)
       summary.append(
-        text('p', `${local.length} road sections to review`, 'warning'),
+        text(
+          'p',
+          local.length === 1
+            ? '1 road section to review'
+            : `${local.length} road sections to review`,
+          'warning',
+        ),
       );
   }
   const roads = document.createElement('details');
@@ -996,7 +1002,8 @@ $<HTMLInputElement>('import').onchange = () => {
       dirty.clear();
       drafts = new WeakMap();
       state.points = imported.points;
-      state.name = imported.name;
+      // A GPX without a name gets one in the current interface language.
+      state.name = imported.name || t('Imported route');
       selected = 0;
       weather.invalidate();
       current = imported.route;
@@ -1260,7 +1267,11 @@ $<HTMLInputElement>('restore-routes').onchange = () => {
     .text()
     .then((data) => importRouteBackup(parseRouteBackup(data)))
     .then((count) => {
-      libraryMessage(`Imported ${count} routes. Existing names were kept.`);
+      libraryMessage(
+        count === 1
+          ? 'Imported 1 route. Existing names were kept.'
+          : `Imported ${count} routes. Existing names were kept.`,
+      );
       return refreshSavedRoutes();
     })
     .catch(() => libraryMessage('Could not import this route backup.', true))

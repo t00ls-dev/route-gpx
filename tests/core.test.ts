@@ -420,6 +420,8 @@ describe('GPX 1.1', () => {
     result.points.forEach((p, i) =>
       expect(p.coord).toEqual(coords[result.indices![i]]),
     );
+    // The interface supplies a localized default for unnamed files.
+    expect(result.name).toBe('');
   });
   it.each([
     '<html/>',

@@ -343,6 +343,22 @@ const pt: Record<string, string> = {
     'Use uma URL HTTP(S) de servidor sem credenciais, parâmetros ou hash.',
   'Use HTTPS for a server accessed from this site.':
     'Use HTTPS para um servidor acessado por este site.',
+  'This route link is invalid or too large.':
+    'Este link de rota é inválido ou grande demais.',
+  'This route link contains invalid points or options.':
+    'Este link de rota contém pontos ou opções inválidos.',
+  'No valid route geometry to export.':
+    'Não há geometria de rota válida para exportar.',
+  'Name your route before saving.': 'Dê um nome à rota antes de salvar.',
+  'Valhalla could not find a route.': 'O Valhalla não encontrou uma rota.',
+  'The search server returned an invalid response.':
+    'O servidor de busca retornou uma resposta inválida.',
+  'Region service requires HTTPS.': 'O serviço de região exige HTTPS.',
+  'Distance and average speed must be valid positive numbers.':
+    'A distância e a velocidade média devem ser números positivos válidos.',
+  'Imported route': 'Rota importada',
+  'Imported GPX': 'GPX importado',
+  'Valhalla (fallback)': 'Valhalla (alternativo)',
   Start: 'Início',
   Destination: 'Destino',
   Via: 'Passagem',
@@ -361,6 +377,10 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   [/^Download saved route: (.*?)$/, (n) => `Baixar rota salva: ${n}`],
   [/^Delete saved route: (.*?)$/, (n) => `Excluir rota salva: ${n}`],
   [
+    /^Imported 1 route\. Existing names were kept\.$/,
+    () => '1 rota importada. Os nomes existentes foram mantidos.',
+  ],
+  [
     /^Imported (\d+) routes\. Existing names were kept\.$/,
     (n) => `${n} rotas importadas. Os nomes existentes foram mantidos.`,
   ],
@@ -378,7 +398,16 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],
 
-  [/^(.*?) · (.*?) points$/, (p, n) => `${p} · ${n} pontos`],
+  [
+    /^(.*?) · (.*?) points$/,
+    // Providers combine as "Imported GPX + OSRM"; names without a key stay as is.
+    (p, n) =>
+      `${p
+        .split(' + ')
+        .map((part) => pt[part] ?? part)
+        .join(' + ')} · ${n} pontos`,
+  ],
+  [/^1 road section to review$/, () => '1 trecho para conferir'],
   [/^(\d+) road sections to review$/, (n) => `${n} trechos para conferir`],
   [/^Roads \((\d+)\)$/, (n) => `Vias (${n})`],
 
