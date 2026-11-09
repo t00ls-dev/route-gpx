@@ -68,7 +68,7 @@ Do not add project UI screenshots to the repository or the README. Use the proje
 
 Never use emoji characters as authored interface icons or decoration. Use the shared inline SVG system in `src/icons.ts`, with a 24-unit viewBox, 2-unit strokes, rounded ends and `currentColor`. Apply it to weather cards/markers, alerts and controls. Decorative SVGs must be hidden from assistive technology; retain meaningful text and accessible names. Preserve user-provided route names and required copyright attribution as text.
 
-Use at least 16px text in editable touch controls to avoid iOS focus zoom; preserve pinch zoom. Keep the compact mobile layout, keyboard-accessible controls and high-contrast light theme, including when the OS prefers dark mode. Use the separate help page for detailed instructions.
+Use at least 16px text in editable touch controls to avoid iOS focus zoom; preserve pinch zoom. Keep the compact mobile layout, keyboard-accessible controls and high-contrast light theme, including when the OS prefers dark mode. Use the separate help page for detailed usage instructions; it is for site users only, so keep development, build, test and deployment information in the README and repository documentation.
 
 Keep English source keys and Portuguese translations together in `src/i18n.ts`; check both language directions. Keep redistributed dependency notices in `public/THIRD_PARTY_NOTICES.txt` and link them from the README and help. Adding or changing an external service requires updating the README, help, privacy disclosures and required source/license credits.
 
@@ -88,7 +88,7 @@ Edit SVG brand sources, then run `node scripts/generate-brand.mjs` to regenerate
 
 ## Local validation
 
-Use Node.js 22 LTS 22.23.4 or newer, Node 24.15 or newer in the 24 line, or Node 26+ (CI uses Node 22.23.4), and `npm ci` for a reproducible install. The 24.15 minimum comes from jsdom 31 (unit-test environment), which requires Node `^22.22.2 || ^24.15.0 || >=26.0.0`; keep the `engines` field in `package.json` within the ranges required by the development dependencies, and update the README and help when it changes. Keep `@types/node` on the 22 line so type checks match the minimum supported runtime (Dependabot ignores its major updates). `npm run dev` serves the application at `http://localhost:5173/` by default; the help page is a second Vite entry.
+Use Node.js 22 LTS 22.23.4 or newer, Node 24.15 or newer in the 24 line, or Node 26+ (CI uses Node 22.23.4), and `npm ci` for a reproducible install. The 24.15 minimum comes from jsdom 31 (unit-test environment), which requires Node `^22.22.2 || ^24.15.0 || >=26.0.0`; keep the `engines` field in `package.json` within the ranges required by the development dependencies, and update the README when it changes. Keep `@types/node` on the 22 line so type checks match the minimum supported runtime (Dependabot ignores its major updates). `npm run dev` serves the application at `http://localhost:5173/` by default; the help page is a second Vite entry.
 
 For application changes, run the CI checks:
 
