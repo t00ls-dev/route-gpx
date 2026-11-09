@@ -1686,6 +1686,28 @@ footer a {
   font-size: 16px;
 }
 
+.daylight-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.daylight-line .button-icon {
+  flex: 0 0 auto;
+}
+.daylight-details {
+  margin: 8px 0;
+  font-size: 13px;
+}
+.daylight-heading {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.daylight-details ul {
+  margin: 0;
+  padding-left: 18px;
+}
 #weather-status:empty {
   display: none;
 }

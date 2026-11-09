@@ -141,6 +141,51 @@ for (const mobile of [false, true])
     );
     expect(calls).toBe(1);
   });
+test('daylight shows today without a departure, dark sections for an evening departure and translates', async ({
+  page,
+}) => {
+  await setup(page, true);
+  let routes = 0;
+  page.on('request', (r) => {
+    if (r.url().includes('/route/v1/driving/')) routes++;
+  });
+  const line = page.locator('#daylight-summary .daylight-line');
+  await expect(line).toContainText(
+    /Today at the start: Sunrise \d\d:\d\d [AP]M · Sunset \d\d:\d\d [AP]M/,
+  );
+  await expect(page.locator('#daylight-summary')).toContainText(
+    'Choose a departure date to see dark sections.',
+  );
+  await expect(page.locator('#daylight-details')).toBeHidden();
+  // About 1 h 51 min at 60 km/h from 16:30 UTC; the equator gets dark near 18:06.
+  await date(page, '2026-11-08T16:30');
+  await expect(line).toContainText(
+    /Sunrise \d\d:\d\d [AP]M · Sunset \d\d:\d\d [AP]M · [\d.]+ km in the dark/,
+  );
+  const details = page.locator('#daylight-details');
+  await expect(details).toBeVisible();
+  await expect(details).toContainText(
+    /Dark from [\d.]+ km \(.+\) to 111\.2 km/,
+  );
+  await expect(details).toContainText(/Leave by .+ to arrive before sunset\./);
+  await expect(details).toContainText(
+    /Daylight at the start from \d\d:\d\d [AP]M\./,
+  );
+  await date(page, '2026-11-08T10:00');
+  await expect(line).toContainText('None in the dark');
+  await expect(details).not.toContainText('Dark from');
+  await page.locator('#language').selectOption('pt');
+  await expect(line).toContainText(
+    /Nascer \d\d:\d\d · Pôr \d\d:\d\d · Nada no escuro/,
+  );
+  await expect(details).toContainText('Luz do dia');
+  await expect(details).toContainText(
+    /Saia até .+ para chegar antes do pôr do sol\./,
+  );
+  await page.locator('#language').selectOption('en');
+  await expect(line).toContainText('None in the dark');
+  expect(routes).toBe(0);
+});
 test('no date or invalid dates never request weather', async ({ page }) => {
   await setup(page);
   let calls = 0;

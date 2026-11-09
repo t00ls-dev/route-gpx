@@ -19,6 +19,7 @@ Route creation uses addresses, coordinates and map points. The route-description
 | `src/services.ts`                                                                   | OSRM and Valhalla adapters, geometry conversion, serialized request queues and Nominatim search/cache.                                       |
 | `src/saved-routes.ts`                                                               | IndexedDB library, normalized route-name identity, backup serialization, validation and import.                                              |
 | `src/weather.ts`, `src/weather-risk.ts`, `src/weather-wind.ts`, `src/weather-ui.ts` | Weather sampling, passage times, date bounds, risk thresholds and map/card interactions.                                                     |
+| `src/daylight.ts`, `src/daylight-ui.ts`                                             | Local sun position, sunrise/sunset/civil twilight and route daylight summary.                                                                |
 | `src/weather-cache.ts`, `src/routing-cache.ts`                                      | Bounded page-memory caches, with no persistent location storage.                                                                             |
 | `src/history.ts`                                                                    | In-memory undo snapshots.                                                                                                                    |
 | `src/units.ts`, `src/travel-time.ts`                                                | Display units, speed bounds/conversion and optional duration estimates.                                                                      |
@@ -59,7 +60,7 @@ Weather is optional: no departure date means no Open-Meteo request. A valid date
 
 Keep route caching bounded to 20 results for 15 minutes; Calculate route bypasses it. Weather caches are per rounded location and interval, at most 200 locations/100,000 hourly entries for ten minutes. Cache hits must not extend freshness. All these caches stay in page memory. Map wind arrows show the direction wind blows toward; colors indicate head/tail/crosswind relative to the route; calm or unknown is neutral. Mean-wind strength remains separate from gust risk thresholds.
 
-Weather belongs to the route: it is shown only for the departure-based samples along it. Do not add map-wide weather overlays such as rain radar, cloud or forecast layers (rain radar was removed). Keep weather attribution in the existing map credits dialog. No service worker or installation flow.
+Daylight is calculated locally from the route and the same passage times as weather (configured or default speed, no stops): no requests and no stored data. Weather belongs to the route: it is shown only for the departure-based samples along it. Do not add map-wide weather overlays such as rain radar, cloud or forecast layers (rain radar was removed). Keep weather attribution in the existing map credits dialog. No service worker or installation flow.
 
 ## Interface, text and assets
 
