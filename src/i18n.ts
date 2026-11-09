@@ -204,11 +204,7 @@ const pt: Record<string, string> = {
     'Não foi possível importar este backup de rotas.',
 
   'GPX name': 'Nome do GPX',
-  Enable: 'Ativar',
-  'Average speed must be between 1 and 200 km/h or 1 and 130 mph.':
-    'A velocidade média deve ficar entre 1 e 200 km/h ou 1 e 130 mph.',
   'Average speed': 'Velocidade média',
-  'Use router estimate': 'Usar estimativa do roteador',
   'Distance units': 'Unidades de distância',
   'Calculate route': 'Calcular rota',
   '↶ Undo': '↶ Desfazer',
@@ -335,9 +331,6 @@ const pt: Record<string, string> = {
   Distance: 'Distância',
   Time: 'Tempo',
   Arrival: 'Chegada',
-  'Router estimate · no stops': 'Estimativa do roteador · sem paradas',
-  'Set an average speed to estimate the time.':
-    'Defina uma velocidade média para estimar o tempo.',
   'Sun up all day': 'Sol o dia todo',
   'Sun down all day': 'Sem sol o dia todo',
   'None in the dark': 'Nada no escuro',

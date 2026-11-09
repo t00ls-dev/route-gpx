@@ -114,7 +114,7 @@ export function parseRouteBackup(text: string): SavedRoute[] {
       row.name.length > 160
     )
       throw new Error('Invalid saved route name.');
-    const state = validateState(row.state, true);
+    const state = validateState(row.state);
     if (state.points.some((p) => !p.coord))
       throw new Error('Invalid saved route points.');
     const route = row.route;

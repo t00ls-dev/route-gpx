@@ -1,10 +1,3 @@
-import {
-  isValidAverageSpeedKmh,
-  AVERAGE_SPEED_ERROR,
-  speedToKmh,
-  speedFromKmh,
-  snapSpeed,
-} from './travel-time';
 import { deflateSync, inflateSync, strFromU8, strToU8 } from 'fflate';
 export type Coord = [number, number]; // latitude, longitude
 export interface Point {
@@ -13,7 +6,6 @@ export interface Point {
 }
 export interface State {
   departure?: string;
-  averageSpeedKmh?: number;
   units?: 'metric' | 'imperial';
   language?: 'en' | 'pt';
   version: 1;
@@ -166,7 +158,7 @@ export function encodeState(state: State): string {
         ? 'm'
         : (state.units ?? 0),
     state.language ?? 0,
-    state.averageSpeedKmh ?? 0,
+    0, // Former average speed slot, kept so positions stay compatible.
     state.departure ?? 0,
     servers.some(Boolean) ? servers : 0,
   ];
@@ -184,7 +176,8 @@ function decodeV2(text: string): unknown {
   if (bytes.length > MAX_V2_JSON_BYTES) throw new Error(INVALID_LINK);
   const x: unknown = JSON.parse(strFromU8(bytes));
   if (!Array.isArray(x) || !Array.isArray(x[0])) throw new Error(INVALID_LINK);
-  const [points, prefer, name, units, language, speed, departure, servers] =
+  // Index 5 held the average speed, now a device preference that links ignore.
+  const [points, prefer, name, units, language, , departure, servers] =
     x as unknown[];
   if (servers !== undefined && servers !== 0 && !Array.isArray(servers))
     throw new Error(INVALID_LINK);
@@ -207,7 +200,6 @@ function decodeV2(text: string): unknown {
     units:
       units === 'm' ? 'metric' : units === 'i' ? 'imperial' : optional(units),
     language: optional(language),
-    averageSpeedKmh: optional(speed),
     departure: optional(departure),
     osrm: server(0),
     valhalla: server(1),
@@ -222,29 +214,24 @@ export function linkServerOverrides(state: State): ServerUrls | null {
     ? { osrm: state.osrm, valhalla: state.valhalla, nominatim: state.nominatim }
     : null;
 }
-export function decodeState(hash: string, resetInvalidSpeed = false): State {
+export function decodeState(hash: string): State {
   if (!hash || hash === '#') return defaults();
   if (hash.startsWith('#v2=') && hash.length <= MAX_V2_LINK)
-    return validateState(decodeV2(hash.slice(4)), resetInvalidSpeed);
+    return validateState(decodeV2(hash.slice(4)));
   if (!hash.startsWith('#v1=') || hash.length > MAX_V1_LINK)
     throw new Error(INVALID_LINK);
   return validateState(
     JSON.parse(new TextDecoder().decode(fromBase64Url(hash.slice(4)))),
-    resetInvalidSpeed,
   );
 }
-/** Validates untrusted state from links, the JSON editor or backups. */
-export function validateState(raw: unknown, resetInvalidSpeed = false): State {
+/**
+ * Validates untrusted state from links, the JSON editor or backups. A legacy
+ * `averageSpeedKmh` (any value) is ignored: the speed is a device preference.
+ */
+export function validateState(raw: unknown): State {
   if (!raw || typeof raw !== 'object')
     throw new Error('This route link contains invalid points or options.');
   const x = { ...raw } as State;
-  if (
-    x.averageSpeedKmh !== undefined &&
-    !isValidAverageSpeedKmh(x.averageSpeedKmh, x.units)
-  ) {
-    if (resetInvalidSpeed) delete x.averageSpeedKmh;
-    else throw new Error(AVERAGE_SPEED_ERROR);
-  }
   if (
     (x.units !== undefined && !['metric', 'imperial'].includes(x.units)) ||
     (x.language !== undefined && !['en', 'pt'].includes(x.language)) ||
@@ -268,11 +255,6 @@ export function validateState(raw: unknown, resetInvalidSpeed = false): State {
     x.name.length > 160
   )
     throw new Error('This route link contains invalid points or options.');
-  if (x.averageSpeedKmh !== undefined)
-    x.averageSpeedKmh = speedToKmh(
-      snapSpeed(speedFromKmh(x.averageSpeedKmh, x.units), x.units),
-      x.units,
-    );
   return {
     version: 1,
     points: x.points.map((p) => ({ name: p.name, coord: p.coord })),
@@ -280,9 +262,6 @@ export function validateState(raw: unknown, resetInvalidSpeed = false): State {
     name: x.name,
     ...(x.units !== undefined ? { units: x.units } : {}),
     ...(x.language !== undefined ? { language: x.language } : {}),
-    ...(x.averageSpeedKmh !== undefined
-      ? { averageSpeedKmh: x.averageSpeedKmh }
-      : {}),
     ...(x.departure !== undefined ? { departure: x.departure } : {}),
     osrm: serverUrl(x.osrm),
     valhalla: serverUrl(x.valhalla),

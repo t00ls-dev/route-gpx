@@ -73,9 +73,11 @@ for (const mobile of [false, true]) {
         'Distance',
         'Time',
       ]);
+      // Our own estimate from the default 60 km/h, never the router's 49 min.
       await expect(page.locator('#summary')).toContainText(
-        'Router estimate · no stops',
+        'At 60 km/h · no stops',
       );
+      await expect(page.locator('#summary')).toContainText('42 min');
       // Street-by-street detail sits below the summary card, not inside it.
       await expect(
         page.locator('#summary .road-list, #summary .chips'),
@@ -396,19 +398,19 @@ test('distance units change without rerouting or changing GPX geometry and can b
   await expect(page.locator('#summary')).toContainText('42 km');
 });
 
-test('average-speed slider supports keyboard steps, units and router reset', async ({
+test('average speed: keyboard steps, units, kept on the device and never taken from links', async ({
   page,
 }) => {
   await setup(page);
   await fillPair(page);
-  await expect(page.locator('#summary')).toContainText('49 min');
+  // 42 km at the default 60 km/h; the router's 49 min is not used.
+  await expect(page.locator('#summary')).toContainText('42 min');
   await page.locator('.speed-options').evaluate((el) => {
     (el as HTMLDetailsElement).open = true;
   });
-  await expect(page.locator('#average-speed')).toBeDisabled();
-  await page.locator('#use-average-speed').check();
+  await expect(page.locator('#average-speed')).toBeEnabled();
+  await expect(page.locator('#use-average-speed, #reset-speed')).toHaveCount(0);
   await expect(page.locator('#average-speed-value')).toHaveText('60');
-  await expect(page.locator('#summary')).toContainText('42 min');
   await page.locator('#average-speed').focus();
   await page.locator('#average-speed').press('Home');
   await expect(page.locator('#average-speed-value')).toHaveText('1');
@@ -428,31 +430,38 @@ test('average-speed slider supports keyboard steps, units and router reset', asy
   await page.locator('#average-speed').press('End');
   await expect(page.locator('#average-speed-value')).toHaveText('130');
   await expect(page.locator('#summary')).toContainText('12 min');
-  await page.locator('#average-speed').press('Home');
-  await expect(page.locator('#average-speed-value')).toHaveText('1');
-  await page.locator('#reset-speed').click();
-  await expect(page.locator('#average-speed')).toBeDisabled();
-  await expect(page.locator('#use-average-speed')).not.toBeChecked();
-  await expect(page.locator('#summary')).toContainText('49 min');
+  await page.locator('#units').selectOption('metric');
+  await page.locator('#average-speed').fill('25');
+  await expect(page.locator('#summary')).toContainText('At 25 km/h · no stops');
+  // Kept on this device across reloads, not in the link.
+  await page.reload();
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('#average-speed-value')).toHaveText('25');
+  await expect(page.locator('#summary')).toContainText('At 25 km/h · no stops');
 });
 
-test('an older route link with a 500 km/h average retains its points', async ({
+test('an older route link with a speed opens with its points and the device speed', async ({
   page,
 }) => {
   await setup(page);
   const state = defaults();
-  state.averageSpeedKmh = 500;
   state.points = [
     { name: 'Start', coord: [-22.930929, -43.238286] },
     { name: 'Destination', coord: [-23.05016, -43.53524] },
   ];
-  await page.goto(base + encodeState(state));
-  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
-  await expect(page.locator('#location-0')).toHaveValue(start);
-  await expect(page.locator('#location-1')).toHaveValue(end);
-  await expect(page.locator('#use-average-speed')).not.toBeChecked();
-  await expect(page.locator('#average-speed')).toBeDisabled();
-  await expect(page.locator('#summary')).toContainText('49 min');
+  // Legacy links carried averageSpeedKmh, including out-of-range values.
+  for (const averageSpeedKmh of [500, 20]) {
+    await page.goto(
+      base + encodeStateV1({ ...state, averageSpeedKmh } as typeof state),
+    );
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    await expect(page.locator('#location-0')).toHaveValue(start);
+    await expect(page.locator('#location-1')).toHaveValue(end);
+    await expect(page.locator('#summary')).toContainText(
+      'At 60 km/h · no stops',
+    );
+    await expect(page.locator('#summary')).toContainText('42 min');
+  }
 });
 
 test('an invalid settings URL leaves every server unchanged', async ({

@@ -40,11 +40,13 @@ async function setup(
       },
     }),
   );
-  const state = {
-    ...defaults(),
-    language: 'en' as const,
-    averageSpeedKmh: speed === null ? undefined : speed,
-  };
+  // The average speed is a device preference; null keeps the 60 km/h default.
+  if (speed !== null)
+    await page.addInitScript(
+      (value) => localStorage.setItem('average-speed', String(value)),
+      speed,
+    );
+  const state = { ...defaults(), language: 'en' as const };
   if (routed)
     state.points = [
       { name: longNames ? 'A'.repeat(240) : 'Start', coord: [0, 0] },
@@ -260,9 +262,9 @@ test('selected speeds recalculate weather locally and support slow/fast travel a
   page,
 }) => {
   await setup(page, false, null);
-  // An imported GPX has no router time; weather still uses 60 km/h.
+  // Nothing stored yet: the 60 km/h default, also for an imported GPX.
   await expect(page.locator('#summary .stats-basis')).toHaveText(
-    'Set an average speed to estimate the time.',
+    'At 60 km/h · no stops',
   );
   await date(page);
   await fetchWeather(page);
@@ -275,7 +277,6 @@ test('selected speeds recalculate weather locally and support slow/fast travel a
     .last()
     .getAttribute('aria-label');
   await page.locator('.speed-options > summary').click();
-  await page.locator('#use-average-speed').check();
   await page.locator('#average-speed').fill('30');
   await expect(page.locator('#summary .stats-basis')).toHaveText(
     'At 30 km/h · no stops',
@@ -356,12 +357,7 @@ test('departure persists but forecasts and samples do not; reload refreshes; GPX
   const state = decodeState(new URL(page.url()).hash);
   expect(state.departure).toBe('2026-11-08T10:00:00.000Z');
   expect(Object.keys(state).sort()).toEqual(
-    [
-      ...Object.keys(defaults()),
-      'averageSpeedKmh',
-      'departure',
-      'language',
-    ].sort(),
+    [...Object.keys(defaults()), 'departure', 'language'].sort(),
   );
   await page.locator('#route-name').fill('Weather saved');
   await page.locator('#save-route').click();

@@ -17,6 +17,8 @@ import {
   travelTimeSeconds,
   speedInputBounds,
   snapSpeed,
+  storedSpeedKmh,
+  rememberSpeedKmh,
 } from './travel-time';
 import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
 import { UndoHistory } from './history';
@@ -121,7 +123,7 @@ function fromLink(next: State): State {
   };
 }
 try {
-  state = fromLink(decodeState(location.hash, true));
+  state = fromLink(decodeState(location.hash));
 } catch {
   status('This route link is invalid. Start a new route below.', true);
 }
@@ -176,16 +178,19 @@ map.on('zoomend', () => {
 const zoom = L.control.zoom({ position: 'bottomright' }).addTo(map);
 const markers = L.layerGroup().addTo(map),
   line = L.featureGroup().addTo(map);
+/** The traveler's average speed (km/h): a device preference, changed only by the user. */
+let speedKmh = storedSpeedKmh();
 const weather = setupWeather(
   map,
   () => state,
   () => current,
   syncUrl,
+  () => speedKmh,
 );
 // Registered after the weather handler, which stores the new departure first.
 $('departure').addEventListener('change', () => {
   if (current) renderSummary(current);
-  else renderDaylight(state, null);
+  else renderDaylight(state, null, speedKmh);
 });
 new ResizeObserver(() => map.invalidateSize()).observe($('map'));
 function fit() {
@@ -230,17 +235,12 @@ function settings() {
   weather.syncInputs();
   const input = $<HTMLInputElement>('average-speed');
   const bounds = speedInputBounds(state.units);
-  const value = state.averageSpeedKmh
-    ? snapSpeed(speedFromKmh(state.averageSpeedKmh, state.units), state.units)
-    : 60;
+  const value = snapSpeed(speedFromKmh(speedKmh, state.units), state.units);
   // The first notch represents 1; subsequent notches are 5, 10, 15…
   input.min = '0';
   input.max = String(bounds.max);
   input.step = '5';
   input.value = value === 1 ? '0' : String(value);
-  input.disabled = state.averageSpeedKmh === undefined;
-  $<HTMLInputElement>('use-average-speed').checked =
-    state.averageSpeedKmh !== undefined;
   input.setAttribute('aria-valuemin', '1');
   input.setAttribute('aria-valuemax', String(bounds.max));
   input.setAttribute('aria-valuenow', String(value));
@@ -624,15 +624,14 @@ function clearSummary() {
   $('summary').hidden = true;
   for (const id of ['summary-content', 'summary-notes', 'itinerary'])
     $(id).replaceChildren();
-  renderDaylight(state, null);
+  renderDaylight(state, null, speedKmh);
 }
 /** Route summary card; departure, units, speed and language changes only re-render this. */
 function renderSummary(route: Route) {
   const locale = state.language === 'pt' ? 'pt-BR' : 'en';
-  const duration = state.averageSpeedKmh
-    ? travelTimeSeconds(route.distance, state.averageSpeedKmh)
-    : route.duration;
-  const minutes = duration === null ? null : Math.round(duration / 60);
+  // Our own estimate from the traveler's speed, never the router's duration.
+  const duration = travelTimeSeconds(route.distance, speedKmh);
+  const minutes = Math.round(duration / 60);
   const summary = $('summary-content'),
     notes = $('summary-notes'),
     itinerary = $('itinerary');
@@ -678,18 +677,14 @@ function renderSummary(route: Route) {
     );
   }
   // The basis of the time estimate, next to the numbers it explains.
-  let basis = 'Set an average speed to estimate the time.';
-  if (state.averageSpeedKmh) {
-    const speed = speedFromKmh(
-      state.averageSpeedKmh,
-      state.units,
-    ).toLocaleString(locale, { maximumFractionDigits: 1 });
-    basis = `At ${speed} ${state.units === 'imperial' ? 'mph' : 'km/h'} · no stops`;
-  } else if (duration !== null) basis = 'Router estimate · no stops';
+  const speed = speedFromKmh(speedKmh, state.units).toLocaleString(locale, {
+    maximumFractionDigits: 1,
+  });
+  const basis = `At ${speed} ${state.units === 'imperial' ? 'mph' : 'km/h'} · no stops`;
   const daylight = document.createElement('div');
   daylight.id = 'daylight-summary';
   summary.append(stats, text('p', basis, 'hint stats-basis'), daylight);
-  renderDaylight(state, route);
+  renderDaylight(state, route, speedKmh);
   const chips = document.createElement('div');
   chips.className = 'chips';
   const refs = highways(route.steps);
@@ -949,11 +944,12 @@ $('roundtrip').onclick = () => {
 $('fit').onclick = fit;
 $<HTMLSelectElement>('units').onchange = () => {
   state.units = $<HTMLSelectElement>('units').value as DistanceUnits;
-  if (state.averageSpeedKmh !== undefined)
-    state.averageSpeedKmh = speedToKmh(
-      snapSpeed(speedFromKmh(state.averageSpeedKmh, state.units), state.units),
-      state.units,
-    );
+  // Switching units keeps the speed on a notch of the new scale.
+  speedKmh = speedToKmh(
+    snapSpeed(speedFromKmh(speedKmh, state.units), state.units),
+    state.units,
+  );
+  rememberSpeedKmh(speedKmh);
   settings();
   syncUrl();
   if (current) renderRoute(current);
@@ -1099,7 +1095,7 @@ $<HTMLInputElement>('import').onchange = () => {
 };
 window.addEventListener('hashchange', () => {
   try {
-    state = fromLink(decodeState(location.hash, true));
+    state = fromLink(decodeState(location.hash));
     // A link stores points, not imported geometry: route it from scratch.
     trackBase = null;
     const lang = state.language ?? getLanguage();
@@ -1166,26 +1162,13 @@ function updateSpeedEstimate() {
   if (current) renderRoute(current);
   status(current ? 'Route ready.' : 'Set your start and destination.');
 }
-$<HTMLInputElement>('use-average-speed').onchange = () => {
-  if ($<HTMLInputElement>('use-average-speed').checked)
-    state.averageSpeedKmh = speedToKmh(
-      snapSpeed(
-        Number($<HTMLInputElement>('average-speed').value),
-        state.units,
-      ),
-      state.units,
-    );
-  else delete state.averageSpeedKmh;
-  settings();
-  syncUrl();
-  updateSpeedEstimate();
-};
 $<HTMLInputElement>('average-speed').oninput = () => {
   const value = snapSpeed(
     Number($<HTMLInputElement>('average-speed').value),
     state.units,
   );
-  state.averageSpeedKmh = speedToKmh(value, state.units);
+  speedKmh = speedToKmh(value, state.units);
+  rememberSpeedKmh(speedKmh);
   $('average-speed-value').textContent = String(value);
   const input = $<HTMLInputElement>('average-speed');
   input.setAttribute('aria-valuenow', String(value));
@@ -1195,14 +1178,6 @@ $<HTMLInputElement>('average-speed').oninput = () => {
   );
   updateSpeedEstimate();
 };
-$<HTMLInputElement>('average-speed').onchange = syncUrl;
-$('reset-speed').onclick = () => {
-  delete state.averageSpeedKmh;
-  settings();
-  syncUrl();
-  updateSpeedEstimate();
-};
-
 function updateSaveButton() {
   $('share-gpx').hidden = !shareableFile();
   $<HTMLButtonElement>('share-gpx').disabled = !current || dirty.size > 0;
@@ -1256,7 +1231,8 @@ async function refreshSavedRoutes() {
         clearTimeout(timer);
         dirty.clear();
         drafts = new WeakMap();
-        state = structuredClone(record.state);
+        // Validation strips legacy fields such as a stored average speed.
+        state = validateState(structuredClone(record.state));
         state.language = language;
         selected = 0;
         weather.invalidate();

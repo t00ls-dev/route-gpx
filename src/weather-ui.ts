@@ -26,6 +26,8 @@ export function setupWeather(
   getState: () => State,
   getRoute: () => Route | null,
   syncState: () => void,
+  /** The device's average speed in km/h (see `storedSpeedKmh`). */
+  getSpeed: () => number,
 ) {
   const departure = $<HTMLInputElement>('departure'),
     retry = $<HTMLButtonElement>('weather-retry');
@@ -77,7 +79,7 @@ export function setupWeather(
     const error = departureError(state.departure ?? '');
     if (error) throw new Error(error);
     return samples.map((p) =>
-      passageTime(p, Date.parse(state.departure!), state.averageSpeedKmh ?? 60),
+      passageTime(p, Date.parse(state.departure!), getSpeed()),
     );
   }
   async function revealCard(card: HTMLElement) {
@@ -143,11 +145,7 @@ export function setupWeather(
       $('weather-result').hidden = true;
       return;
     }
-    const desiredPoints = sampleRoute(
-      sourceRoute!,
-      state.points,
-      state.averageSpeedKmh ?? 60,
-    );
+    const desiredPoints = sampleRoute(sourceRoute!, state.points, getSpeed());
     const largestGap = (samples: WeatherPoint[]) =>
       Math.max(
         0,
@@ -369,13 +367,13 @@ export function setupWeather(
       attemptedRoute === route &&
       attemptedDeparture === state.departure &&
       attemptedEndpoint === endpoint &&
-      attemptedSpeed === (state.averageSpeedKmh ?? 60)
+      attemptedSpeed === getSpeed()
     )
       return;
     attemptedRoute = route;
     attemptedDeparture = state.departure;
     attemptedEndpoint = endpoint;
-    attemptedSpeed = state.averageSpeedKmh ?? 60;
+    attemptedSpeed = getSpeed();
     clearTimeout(automaticTimer);
     automaticTimer = setTimeout(() => {
       automaticTimer = undefined;
@@ -389,11 +387,7 @@ export function setupWeather(
     try {
       const route = getRoute();
       if (!route) throw new Error('Calculate or import a route first.');
-      samples = sampleRoute(
-        route,
-        getState().points,
-        getState().averageSpeedKmh ?? 60,
-      );
+      samples = sampleRoute(route, getState().points, getSpeed());
       passage = times(samples);
       interval = forecastInterval(passage[0], passage.at(-1)!);
     } catch (error) {
@@ -413,7 +407,7 @@ export function setupWeather(
     attemptedRoute = route;
     attemptedDeparture = date;
     attemptedEndpoint = base;
-    attemptedSpeed = getState().averageSpeedKmh ?? 60;
+    attemptedSpeed = getSpeed();
     controller = new AbortController();
     retry.disabled = true;
     retry.hidden = true;

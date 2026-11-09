@@ -187,7 +187,7 @@
         <p>
           Enter a GPX name and press Save route. Routes are never saved
           automatically. The same name updates an existing route. Saved routes,
-          above Average speed, lets you open the original geometry, download
+          below the route summary, lets you open the original geometry, download
           GPX, delete entries, or export and restore a backup. These files stay
           in this browser profile, without cloud sync. Clearing browser data can
           remove them; keep a backup. Matching names in a backup keep your
@@ -218,20 +218,19 @@
           Choose Departure in the route summary, which appears once the route is
           ready. Then weather loads automatically after a short pause. There is
           no request without a date. Choosing a date sends sampled points and
-          expected dates/times to Open-Meteo. Weather passage times use the
-          value enabled in Average speed, or 60 km/h when it is off. Adjust it
-          for your journey. Stops and traffic are excluded. All displayed times
-          use the device timezone. Departures in the last 90 UTC calendar days
-          are accepted. Older departures and arrival windows beyond 16 UTC
-          calendar days including today are rejected. For past dates, values are
-          archived model estimates, not exact observations at each route point.
-          Imported GPX works too. Samples include endpoints and waypoints,
-          approximately every 20 km. Below 20 km/h, spacing is reduced to about
-          one hour of travel (5 km at 5 km/h, for example). The maximum of 20
-          points takes priority and may require larger gaps. Select a weather
-          icon on the map to open its weather card in the panel. Selecting a
-          card centers the map on its point and collapses the mobile panel;
-          Enter and Space work too.
+          expected dates/times to Open-Meteo. Weather passage times use your
+          Average speed. Adjust it for your journey. Stops and traffic are
+          excluded. All displayed times use the device timezone. Departures in
+          the last 90 UTC calendar days are accepted. Older departures and
+          arrival windows beyond 16 UTC calendar days including today are
+          rejected. For past dates, values are archived model estimates, not
+          exact observations at each route point. Imported GPX works too.
+          Samples include endpoints and waypoints, approximately every 20 km.
+          Below 20 km/h, spacing is reduced to about one hour of travel (5 km at
+          5 km/h, for example). The maximum of 20 points takes priority and may
+          require larger gaps. Select a weather icon on the map to open its
+          weather card in the panel. Selecting a card centers the map on its
+          point and collapses the mobile panel; Enter and Space work too.
         </p>
         <p>
           Speed changes recalculate locally if coverage permits; use Try again
@@ -323,14 +322,17 @@
         </p>
         <h2>Travel time</h2>
         <p>
-          Open Average speed in the route summary, enable it and drag the
-          slider. Values are 1, 5, 10… up to 200 km/h or 130 mph. Switching
-          units rounds to the nearest position. The estimate excludes stops and
-          traffic. Turn it off or press × to use the router estimate. The route
+          Time, arrival, weather passage times and daylight all come from the
+          route distance and your average speed, not from the routing service.
+          Open Average speed in the route summary and drag the slider: values
+          are 1, 5, 10… up to 200 km/h or 130 mph, starting at 60 km/h. The
+          speed is remembered on this device and changes only when you move the
+          slider; switching units converts it to the nearest position. Route
+          links and saved routes do not carry it, so opening one never changes
+          your speed. The estimate excludes stops and traffic. The route
           summary, right below Calculate route, holds the departure date and
           shows the distance, the time and, when a departure is set, the arrival
-          time, with a line saying whether the time comes from the router or
-          from your average speed. Itinerary, below the summary, shows the
+          time, with the speed used. Itinerary, below the summary, shows the
           highway references, each road with its distance and the routing
           provider.
         </p>
@@ -563,8 +565,8 @@
         <p>
           Preencha Nome do GPX e toque em Salvar rota. Nenhuma rota é salva
           automaticamente. Um nome existente atualiza a entrada. Em Rotas
-          salvas, acima de Velocidade média, reabra a geometria original, baixe
-          o GPX, exclua entradas ou exporte e restaure um backup. Os arquivos
+          salvas, abaixo do resumo da rota, reabra a geometria original, baixe o
+          GPX, exclua entradas ou exporte e restaure um backup. Os arquivos
           ficam neste perfil do navegador, sem nuvem. Limpar os dados do
           navegador pode apagá-los; guarde um backup. Nomes iguais no backup
           mantêm a rota que já está salva.
@@ -595,21 +597,20 @@
           pronta. Então o clima carrega automaticamente após uma breve pausa.
           Sem data não há consulta. Escolher uma data envia pontos de amostragem
           e datas/horários previstos ao Open-Meteo. Os horários de passagem do
-          clima usam o valor ativado em Velocidade média, ou 60 km/h quando ela
-          está desligada. Ajuste ao seu deslocamento. Paradas e trânsito não são
-          incluídos. Todos os horários usam o fuso do aparelho. São aceitas
-          saídas nos últimos 90 dias de calendário UTC. Saídas anteriores e
-          janelas de chegada além de 16 dias de calendário UTC incluindo hoje
-          são rejeitadas. Para datas passadas, os valores são estimativas
-          arquivadas dos modelos, não observações exatas em cada ponto da rota.
-          Também funciona com GPX importado. As amostras incluem origem, destino
-          e passagens, aproximadamente a cada 20 km. Abaixo de 20 km/h, o
-          espaçamento é reduzido para cerca de uma hora de deslocamento (5 km a
-          5 km/h, por exemplo). O máximo de 20 pontos tem prioridade e pode
-          exigir intervalos maiores. Selecione um ícone de tempo no mapa para
-          abrir seu card de clima no painel. Selecionar um card centraliza o
-          mapa no ponto e recolhe o painel no celular; Enter e Espaço também
-          funcionam.
+          clima usam a sua Velocidade média. Ajuste ao seu deslocamento. Paradas
+          e trânsito não são incluídos. Todos os horários usam o fuso do
+          aparelho. São aceitas saídas nos últimos 90 dias de calendário UTC.
+          Saídas anteriores e janelas de chegada além de 16 dias de calendário
+          UTC incluindo hoje são rejeitadas. Para datas passadas, os valores são
+          estimativas arquivadas dos modelos, não observações exatas em cada
+          ponto da rota. Também funciona com GPX importado. As amostras incluem
+          origem, destino e passagens, aproximadamente a cada 20 km. Abaixo de
+          20 km/h, o espaçamento é reduzido para cerca de uma hora de
+          deslocamento (5 km a 5 km/h, por exemplo). O máximo de 20 pontos tem
+          prioridade e pode exigir intervalos maiores. Selecione um ícone de
+          tempo no mapa para abrir seu card de clima no painel. Selecionar um
+          card centraliza o mapa no ponto e recolhe o painel no celular; Enter e
+          Espaço também funcionam.
         </p>
         <p>
           Alterar a velocidade recalcula localmente se houver cobertura; use
@@ -707,14 +708,17 @@
         </p>
         <h2>Tempo de viagem</h2>
         <p>
-          Abra Velocidade média no resumo da rota, ative e arraste o controle.
-          Os valores são 1, 5, 10… até 200 km/h ou 130 mph. A troca de unidade
-          arredonda para a posição mais próxima. A estimativa não inclui paradas
-          nem trânsito. Desative ou toque em × para usar a estimativa do
-          roteador. O resumo da rota, logo abaixo de Calcular rota, traz a data
-          de saída e mostra a distância, o tempo e, quando há saída, o horário
-          de chegada, com uma linha dizendo se o tempo vem do roteador ou da sua
-          velocidade média. Itinerário, abaixo do resumo, mostra as rodovias,
+          Tempo, chegada, horários de passagem do clima e luz do dia vêm da
+          distância da rota e da sua velocidade média, não do serviço de rotas.
+          Abra Velocidade média no resumo da rota e arraste o controle: os
+          valores são 1, 5, 10… até 200 km/h ou 130 mph, começando em 60 km/h. A
+          velocidade fica guardada neste aparelho e só muda quando você mexe no
+          controle; trocar a unidade converte para a posição mais próxima. Links
+          e rotas salvas não levam a velocidade, então abrir um deles nunca muda
+          a sua. A estimativa não inclui paradas nem trânsito. O resumo da rota,
+          logo abaixo de Calcular rota, traz a data de saída e mostra a
+          distância, o tempo e, quando há saída, o horário de chegada, com a
+          velocidade usada. Itinerário, abaixo do resumo, mostra as rodovias,
           cada via com sua distância e o provedor de rotas.
         </p>
         <h2>Unidades de distância e desfazer</h2>

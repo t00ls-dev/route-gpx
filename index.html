@@ -159,9 +159,6 @@
           </details>
           <details class="speed-options">
             <summary>Average speed</summary>
-            <label class="speed-toggle"
-              ><input id="use-average-speed" type="checkbox" />Enable</label
-            >
             <div class="speed-field">
               <input
                 id="average-speed"
@@ -170,19 +167,10 @@
                 max="200"
                 step="5"
                 value="60"
-                disabled
                 aria-label="Average speed"
                 aria-describedby="speed-range"
               /><output id="average-speed-value" for="average-speed">60</output
-              ><span id="speed-unit">km/h</span
-              ><button
-                id="reset-speed"
-                type="button"
-                aria-label="Use router estimate"
-                title="Use router estimate"
-              >
-                ×
-              </button>
+              ><span id="speed-unit">km/h</span>
             </div>
             <p id="speed-range" class="hint">1–200 km/h</p>
           </details>
