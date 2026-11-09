@@ -337,6 +337,73 @@ test('a v1 route link still opens and is rewritten as a short v2 link', async ({
   expect(new URL(page.url()).hash.length).toBeLessThan(legacy.length);
 });
 
+test.describe('servers suggested by a link', () => {
+  const linkWith = (osrm?: string) => {
+    const state = defaults();
+    state.points = [
+      { name: 'Start', coord: [-22.930929, -43.238286] },
+      { name: 'Destination', coord: [-23.05016, -43.53524] },
+    ];
+    if (osrm) state.osrm = osrm;
+    return base + encodeState(state);
+  };
+  const track = (page: Page) => {
+    const hosts: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().includes('/route/v1/driving/'))
+        hosts.push(new URL(r.url()).host);
+    });
+    return hosts;
+  };
+  test('open with the default servers until the visitor opts in', async ({
+    page,
+  }) => {
+    await setup(page);
+    const hosts = track(page);
+    await page.goto(linkWith('https://example.org/osrm'));
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    await expect(page.locator('#server-notice')).toBeVisible();
+    await expect(page.locator('#server-notice-text')).toContainText(
+      'example.org',
+    );
+    expect(hosts).toEqual(['router.project-osrm.org']);
+    expect(page.url()).not.toContain('example');
+    await expect(page.locator('#osrm')).toHaveValue(
+      'https://router.project-osrm.org',
+    );
+    await page.locator('#use-link-servers').click();
+    await expect(page.locator('#server-notice')).toBeHidden();
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    expect(hosts.at(-1)).toBe('example.org');
+    await expect(page.locator('#osrm')).toHaveValue('https://example.org/osrm');
+    await page.locator('#undo').click();
+    await expect(page.locator('#osrm')).toHaveValue(
+      'https://router.project-osrm.org',
+    );
+  });
+  test('keeping the defaults dismisses the notice without contacting the link server', async ({
+    page,
+  }) => {
+    await setup(page);
+    const hosts = track(page);
+    await page.goto(linkWith('https://example.org/osrm'));
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    await page.locator('#keep-default-servers').click();
+    await expect(page.locator('#server-notice')).toBeHidden();
+    await page.locator('#calculate').click();
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    expect(hosts.every((host) => host === 'router.project-osrm.org')).toBe(
+      true,
+    );
+  });
+  test('a link with default servers shows no notice', async ({ page }) => {
+    await setup(page);
+    await page.goto(linkWith());
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    await expect(page.locator('#server-notice')).toBeHidden();
+  });
+});
+
 test('GPX name is visible and names the downloaded file, metadata and track', async ({
   page,
 }) => {

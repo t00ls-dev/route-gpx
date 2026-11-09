@@ -353,6 +353,15 @@ label[for] {
   margin: 10px 0;
   border-radius: 3px;
 }
+#server-notice p {
+  margin: 0;
+}
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+}
 .road-list {
   border-bottom: 1px solid #e2e7eb;
 }

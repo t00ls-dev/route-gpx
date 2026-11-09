@@ -7,6 +7,7 @@ import {
   encodeStateV1,
   decodeState,
   validateState,
+  linkServerOverrides,
   highways,
   generateGpx,
   importGpx,
@@ -249,6 +250,18 @@ describe('short v2 links', () => {
     expect(validateState(JSON.parse(JSON.stringify(s)))).toEqual(s);
     expect(() => validateState(null)).toThrow();
     expect(() => validateState({ ...s, points: [] })).toThrow();
+  });
+});
+describe('link server overrides', () => {
+  it('is null for default servers and returns all servers otherwise', () => {
+    const s = defaults();
+    expect(linkServerOverrides(s)).toBeNull();
+    s.nominatim = 'https://example.org/search';
+    expect(linkServerOverrides(s)).toEqual({
+      osrm: s.osrm,
+      valhalla: s.valhalla,
+      nominatim: 'https://example.org/search',
+    });
   });
 });
 describe('road references', () => {
