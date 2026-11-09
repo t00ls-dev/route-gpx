@@ -117,6 +117,10 @@
         <div class="section-line page-heading">
           <h1>Plan your route</h1>
         </div>
+        <div id="lock-notice" class="warning lock-notice" hidden>
+          <p>Route locked. Map, export and sharing still work.</p>
+          <button id="unlock" type="button">Unlock editing</button>
+        </div>
         <section aria-label="Route points">
           <div class="section-line">
             <h2>Points</h2>
@@ -376,6 +380,9 @@
             <span aria-hidden="true">⌖</span><span>Use my location</span>
           </button>
           <button id="fullscreen" type="button">Full screen</button>
+          <button id="lock" type="button" aria-pressed="false">
+            Lock editing
+          </button>
         </div>
         <section
           id="location-card"

@@ -6,6 +6,8 @@ export function setupPointMenu(
   map: L.Map,
   choose: (kind: 'start' | 'stop' | 'destination', coord: Coord) => void,
   click: (coord: Coord) => void,
+  /** False while route editing is locked; it reports why to the user. */
+  editable: () => boolean = () => true,
 ) {
   const container = map.getContainer();
   const menu = document.createElement('div');
@@ -74,7 +76,7 @@ export function setupPointMenu(
     if (focus) (menu.firstElementChild as HTMLElement).focus();
   };
   const press = new LongPress(() => {
-    if (!openingEvent) return;
+    if (!openingEvent || !editable()) return;
     suppressClick = true;
     const point = map.mouseEventToContainerPoint(openingEvent);
     open(point, map.containerPointToLatLng(point), false);
@@ -119,11 +121,11 @@ export function setupPointMenu(
       return;
     }
     close();
-    if (!matchMedia('(pointer: coarse)').matches)
+    if (!matchMedia('(pointer: coarse)').matches && editable())
       click([event.latlng.lat, event.latlng.lng]);
   });
   map.on('contextmenu', (event: L.LeafletMouseEvent) => {
-    if (matchMedia('(pointer: coarse)').matches) return;
+    if (matchMedia('(pointer: coarse)').matches || !editable()) return;
     open(event.containerPoint, event.latlng, true);
   });
   container.addEventListener('keydown', (event) => {
@@ -132,7 +134,7 @@ export function setupPointMenu(
       (event.shiftKey && event.key === 'F10')
     ) {
       event.preventDefault();
-      open(map.getSize().divideBy(2), map.getCenter(), true);
+      if (editable()) open(map.getSize().divideBy(2), map.getCenter(), true);
     }
   });
   document.addEventListener('pointerdown', (event) => {

@@ -9,6 +9,8 @@ export function setupMapControls(map: L.Map, zoom: L.Control.Zoom) {
   iconControl(get('fit'), 'route', '◎ Fit route');
   iconControl(get('help'), 'help', 'Help');
   iconControl(get('undo'), 'undo', '↶ Undo');
+  iconControl(get('lock'), 'unlock', 'Lock editing');
+  get('lock').prepend(icon('lock'));
   const container = document.createElement('div');
   container.className = 'map-action-control';
   container.append(
@@ -16,6 +18,7 @@ export function setupMapControls(map: L.Map, zoom: L.Control.Zoom) {
     get('layers-toggle').parentElement!,
     get('fullscreen'),
     get('fit'),
+    get('lock'),
     get('undo'),
   );
   document.querySelector('.map-tools')?.remove();

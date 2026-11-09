@@ -86,6 +86,16 @@ function status(message: string, error = false) {
   $('status').textContent = message;
   $('status').classList.toggle('error', error);
 }
+/**
+ * Edit lock, kept in page memory only. Every route edit entry point checks
+ * `editBlocked()`; viewing, export and sharing stay available.
+ */
+let locked = false;
+function editBlocked(): boolean {
+  if (!locked) return false;
+  status('Route locked. Unlock editing to change it.', true);
+  return true;
+}
 let linkServers: ServerUrls | null = null;
 /**
  * Servers suggested by a link are used only after an explicit choice: the
@@ -115,7 +125,7 @@ try {
   status('This route link is invalid. Start a new route below.', true);
 }
 $('use-link-servers').onclick = () => {
-  if (!linkServers) return;
+  if (!linkServers || editBlocked()) return;
   Object.assign(state, linkServers);
   linkServers = null;
   $('server-notice').hidden = true;
@@ -204,7 +214,8 @@ function syncUrl() {
   updateSaveButton();
   undoHistory.record(routeSnapshot(state));
   const hash = encodeState(state);
-  $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
+  $<HTMLButtonElement>('undo').disabled =
+    locked || (!undoHistory.canUndo && !dirty.size);
   history.replaceState(null, '', hash);
   $<HTMLAnchorElement>('help').href =
     './help.html?lang=' + getLanguage() + hash;
@@ -266,12 +277,15 @@ function updateSelection() {
         .querySelector('button')
         ?.setAttribute('aria-pressed', String(i === selected));
     });
-  $('map-note').textContent = matchMedia('(pointer: coarse)').matches
-    ? 'Touch and hold to choose a route point'
-    : `Set ${pointLabel(selected)} on the map`;
-  $<HTMLButtonElement>('undo').disabled = !undoHistory.canUndo && !dirty.size;
+  $('map-note').textContent = locked
+    ? 'Route locked. Unlock editing to change it.'
+    : matchMedia('(pointer: coarse)').matches
+      ? 'Touch and hold to choose a route point'
+      : `Set ${pointLabel(selected)} on the map`;
+  $<HTMLButtonElement>('undo').disabled =
+    locked || (!undoHistory.canUndo && !dirty.size);
   $<HTMLButtonElement>('calculate').disabled =
-    state.points.some((p) => !p.coord) || dirty.size > 0;
+    locked || state.points.some((p) => !p.coord) || dirty.size > 0;
 }
 function setPoint(
   point: Point,
@@ -339,6 +353,7 @@ function renderPoints() {
     input.autocomplete = 'off';
     input.setAttribute('aria-label', `Location of point ${i + 1}`);
     input.enterKeyHint = 'search';
+    input.readOnly = locked;
     const results = document.createElement('div');
     results.id = `point-results-${i}`;
     results.className = 'point-results';
@@ -352,6 +367,7 @@ function renderPoints() {
       center: () => [map.getCenter().lat, map.getCenter().lng],
       valid: () => state.points[i] === point && input.isConnected,
       choose: (result) => {
+        if (editBlocked()) return;
         const coord = parseCoordinates(`${result.lat},${result.lon}`);
         if (!coord) return;
         setPoint(point, i, coord, result.display_name.slice(0, 240), true);
@@ -415,6 +431,7 @@ function renderPoints() {
     form.onsubmit = (e) => {
       e.preventDefault();
       closeSuggestions();
+      if (editBlocked()) return;
       if (commitCoordinates()) return;
       const q = input.value.trim();
       if (q.length < 3) {
@@ -455,6 +472,7 @@ function renderPoints() {
               const b = text('button', r.display_name) as HTMLButtonElement;
               b.type = 'button';
               b.onclick = () => {
+                if (editBlocked()) return;
                 const c = parseCoordinates(`${r.lat},${r.lon}`);
                 if (!c) {
                   status('Search returned invalid coordinates.', true);
@@ -510,8 +528,9 @@ function renderPoints() {
         `Move point ${i + 1} ${delta < 0 ? 'up' : 'down'}`,
         true,
       );
-      b.disabled = i + delta < 0 || i + delta >= state.points.length;
+      b.disabled = locked || i + delta < 0 || i + delta >= state.points.length;
       b.onclick = () => {
+        if (editBlocked()) return;
         [state.points[i], state.points[i + delta]] = [
           state.points[i + delta],
           state.points[i],
@@ -525,8 +544,9 @@ function renderPoints() {
     remove.type = 'button';
     remove.setAttribute('aria-label', `Remove point ${i + 1}`);
     iconControl(remove, 'close', `Remove point ${i + 1}`, true);
-    remove.disabled = state.points.length <= 2;
+    remove.disabled = locked || state.points.length <= 2;
     remove.onclick = () => {
+      if (editBlocked()) return;
       dirty.delete(point);
       state.points.splice(i, 1);
       selected = Math.min(selected, state.points.length - 1);
@@ -540,14 +560,14 @@ function renderPoints() {
   list.scrollTop = scroll;
   renderMarkers();
   updateSelection();
-  $<HTMLButtonElement>('add').disabled = state.points.length >= 50;
+  $<HTMLButtonElement>('add').disabled = locked || state.points.length >= 50;
 }
 function renderMarkers() {
   markers.clearLayers();
   state.points.forEach((p, i) => {
     if (!p.coord || dirty.has(p)) return;
     const m = L.marker(p.coord, {
-      draggable: true,
+      draggable: !locked,
       icon: L.divIcon({
         className: `route-marker ${i === selected ? 'active' : ''}`,
         html: `<span><b>${i + 1}</b></span>`,
@@ -782,6 +802,7 @@ function changed(preserveEditor = false, forceRouting = false) {
 setupPointMenu(
   map,
   (kind, coord) => {
+    if (editBlocked()) return;
     if (kind === 'stop') {
       if (state.points.length >= 50) {
         status('The route already has 50 points.', true);
@@ -799,8 +820,10 @@ setupPointMenu(
     }
   },
   (coord) => setPoint(state.points[selected], selected, coord),
+  () => !editBlocked(),
 );
 $('calculate').onclick = () => {
+  if (editBlocked()) return;
   if (dirty.size || state.points.some((p) => !p.coord)) {
     status('Set your start and destination.', true);
     return;
@@ -808,6 +831,7 @@ $('calculate').onclick = () => {
   changed(false, true);
 };
 $('undo').onclick = () => {
+  if (editBlocked()) return;
   if (dirty.size) {
     dirty.clear();
     drafts = new WeakMap();
@@ -853,7 +877,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 $('add').onclick = () => {
-  if (state.points.length >= 50) return;
+  if (editBlocked() || state.points.length >= 50) return;
   state.points.splice(state.points.length - 1, 0, {
     name: `Stop ${state.points.length - 1}`,
     coord: null,
@@ -862,11 +886,13 @@ $('add').onclick = () => {
   changed();
 };
 $('reverse').onclick = () => {
+  if (editBlocked()) return;
   state.points.reverse();
   selected = 0;
   changed();
 };
 $('roundtrip').onclick = () => {
+  if (editBlocked()) return;
   if (state.points.length * 2 - 1 > 50) {
     status('A round trip would exceed the 50-point limit.', true);
     return;
@@ -902,8 +928,10 @@ $('save-settings').onclick = () => {
       (key) => [key, serverUrl($<HTMLInputElement>(key).value.trim())] as const,
     );
     const photon = serverUrl($<HTMLInputElement>('photon').value.trim());
-    weather.applyServer(); // Validates its own URL before changing anything.
     const reroute = servers.some(([key, url]) => state[key] !== url);
+    // Routing server changes recalculate the route; device preferences do not.
+    if (reroute && editBlocked()) return;
+    weather.applyServer(); // Validates its own URL before changing anything.
     for (const [key, url] of servers) state[key] = url;
     photonUrl = photon;
     try {
@@ -989,6 +1017,10 @@ $('share').onclick = () => {
 $<HTMLInputElement>('import').onchange = () => {
   const file = $<HTMLInputElement>('import').files?.[0];
   if (!file) return;
+  if (editBlocked()) {
+    $<HTMLInputElement>('import').value = '';
+    return;
+  }
   if (file.size > 10_000_000) {
     status('Choose a GPX smaller than 10 MB.', true);
     return;
@@ -1047,6 +1079,7 @@ $('export-json').onclick = () => {
   $<HTMLTextAreaElement>('state-json').value = JSON.stringify(state, null, 2);
 };
 $('apply-json').onclick = () => {
+  if (editBlocked()) return;
   try {
     const parsed: unknown = JSON.parse(
       $<HTMLTextAreaElement>('state-json').value,
@@ -1170,7 +1203,10 @@ async function refreshSavedRoutes() {
       const open = text('button', 'Open') as HTMLButtonElement;
       open.type = 'button';
       open.setAttribute('aria-label', `Open saved route: ${record.name}`);
+      open.classList.add('open-saved');
+      open.disabled = locked;
       open.onclick = () => {
+        if (editBlocked()) return;
         const language = state.language;
         revision++;
         clearTimeout(timer);
@@ -1285,6 +1321,7 @@ updateSaveButton();
 setupMapView(map, {
   hasRoute: () => state.points.some((p) => p.coord !== null),
   addPoint: (coord, asStart) => {
+    if (editBlocked()) return;
     if (asStart) setPoint(state.points[0], 0, coord, 'Start');
     else if (state.points.length < 50) {
       state.points.splice(state.points.length - 1, 0, {
@@ -1301,3 +1338,34 @@ setupMapLayers(map);
 setupRadar(map);
 
 setupMapControls(map, zoom);
+
+function setLocked(value: boolean) {
+  locked = value;
+  $('lock').setAttribute('aria-pressed', String(locked));
+  $('lock-notice').hidden = !locked;
+  for (const id of [
+    'reverse',
+    'roundtrip',
+    'apply-json',
+    'use-link-servers',
+    'location-start',
+    'location-stop',
+  ])
+    $<HTMLButtonElement>(id).disabled = locked;
+  $<HTMLInputElement>('import').disabled = locked;
+  document
+    .querySelectorAll<HTMLButtonElement>('#saved-list .open-saved')
+    .forEach((button) => (button.disabled = locked));
+  // Rebuild the editor and markers with the new read-only/draggable state.
+  renderPoints();
+  status(
+    locked
+      ? 'Route locked. Map, export and sharing still work.'
+      : 'Editing unlocked.',
+  );
+}
+$('lock').onclick = () => setLocked(!locked);
+$('unlock').onclick = () => {
+  setLocked(false);
+  $('lock').focus();
+};

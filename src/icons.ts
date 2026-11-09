@@ -47,6 +47,9 @@ const paths = {
   info: '<path d="M12 11v6m-1-6h1m-1 6h2"/><circle cx="12" cy="7" r=".5"/>',
   close: '<path d="m5 5 14 14M19 5 5 19"/>',
   undo: '<path d="M3 10h11a6 6 0 0 1 0 12M3 10l5-5m-5 5 5 5"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  unlock:
+    '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .5-1.5 1-1.5 2M12 16v1"/>',
 } as const;
 export type IconName = keyof typeof paths;
