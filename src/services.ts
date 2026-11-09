@@ -1,12 +1,5 @@
 import { WeatherCache, weatherCoordinateKey } from './weather-cache';
 import {
-  RADAR_METADATA_URL,
-  RADAR_REQUEST_SPACING,
-  RadarImageCache,
-  parseRadarTimeline,
-  type RadarTimeline,
-} from './radar';
-import {
   HOUR,
   MAX_WEATHER_POINTS,
   type WeatherForecast,
@@ -630,104 +623,5 @@ export async function weatherForecast(
       }
     },
     () => !signal.aborted && isCurrent(),
-  );
-}
-
-// Metadata, coverage and visible radar tiles share the same conservative budget.
-const radarQueue = new RequestQueue(RADAR_REQUEST_SPACING);
-const radarImages = new RadarImageCache();
-let radarTimeline: { value: RadarTimeline; fetched: number } | undefined;
-async function radarResponse(
-  url: string,
-  signal: AbortSignal,
-): Promise<Response> {
-  signal.throwIfAborted();
-  try {
-    const response = await request(url, 15000, { signal, noStore: true });
-    if (response.status === 429)
-      throw new Error('Radar usage limit reached. Try again later.');
-    if (!response.ok) throw new Error('Radar unavailable. Try again.');
-    return response;
-  } catch (error) {
-    if (signal.aborted) throw error;
-    if (
-      error instanceof DOMException &&
-      ['AbortError', 'TimeoutError'].includes(error.name)
-    )
-      throw new Error('Radar request timed out. Try again.', { cause: error });
-    if (error instanceof TypeError)
-      throw new Error(
-        'Radar network error. Check your connection and try again.',
-        { cause: error },
-      );
-    throw error;
-  }
-}
-export async function fetchRadarTimeline(
-  signal: AbortSignal,
-): Promise<RadarTimeline> {
-  signal.throwIfAborted();
-  if (radarTimeline && Date.now() - radarTimeline.fetched < 120000)
-    return radarTimeline.value;
-  return radarQueue.run(
-    async () => {
-      signal.throwIfAborted();
-      if (radarTimeline && Date.now() - radarTimeline.fetched < 120000)
-        return radarTimeline.value;
-      const response = await radarResponse(RADAR_METADATA_URL, signal);
-      let data: unknown;
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error('Radar service returned an invalid response.');
-      }
-      const value = parseRadarTimeline(data);
-      signal.throwIfAborted();
-      radarTimeline = { value, fetched: Date.now() };
-      return value;
-    },
-    () => !signal.aborted,
-  );
-}
-export async function fetchRadarImage(
-  url: string,
-  signal: AbortSignal,
-): Promise<Blob> {
-  // Only provider-controlled image paths; never fetch arbitrary hosts from metadata.
-  if (
-    !/^https:\/\/tilecache\.rainviewer\.com\/v2\/(?:radar\/[\w-]{1,64}|coverage\/0)\/512\/[0-7]\/\d+\/\d+\/[02]\/0_0\.png$/.test(
-      url,
-    )
-  )
-    throw new Error('Radar service returned an invalid response.');
-  signal.throwIfAborted();
-  const cached = radarImages.get(url);
-  if (cached) return cached;
-  return radarQueue.run(
-    async () => {
-      signal.throwIfAborted();
-      const hit = radarImages.get(url);
-      if (hit) return hit;
-      const response = await radarResponse(url, signal);
-      const blob = await response.blob();
-      signal.throwIfAborted();
-      if (
-        blob.type !== 'image/png' ||
-        blob.size === 0 ||
-        blob.size > 2 * 1024 * 1024
-      )
-        throw new Error('Radar service returned an invalid response.');
-      // Validate actual image bytes before caching, including malformed image responses.
-      try {
-        const image = await createImageBitmap(blob);
-        image.close();
-      } catch {
-        throw new Error('Radar service returned an invalid response.');
-      }
-      signal.throwIfAborted();
-      radarImages.set(url, blob);
-      return blob;
-    },
-    () => !signal.aborted,
   );
 }

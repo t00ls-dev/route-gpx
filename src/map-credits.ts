@@ -81,11 +81,6 @@ export function setupMapCredits(map: L.Map) {
           text: 'Weather data license: CC BY 4.0',
           url: 'https://creativecommons.org/licenses/by/4.0/',
         },
-        { text: 'Radar by RainViewer', url: 'https://www.rainviewer.com/' },
-        {
-          text: 'RainViewer API terms',
-          url: 'https://www.rainviewer.com/api.html',
-        },
       ].map(({ text, url }) => {
         const item = document.createElement('li');
         const link = document.createElement('a');
