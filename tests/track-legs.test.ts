@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaults, type Coord, type Route, type State } from '../src/core';
-import { routeKeepingLegs, splitLegs } from '../src/track-legs';
+import { locatePoints, routeKeepingLegs, splitLegs } from '../src/track-legs';
 
 const line = (n: number, lat = -22.9): Coord[] =>
   Array.from({ length: n }, (_, i) => [lat, -43.2 + i * 0.001] as Coord);
@@ -88,10 +88,77 @@ describe('track legs', () => {
     );
     expect(calls).toEqual([[t[20], end]]);
   });
+  it('matches points on repeated passes to the right pass, not the first', () => {
+    // Out-and-back twice; each pass is a few metres apart, as GPS laps are.
+    const pass = (lat: number, back = false) => {
+      const p = line(100, lat);
+      return back ? p.reverse() : p;
+    };
+    const flat = [
+      ...pass(-22.9),
+      ...pass(-22.90005, true),
+      ...pass(-22.9001),
+      ...pass(-22.90015, true),
+    ];
+    const indices = [0, 150, 230, 320, 399];
+    expect(
+      locatePoints(
+        flat,
+        indices.map((i) => flat[i]),
+      ),
+    ).toEqual(indices);
+    // Out of order or off the track: no match.
+    expect(locatePoints(flat, [flat[0], [-23.5, -43], flat[399]])).toBeNull();
+  });
+  it('joins legs across a removed stop without a request', async () => {
+    const t = line(30);
+    const points = [t[0], t[10], t[20], t[29]];
+    const calls: Coord[][] = [];
+    const route = await routeKeepingLegs(
+      stateFor([t[0], t[20], t[29]]),
+      { route: imported([t]), points },
+      router(calls),
+    );
+    expect(calls).toEqual([]);
+    expect(route!.segments).toEqual([t]);
+  });
+  it('reuses the imported track for reverse and round trip', async () => {
+    const t = line(30);
+    const points = [t[0], t[10], t[20], t[29]];
+    const base = { route: imported([t]), points };
+    const calls: Coord[][] = [];
+    const back = await routeKeepingLegs(
+      stateFor([...points].reverse()),
+      base,
+      router(calls),
+    );
+    expect(back!.segments).toEqual([[...t].reverse()]);
+    const trip = await routeKeepingLegs(
+      stateFor([...points, t[20], t[10], t[0]]),
+      base,
+      router(calls),
+    );
+    expect(trip!.segments).toEqual([[...t, ...[...t].reverse().slice(1)]]);
+    expect(calls).toEqual([]);
+  });
+  it('never joins legs across a stop that is still in the route', async () => {
+    const t = line(30);
+    const points = [t[0], t[10], t[20], t[29]];
+    const calls: Coord[][] = [];
+    await routeKeepingLegs(
+      stateFor([t[0], t[20], t[10], t[29]]),
+      { route: imported([t]), points },
+      router(calls),
+    );
+    expect(calls).toEqual([
+      [t[0], t[20]],
+      [t[10], t[29]],
+    ]);
+  });
   it('lets the caller route everything when no leg survives', async () => {
     const t = line(10);
     const result = await routeKeepingLegs(
-      stateFor([t[9], t[0]]),
+      stateFor([t[0], [-22.95, -43.19]]),
       { route: imported([t]), points: [t[0], t[9]] },
       router([]),
     );

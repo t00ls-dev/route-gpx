@@ -198,9 +198,12 @@
           original geometry. A track without waypoints gets stops where its
           shape needs them (loops, out-and-back sections and large bends).
           Editing a point recalculates only the sections next to it; the rest of
-          the imported track stays exact. Shared links store points and
-          settings, then recalculate against current road data; they do not
-          embed an imported track.
+          the imported track stays exact. Removing a stop, Reverse and Round
+          trip reuse the imported track without a new request; a recalculated
+          section joins any gap between track segments. Calculate route
+          recalculates the whole route through your points. Shared links store
+          points and settings, then recalculate against current road data; they
+          do not embed an imported track.
         </p>
         <p>
           Round trip adds the return itinerary. On divided roads, check that
@@ -593,9 +596,12 @@ npm run test:browser -- --shard=2/2</code></pre>
           geometria original. Um trajeto sem paradas ganha paradas onde o
           formato precisa delas (laços, idas e voltas e curvas grandes). Editar
           um ponto recalcula só os trechos vizinhos; o resto do trajeto
-          importado continua exato. Links compartilhados guardam pontos e opções
-          e recalculam com os dados atuais; não incluem a geometria original de
-          um arquivo importado.
+          importado continua exato. Remover uma parada, Inverter e Ida e volta
+          reaproveitam o trajeto importado sem nova solicitação; um trecho
+          recalculado une eventuais intervalos entre segmentos do trajeto.
+          Calcular rota recalcula a rota inteira pelos seus pontos. Links
+          compartilhados guardam pontos e opções e recalculam com os dados
+          atuais; não incluem a geometria original de um arquivo importado.
         </p>
         <p>
           Ida e volta adiciona o retorno ao itinerário. Em vias de pistas

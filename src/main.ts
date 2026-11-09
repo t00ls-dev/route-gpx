@@ -54,7 +54,13 @@ import {
 } from './core';
 import { calculate, searchAddress, defaultPhotonUrl } from './services';
 import { simplifyTrack } from './simplify';
-import { isImportedRoute, routeKeepingLegs } from './track-legs';
+import {
+  isImportedRoute,
+  isMixedRoute,
+  legsAt,
+  rememberLegs,
+  routeKeepingLegs,
+} from './track-legs';
 import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { addressAutocomplete } from './autocomplete';
@@ -641,6 +647,10 @@ function renderRoute(route: Route) {
   const refs = highways(route.steps);
   refs.forEach((ref) => chips.append(text('span', ref)));
   summary.append(chips);
+  if (isMixedRoute(route) && route.steps.length)
+    summary.append(
+      text('p', 'Road summary covers only recalculated sections.', 'hint'),
+    );
   if (state.prefer) {
     const local = localSections(route.steps);
     if (local.length)
@@ -720,7 +730,8 @@ function changed(preserveEditor = false, forceRouting = false) {
   status('Updating…');
   const version = revision;
   const snapshot = structuredClone(state);
-  const base = trackBase;
+  // Calculate route asks for a fresh router result over the whole route.
+  const base = forceRouting ? null : trackBase;
   timer = setTimeout(() => {
     status('Calculating…');
     $<HTMLButtonElement>('calculate').disabled = true;
@@ -900,6 +911,11 @@ $('save-settings').onclick = () => {
     else {
       settings();
       syncUrl();
+      if (current) {
+        // Undo to this step restores the shown geometry instead of rerouting.
+        undoHistory.attach(current);
+        weather.render(); // Picks up a changed weather server.
+      }
       status('Settings applied.');
     }
   } catch (e) {
@@ -913,6 +929,7 @@ $<HTMLInputElement>('route-name').oninput = () => {
 $<HTMLInputElement>('route-name').onchange = () => {
   state.name = $<HTMLInputElement>('route-name').value.trim();
   syncUrl();
+  if (current) undoHistory.attach(current);
 };
 function gpxContent(): string {
   return generateGpx(
@@ -983,6 +1000,8 @@ $<HTMLInputElement>('import').onchange = () => {
       selected = 0;
       weather.invalidate();
       current = imported.route;
+      if (imported.indices)
+        rememberLegs(current, legsAt(current.segments, imported.indices));
       syncUrl();
       renderPoints();
       settings();
@@ -998,6 +1017,8 @@ $<HTMLInputElement>('import').onchange = () => {
 window.addEventListener('hashchange', () => {
   try {
     state = fromLink(decodeState(location.hash, true));
+    // A link stores points, not imported geometry: route it from scratch.
+    trackBase = null;
     const lang = state.language ?? getLanguage();
     state.language = lang;
     setLanguage(lang);

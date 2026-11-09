@@ -373,16 +373,20 @@ export function meters(a: Coord, b: Coord): number {
 }
 /**
  * Interior track indices for control points of an imported track without
- * waypoints. Douglas–Peucker picks the vertices farthest from the line between
- * neighbours first, so loops, out-and-back spurs and large bends get a point
- * and a full reroute follows the original shape; long straight gaps are then
- * split by distance.
+ * waypoints. The track is first divided evenly by distance so that no leg is
+ * longer than `maxSpacing` (a leg spanning several laps would be replaced
+ * wholesale when one of its points is edited); Douglas–Peucker then spends the
+ * remaining points on the vertices farthest from the line between neighbours,
+ * so loops, out-and-back spurs and large bends get a point and a full reroute
+ * follows the original shape. No point is placed within `minSpacing` metres of
+ * another, so repeated laps and out-and-back sections do not stack markers.
  */
 export function controlIndices(
   flat: Coord[],
   max = 20,
   tolerance = 50,
   maxSpacing = 10_000,
+  minSpacing = 150,
 ): number[] {
   // Short tracks (under 50 points) keep only their endpoints, as before.
   if (flat.length < 50) return [];
@@ -401,16 +405,42 @@ export function controlIndices(
       : 0;
     return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
   };
+  const keep = [0, flat.length - 1];
+  const near = (i: number) =>
+    keep.some(
+      (j) => Math.hypot(xy[i][0] - xy[j][0], xy[i][1] - xy[j][1]) < minSpacing,
+    );
+  const along = [0];
+  for (let i = 1; i < flat.length; i++)
+    along.push(along[i - 1] + meters(flat[i - 1], flat[i]));
+  const total = along.at(-1)!;
+  const pieces = Math.min(max + 1, Math.ceil(total / maxSpacing));
+  for (let n = 1, m = 0; n < pieces; n++) {
+    const target = (total * n) / pieces,
+      half = total / pieces / 2;
+    while (m < flat.length - 1 && along[m] < target) m++;
+    // Closest vertex to the target that keeps the minimum spacing.
+    for (let d = 0; ; d++) {
+      const up = m + d < flat.length - 1 && along[m + d] - target < half,
+        down = m - d > 0 && target - along[m - d] < half;
+      if (!up && !down) break;
+      const j = up && !near(m + d) ? m + d : down && !near(m - d) ? m - d : -1;
+      if (j >= 0) {
+        keep.push(j);
+        break;
+      }
+    }
+  }
+  keep.sort((a, b) => a - b);
   const farthest = (a: number, b: number) => {
     let best = -1,
       distance = 0;
     for (let i = a + 1; i < b; i++) {
       const d = deviation(xy[i], xy[a], xy[b]);
-      if (d > distance) [best, distance] = [i, d];
+      if (d > distance && !near(i)) [best, distance] = [i, d];
     }
     return { best, distance };
   };
-  const keep = [0, flat.length - 1];
   while (keep.length - 2 < max) {
     let pick = { best: -1, distance: tolerance };
     for (let n = 0; n < keep.length - 1; n++) {
@@ -421,30 +451,14 @@ export function controlIndices(
     keep.push(pick.best);
     keep.sort((a, b) => a - b);
   }
-  const along = [0];
-  for (let i = 1; i < flat.length; i++)
-    along.push(along[i - 1] + meters(flat[i - 1], flat[i]));
-  while (keep.length - 2 < max) {
-    let gap = 0;
-    for (let n = 1; n < keep.length - 1; n++)
-      if (
-        along[keep[n + 1]] - along[keep[n]] >
-        along[keep[gap + 1]] - along[keep[gap]]
-      )
-        gap = n;
-    const [a, b] = [keep[gap], keep[gap + 1]];
-    if (along[b] - along[a] <= maxSpacing || b - a < 2) break;
-    const middle = (along[a] + along[b]) / 2;
-    let j = a + 1;
-    while (j < b - 1 && along[j] < middle) j++;
-    keep.splice(gap + 1, 0, j);
-  }
   return keep.slice(1, -1);
 }
 export function importGpx(xml: string): {
   route: Route;
   points: Point[];
   name: string;
+  /** Flat track index of every point, when the points were placed on the track. */
+  indices?: number[];
 } {
   if (xml.length > 10_000_000)
     throw new Error('Choose a GPX smaller than 10 MB.');
@@ -494,16 +508,21 @@ export function importGpx(xml: string): {
     { name: 'Destination', coord: flat.at(-1)! },
   ];
   // With no waypoints, place control points where the track shape needs them;
-  // original geometry stays intact until edited.
-  if (!inner.length)
+  // original geometry stays intact until edited. Their exact track indices
+  // let edits keep unchanged legs without locating points on the track.
+  let indices: number[] | undefined;
+  if (!inner.length) {
+    const controls = controlIndices(flat);
     points.splice(
       1,
       0,
-      ...controlIndices(flat).map((j, i) => ({
+      ...controls.map((j, i) => ({
         name: `Stop ${i + 1}`,
         coord: flat[j],
       })),
     );
+    indices = [0, ...controls, flat.length - 1];
+  }
   return {
     route: {
       segments,
@@ -518,5 +537,6 @@ export function importGpx(xml: string): {
     },
     points,
     name: (all(doc, 'name')[0]?.textContent || 'Imported route').slice(0, 160),
+    indices,
   };
 }

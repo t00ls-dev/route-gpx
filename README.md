@@ -35,7 +35,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 
 - Nothing is saved automatically: use **Save route** to keep the exact geometry in this browser, and export backups, since clearing browser data can remove saved routes.
 - Routing currently uses a car profile. **Prefer main roads** flags possible local sections but does not guarantee their exclusion; estimates exclude stops and real-time traffic.
-- Imported GPX tracks stay intact. Editing a point recalculates only the sections next to it, and the rest of the imported track is kept exactly. Share links store points and options, not imported geometry.
+- Imported GPX tracks stay intact. Editing a point recalculates only the sections next to it, and the rest of the imported track is kept exactly; **Calculate route** recalculates the whole route. Share links store points and options, not imported geometry.
 - Weather risks are a review aid, not an official warning, and the exported GPX carries no forecast or timestamps.
 
 ## Privacy

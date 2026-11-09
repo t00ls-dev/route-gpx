@@ -13,6 +13,7 @@ import {
   generateGpx,
   importGpx,
   controlIndices,
+  meters,
   localSections,
   filename,
   type Route,
@@ -380,6 +381,45 @@ describe('GPX 1.1', () => {
     expect(picked.length).toBeLessThanOrEqual(20);
     expect(picked).toEqual([...picked].sort((a, b) => a - b));
     expect(controlIndices(straight).length).toBeGreaterThanOrEqual(3);
+  });
+  it('does not stack control points on repeated laps', () => {
+    // Four passes of an out-and-back road with turnarounds at both ends.
+    const road = (n: number) =>
+      Array.from({ length: 300 }, (_, i): [number, number] => {
+        const x = n % 2 ? 299 - i : i;
+        return [
+          -22.9 + Math.sin(x / 20) * 0.002 + n * 0.00004,
+          -43.2 + x * 3e-4,
+        ];
+      });
+    const flat = [0, 1, 2, 3].flatMap(road);
+    const controls = controlIndices(flat);
+    expect(controls.length).toBeGreaterThan(0);
+    // Start and destination meet on a loop; no control point joins them.
+    const all = [0, ...controls, flat.length - 1];
+    // No leg spans several laps: editing one point replaces at most 10 km.
+    for (const [n, a] of all.slice(0, -1).entries()) {
+      const leg = flat.slice(a, all[n + 1] + 1);
+      const km = leg.slice(1).reduce((sum, p, i) => sum + meters(leg[i], p), 0);
+      expect(km).toBeLessThanOrEqual(10_000);
+    }
+    for (const a of controls)
+      for (const b of all)
+        if (a !== b)
+          expect(meters(flat[a], flat[b])).toBeGreaterThanOrEqual(150);
+  });
+  it('returns the track index of every automatic control point', () => {
+    const coords = Array.from({ length: 200 }, (_, i) => [
+      -22.9 + Math.sin(i / 10) * 0.01,
+      -43.2 + i * 0.001,
+    ]);
+    const result = importGpx(
+      `<gpx><trk><trkseg>${coords.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg></trk></gpx>`,
+    );
+    expect(result.indices).toHaveLength(result.points.length);
+    result.points.forEach((p, i) =>
+      expect(p.coord).toEqual(coords[result.indices![i]]),
+    );
   });
   it.each([
     '<html/>',

@@ -240,6 +240,24 @@ test('editing an imported track reroutes only the legs next to the edit', async 
     track.slice(-150).map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`),
   );
   await expect(page.locator('#summary')).toContainText('Imported GPX + OSRM');
+  await expect(page.locator('#summary')).toContainText(
+    'Road summary covers only recalculated sections.',
+  );
+
+  // Undo returns to the renamed step with the exact imported track, no request.
+  await page.locator('#undo').click();
+  // Restored synchronously: a reroute would leave the download disabled.
+  expect(await page.locator('#download').isEnabled()).toBe(true);
+  await expect(page.locator('#summary')).toContainText('Imported GPX ·');
+  await expect(page.locator('#route-name')).toHaveValue('Renamed spur');
+  expect(routes).toEqual([3]);
+
+  // Calculate route asks the router for the whole route through every point.
+  await page.locator('#calculate').click();
+  await expect(page.locator('#summary')).toContainText('OSRM ·', {
+    timeout: 15000,
+  });
+  expect(routes).toEqual([3, count]);
 });
 test('invalid coordinates cannot enable a stale GPX download', async ({
   page,
