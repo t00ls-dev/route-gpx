@@ -36,6 +36,7 @@ Keep calculation and validation logic in the relevant module rather than adding 
 ## Contracts to preserve
 
 - `Coord` is `[latitude, longitude]`. OSRM URLs and GeoJSON use longitude first; convert at the adapter boundary. Preserve every full-resolution track point and separate GPX track segments. Escape user-provided XML text.
+- Server URLs live in two places by design: OSRM, Valhalla and Nominatim are part of `State` (links when non-default, JSON editor, saved routes, backups); Photon, Open-Meteo and the IP-region service are device preferences in localStorage (`photon-url`, `weather-server`, `region-url`) and never enter links, saved routes or backups. Moving a server between the two changes the state/link format and needs compatibility handling.
 - Servers carried by a link are never used without an explicit choice: a link with non-default routing/search servers opens with the defaults and a notice offers Use link servers. Settings, the JSON editor, saved routes and backups remain explicit user flows.
 - Router responses are untrusted: the OSRM and Valhalla adapters build routes through `validRoute` (also used for backups) and reject malformed geometry or values, letting OSRM failures fall back to Valhalla.
 - Imported GPX geometry remains exact until a point edit causes rerouting. A share link stores controls/options, not that geometry, and recalculates when opened. Do not imply that links preserve imported tracks.
