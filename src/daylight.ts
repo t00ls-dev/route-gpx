@@ -109,7 +109,15 @@ interface DarkSection {
   start: number;
   end: number;
 }
+/** Contiguous along-track stretch with the same light, in meters. */
+interface LightRange {
+  from: number;
+  to: number;
+  kind: Light;
+}
 export interface RouteDaylight {
+  /** Whole route split by light at passage time, for map coloring. */
+  ranges: LightRange[];
   nightDistance: number;
   twilightDistance: number;
   sections: DarkSection[];
@@ -134,6 +142,7 @@ export function routeDaylight(
   let nightDistance = 0,
     twilightDistance = 0;
   const sections: DarkSection[] = [];
+  const ranges: LightRange[] = [];
   // Long edges are split so each piece is classified at its own passage time.
   for (let i = 1; i < track.length; i++) {
     const a = track[i - 1],
@@ -152,6 +161,10 @@ export function routeDaylight(
           ((lon + 540) % 360) - 180,
         ];
       const light = lightAt(at(from), coord);
+      const range = ranges.at(-1);
+      if (range && range.kind === light && Math.abs(range.to - from) < 1e-6)
+        range.to = to;
+      else ranges.push({ from, to, kind: light });
       if (light === 'twilight') twilightDistance += to - from;
       if (light !== 'night') continue;
       nightDistance += to - from;
@@ -173,6 +186,7 @@ export function routeDaylight(
     if (sunset !== null) latestDeparture = sunset - (arrival - departure);
   }
   return {
+    ranges,
     nightDistance,
     twilightDistance,
     sections: sections.slice(0, MAX_SECTIONS),

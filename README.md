@@ -12,7 +12,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 - **GPX:** import files up to 10 MB and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates.
 
-- **Map layers:** standard, topographic and satellite maps, with optional labels.
+- **Map layers:** standard, topographic and satellite maps, with optional labels, and route coloring by daylight.
 - **Save and share:** route links, named routes saved in this browser and JSON backup import/export.
 - **Interface:** available in English and Portuguese.
 

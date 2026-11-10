@@ -110,6 +110,28 @@ describe('route daylight', () => {
     expect(result.latestDeparture).toBe(evening.sunset! - travel);
   });
 
+  it('splits the whole route into light ranges for the map', () => {
+    const result = routeDaylight(equator, Date.UTC(2026, 10, 8, 16, 30), 60);
+    expect(result.ranges[0].from).toBe(0);
+    expect(result.ranges.at(-1)!.to).toBeGreaterThan(111_000);
+    for (let i = 1; i < result.ranges.length; i++) {
+      expect(result.ranges[i].from).toBeCloseTo(result.ranges[i - 1].to, 6);
+      expect(result.ranges[i].kind).not.toBe(result.ranges[i - 1].kind);
+    }
+    expect(result.ranges.map((r) => r.kind)).toEqual([
+      'day',
+      'twilight',
+      'night',
+    ]);
+    const night = result.ranges
+      .filter((r) => r.kind === 'night')
+      .reduce((sum, r) => sum + r.to - r.from, 0);
+    expect(night).toBeCloseTo(result.nightDistance, 6);
+    expect(
+      routeDaylight(equator, Date.UTC(2026, 10, 8, 10), 60).ranges,
+    ).toEqual([{ from: 0, to: expect.any(Number), kind: 'day' }]);
+  });
+
   it('has nothing in the dark at midday', () => {
     const result = routeDaylight(equator, Date.UTC(2026, 10, 8, 10), 60);
     expect(result).toMatchObject({
