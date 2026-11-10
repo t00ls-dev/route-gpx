@@ -67,6 +67,8 @@ import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
+import { setupRouteOverlays } from './route-overlays';
+import { routeDaylight } from './daylight';
 import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
@@ -191,6 +193,21 @@ const weather = setupWeather(
 const playback = setupPlayback(map, {
   state: () => state,
   speedKmh: () => speedKmh,
+});
+const overlays = setupRouteOverlays(map, { route: () => current });
+const departureTime = () =>
+  state.departure ? Date.parse(state.departure) : NaN;
+overlays.register({
+  id: 'daylight',
+  label: 'Daylight',
+  legend: [
+    { kind: 'day', label: 'Day' },
+    { kind: 'twilight', label: 'Twilight' },
+    { kind: 'night', label: 'Dark' },
+  ],
+  unavailable: () =>
+    Number.isFinite(departureTime()) ? null : 'Choose a departure date',
+  ranges: (route) => routeDaylight(route, departureTime(), speedKmh).ranges,
 });
 // Registered after the weather handler, which stores the new departure first.
 $('departure').addEventListener('change', () => {
@@ -631,6 +648,7 @@ function clearSummary() {
     $(id).replaceChildren();
   renderDaylight(state, null, speedKmh);
   playback.setRoute(null);
+  overlays.refresh();
 }
 /** Route summary card; departure, units, speed and language changes only re-render this. */
 function renderSummary(route: Route) {
@@ -692,6 +710,7 @@ function renderSummary(route: Route) {
   summary.append(stats, text('p', basis, 'hint stats-basis'), daylight);
   renderDaylight(state, route, speedKmh);
   playback.setRoute(route);
+  overlays.refresh();
   const chips = document.createElement('div');
   chips.className = 'chips';
   const refs = highways(route.steps);

@@ -1995,3 +1995,77 @@ input[type='range'].range-input:disabled {
     font-size: 16px;
   }
 }
+
+/* Route coloring: one active coloring over the route line (route-overlays.ts). */
+.route-coloring-day {
+  --route-coloring: #c98a00;
+}
+.route-coloring-twilight {
+  --route-coloring: #7254a8;
+}
+.route-coloring-night {
+  --route-coloring: #1d2a4d;
+}
+.leaflet-pane path.route-coloring {
+  stroke: var(--route-coloring);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.coloring-group {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.coloring-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.coloring-group button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.coloring-group button + button {
+  margin-top: 6px;
+}
+.coloring-group button[aria-disabled='true'] {
+  color: #586673;
+  cursor: not-allowed;
+}
+.coloring-reason {
+  font-size: 11px;
+}
+.coloring-reason:empty {
+  display: none;
+}
+.route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  box-shadow: 0 1px 4px #0003;
+}
+.route-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.route-legend-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--route-coloring);
+}
+@media (max-width: 759px) {
+  .planner:not(.panel-closed):not(.map-fullscreen) .route-legend {
+    visibility: hidden;
+  }
+}

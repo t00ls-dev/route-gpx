@@ -207,6 +207,55 @@ test('daylight shows today without a departure, dark sections for an evening dep
   await expect(line).toContainText('None in the dark');
   expect(routes).toBe(0);
 });
+test('route coloring by daylight needs a departure, colors dark stretches, persists and translates', async ({
+  page,
+}) => {
+  await setup(page, true);
+  let routes = 0;
+  page.on('request', (r) => {
+    if (r.url().includes('/route/v1/driving/')) routes++;
+  });
+  const daylight = page.locator('[data-coloring=daylight]');
+  await page.locator('#layers-toggle').click();
+  await expect(page.locator('#coloring-heading')).toHaveText('Route coloring');
+  await expect(daylight).toHaveAttribute('aria-disabled', 'true');
+  await expect(daylight).toContainText('Choose a departure date');
+  await expect(page.locator('path.route-coloring')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  // About 1 h 51 min at 60 km/h from 16:30 UTC; the equator gets dark near 18:06.
+  await date(page, '2026-11-08T16:30');
+  await page.locator('#layers-toggle').click();
+  await expect(daylight).toHaveAttribute('aria-disabled', 'false');
+  await daylight.click();
+  await expect(daylight).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('path.route-coloring-day').first()).toBeAttached();
+  await expect(
+    page.locator('path.route-coloring-night').first(),
+  ).toBeAttached();
+  await expect(page.locator('.route-legend')).toHaveText(
+    /Day\s*Twilight\s*Dark/,
+  );
+  // A device preference: kept across reloads, never in the link.
+  expect(new URL(page.url()).hash).not.toContain('daylight');
+  expect(routes).toBe(0);
+  await page.reload();
+  await expect(page.locator('#download')).toBeEnabled();
+  // Reopening the link routes once, as always; coloring adds no request.
+  routes = 0;
+  await expect(
+    page.locator('path.route-coloring-night').first(),
+  ).toBeAttached();
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('.route-legend')).toHaveText(
+    /Dia\s*Crepúsculo\s*Escuro/,
+  );
+  await page.locator('#layers-toggle').click();
+  await expect(page.locator('#coloring-heading')).toHaveText('Colorir a rota');
+  await page.locator('[data-coloring=none]').click();
+  await expect(page.locator('path.route-coloring')).toHaveCount(0);
+  await expect(page.locator('.route-legend')).toBeHidden();
+  expect(routes).toBe(0);
+});
 test('no date or invalid dates never request weather', async ({ page }) => {
   await setup(page);
   let calls = 0;
