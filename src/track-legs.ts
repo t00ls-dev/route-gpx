@@ -1,4 +1,10 @@
-import { meters, type Coord, type Route, type State } from './core';
+import {
+  importedProvider,
+  meters,
+  type Coord,
+  type Route,
+  type State,
+} from './core';
 
 /**
  * Geometry between two consecutive route points. Inner arrays are pieces of
@@ -8,11 +14,11 @@ export type Leg = Coord[][];
 
 /** Routes whose geometry can be reused leg by leg after a point edit. */
 export const isImportedRoute = (route: Route): boolean =>
-  route.provider.startsWith('Imported GPX');
+  importedProvider(route.provider) !== null;
 
 /** True for an imported track whose edited legs were rerouted. */
 export const isMixedRoute = (route: Route): boolean =>
-  route.provider.startsWith('Imported GPX + ');
+  isImportedRoute(route) && route.provider.includes(' + ');
 
 const known = new WeakMap<Route, Leg[]>();
 const coordKey = (c: Coord) => `${c[0]},${c[1]}`;
@@ -271,7 +277,10 @@ export async function routeKeepingLegs(
     steps,
     distance: length(segments),
     duration: null,
-    provider: ['Imported GPX', ...providers].join(' + '),
+    provider: [
+      importedProvider(base.route.provider) ?? 'Imported GPX',
+      ...providers,
+    ].join(' + '),
     snapped,
   };
   if (complete) rememberLegs(result, legs);

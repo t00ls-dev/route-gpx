@@ -1,4 +1,12 @@
-import { deflateSync, inflateSync, strFromU8, strToU8 } from 'fflate';
+import {
+  deflateSync,
+  gunzipSync,
+  inflateSync,
+  strFromU8,
+  strToU8,
+  unzipSync,
+} from 'fflate';
+import { decodeFit, isFit } from './fit';
 export type Coord = [number, number]; // latitude, longitude
 export interface Point {
   name: string;
@@ -432,25 +440,41 @@ export function controlIndices(
   }
   return keep.slice(1, -1);
 }
-export function importGpx(xml: string): {
+/** Result of importing a GPX, TCX or FIT file. */
+export interface ImportedTrack {
   route: Route;
   points: Point[];
   name: string;
   /** Flat track index of every point, when the points were placed on the track. */
   indices?: number[];
-  /** Recorded `<ele>` per track point, parallel to `route.segments`; only when most points have one. */
+  /** Recorded elevation per track point, parallel to `route.segments`; only when most points have one. */
   elevations?: (number | null)[][];
-} {
-  if (xml.length > 10_000_000)
-    throw new Error('Choose a GPX smaller than 10 MB.');
+}
+
+/** Geometry, names and elevation read from a file, before shared processing. */
+interface ParsedTrack {
+  format: 'GPX' | 'TCX' | 'FIT';
+  name: string;
+  segments: Coord[][];
+  elevations: (number | null)[][];
+  waypoints: { name: string; coord: Coord }[];
+}
+
+const MAX_IMPORT_BYTES = 10_000_000;
+
+const recordedElevation = (value: number): number | null =>
+  Number.isFinite(value) && value > -500 && value < 9000 ? value : null;
+
+const xmlAll = (node: Document | Element, tag: string) =>
+  Array.from(node.getElementsByTagNameNS('*', tag));
+
+function parseXml(xml: string): Document | null {
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
-  if (
-    doc.querySelector('parsererror') ||
-    doc.documentElement.localName !== 'gpx'
-  )
-    throw new Error('This file is not a valid GPX.');
-  const all = (node: Document | Element, tag: string) =>
-    Array.from(node.getElementsByTagNameNS('*', tag));
+  return doc.querySelector('parsererror') ? null : doc;
+}
+
+function parseGpx(doc: Document): ParsedTrack {
+  const all = xmlAll;
   const coord = (e: Element): Coord => {
     if (!e.hasAttribute('lat') || !e.hasAttribute('lon'))
       throw new Error('GPX point without coordinates.');
@@ -469,22 +493,84 @@ export function importGpx(xml: string): {
     elements = all(doc, 'rte')
       .map((seg) => all(seg, 'rtept'))
       .filter((s) => s.length >= 2);
-  const segments = elements.map((s) => s.map(coord));
   const ele = (e: Element): number | null => {
     const text = all(e, 'ele')[0]?.textContent?.trim();
-    const value = text ? Number(text) : NaN;
-    return Number.isFinite(value) && value > -500 && value < 9000
-      ? value
-      : null;
+    return text ? recordedElevation(Number(text)) : null;
   };
-  const elevationRows = elements.map((s) => s.map(ele));
-  const withElevation = elevationRows.flat().filter((v) => v !== null).length;
+  return {
+    format: 'GPX',
+    name: all(doc, 'name')[0]?.textContent || '',
+    segments: elements.map((s) => s.map(coord)),
+    elevations: elements.map((s) => s.map(ele)),
+    waypoints: all(doc, 'wpt').map((w) => ({
+      name: all(w, 'name')[0]?.textContent || 'Stop',
+      coord: coord(w),
+    })),
+  };
+}
+
+/** TCX: each `Track` is a segment; course points become named points. */
+function parseTcx(doc: Document): ParsedTrack {
+  const all = xmlAll;
+  const child = (e: Element, tag: string) =>
+    Array.from(e.children).find((c) => c.localName === tag);
+  const position = (e: Element): Coord | null => {
+    const p = child(e, 'Position');
+    if (!p) return null;
+    const c: Coord = [
+      Number(child(p, 'LatitudeDegrees')?.textContent),
+      Number(child(p, 'LongitudeDegrees')?.textContent),
+    ];
+    if (!validCoord(c))
+      throw new Error('The TCX contains invalid coordinates.');
+    return c;
+  };
+  const segments: Coord[][] = [],
+    elevations: (number | null)[][] = [];
+  for (const track of all(doc, 'Track')) {
+    const coords: Coord[] = [],
+      eles: (number | null)[] = [];
+    for (const point of all(track, 'Trackpoint')) {
+      const c = position(point);
+      if (!c) continue;
+      const text = child(point, 'AltitudeMeters')?.textContent?.trim();
+      coords.push(c);
+      eles.push(text ? recordedElevation(Number(text)) : null);
+    }
+    if (coords.length >= 2) {
+      segments.push(coords);
+      elevations.push(eles);
+    }
+  }
+  const course = all(doc, 'Course')[0];
+  return {
+    format: 'TCX',
+    name: (course && child(course, 'Name')?.textContent?.trim()) || '',
+    segments,
+    elevations,
+    waypoints: all(doc, 'CoursePoint').flatMap((p) => {
+      const c = position(p);
+      return c
+        ? [{ name: child(p, 'Name')?.textContent?.trim() || 'Stop', coord: c }]
+        : [];
+    }),
+  };
+}
+
+/** Shared processing: endpoints, waypoints, control points and distance. */
+function finishImport(parsed: ParsedTrack): ImportedTrack {
+  const keep = parsed.segments.flatMap((s, i) => (s.length >= 2 ? [i] : []));
+  const segments = keep.map((i) => parsed.segments[i]);
+  const elevationRows = keep.map((i) => parsed.elevations[i]);
   if (!segments.length)
-    throw new Error('No track or route geometry found in this GPX.');
+    throw new Error(
+      `No track or route geometry found in this ${parsed.format}.`,
+    );
   const flat = segments.flat();
-  const wpts = all(doc, 'wpt').map((w) => ({
-    name: (all(w, 'name')[0]?.textContent || 'Stop').slice(0, 240),
-    coord: coord(w),
+  const withElevation = elevationRows.flat().filter((v) => v !== null).length;
+  const wpts = parsed.waypoints.map((w) => ({
+    name: w.name.slice(0, 240),
+    coord: w.coord,
   }));
   // Always preserve track endpoints, even if a file has unrelated waypoints.
   const inner = wpts
@@ -524,14 +610,111 @@ export function importGpx(xml: string): {
         0,
       ),
       duration: null,
-      provider: 'Imported GPX',
+      provider: `Imported ${parsed.format}`,
     },
     points,
     // Empty when the file has no name; the interface supplies a localized default.
-    name: (all(doc, 'name')[0]?.textContent || '').slice(0, 160),
+    name: parsed.name.slice(0, 160),
     indices,
     ...(withElevation >= 0.8 * flat.length
       ? { elevations: elevationRows }
       : {}),
   };
 }
+
+export function importGpx(xml: string): ImportedTrack {
+  if (xml.length > MAX_IMPORT_BYTES)
+    throw new Error('Choose a GPX smaller than 10 MB.');
+  const doc = parseXml(xml);
+  if (!doc || doc.documentElement.localName !== 'gpx')
+    throw new Error('This file is not a valid GPX.');
+  return finishImport(parseGpx(doc));
+}
+
+/**
+ * Imports a GPX, TCX or FIT file, detected by content rather than extension.
+ * Only geometry, names, course points and recorded elevation are read.
+ */
+export function importTrackFile(input: Uint8Array): ImportedTrack {
+  if (input.length > MAX_IMPORT_BYTES)
+    throw new Error('Choose a file smaller than 10 MB.');
+  const bytes = unpack(input);
+  if (isFit(bytes)) {
+    const fit = decodeFit(bytes, meters);
+    return finishImport({ format: 'FIT', ...fit });
+  }
+  // Like File.text(): UTF-8, with invalid bytes replaced. Some exported TCX
+  // files start with spaces before the XML declaration, which XML rejects.
+  const doc = parseXml(new TextDecoder().decode(bytes).trimStart());
+  const root = doc?.documentElement.localName;
+  if (doc && root === 'gpx') return finishImport(parseGpx(doc));
+  if (doc && root === 'TrainingCenterDatabase')
+    return finishImport(parseTcx(doc));
+  throw new Error('This file is not a valid GPX, TCX or FIT file.');
+}
+
+const TRACK_FILE = /\.(gpx|fit|tcx)$/i;
+
+/**
+ * Exports often come compressed: Strava's original files as `.fit.gz` or
+ * `.gpx.gz`, Garmin Connect as a `.zip` with one file. Unpacks one level,
+ * bounded to the same 10 MB as an uncompressed file.
+ */
+function unpack(bytes: Uint8Array): Uint8Array {
+  const tooLarge = () => new Error('Choose a file smaller than 10 MB.');
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    // The gzip trailer holds the uncompressed size (modulo 4 GiB).
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+    if (
+      bytes.length < 18 ||
+      view.getUint32(bytes.length - 4, true) > MAX_IMPORT_BYTES
+    )
+      throw tooLarge();
+    let out: Uint8Array;
+    try {
+      out = gunzipSync(bytes);
+    } catch {
+      throw new Error('This file is not a valid GPX, TCX or FIT file.');
+    }
+    if (out.length > MAX_IMPORT_BYTES) throw tooLarge();
+    return out;
+  }
+  if (
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    bytes[2] === 0x03 &&
+    bytes[3] === 0x04
+  ) {
+    let found = false;
+    let files: Record<string, Uint8Array>;
+    try {
+      files = unzipSync(bytes, {
+        // Only the first track file, and only when its stated size fits.
+        filter: (file) => {
+          // Skips macOS metadata entries (`__MACOSX/`, `._name`).
+          if (
+            found ||
+            !TRACK_FILE.test(file.name) ||
+            /(^|\/)(__MACOSX\/|\._)/.test(file.name)
+          )
+            return false;
+          if (file.originalSize > MAX_IMPORT_BYTES) throw tooLarge();
+          return (found = true);
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('10 MB'))
+        throw error;
+      throw new Error('This file is not a valid GPX, TCX or FIT file.');
+    }
+    const out = Object.values(files)[0];
+    if (!out) throw new Error('This ZIP has no GPX, TCX or FIT file.');
+    if (out.length > MAX_IMPORT_BYTES) throw tooLarge();
+    return out;
+  }
+  return bytes;
+}
+
+/** True for the provider label of an imported file, possibly with rerouted parts. */
+export const importedProvider = (provider: string): string | null =>
+  /^Imported (GPX|TCX|FIT)(?= \+ |$)/.exec(provider)?.[0] ?? null;

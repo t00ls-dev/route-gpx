@@ -245,12 +245,12 @@ const pt: Record<string, string> = {
   'Choose a place.': 'Escolha um lugar.',
   'GPX downloaded.': 'GPX baixado.',
   'Link copied.': 'Link copiado.',
-  'GPX imported. Edits recalculate only the changed sections.':
-    'GPX importado. Alterações recalculam só os trechos alterados.',
+  'Route imported. Edits recalculate only the changed sections.':
+    'Rota importada. Alterações recalculam só os trechos alterados.',
   'Settings applied.': 'Configurações aplicadas.',
   'Road summary covers only recalculated sections.':
     'O resumo de vias cobre só os trechos recalculados.',
-  'Import GPX': 'Importar GPX',
+  'Import GPX, FIT or TCX': 'Importar GPX, FIT ou TCX',
   'Route points': 'Pontos da rota',
   '↶ Round trip': '↶ Ida e volta',
   'Route summary': 'Resumo da rota',
@@ -282,6 +282,23 @@ const pt: Record<string, string> = {
   'Address search unavailable. Try again later or paste coordinates.':
     'Busca de endereços indisponível. Tente mais tarde ou cole coordenadas.',
   'Choose a GPX smaller than 10 MB.': 'Escolha um GPX menor que 10 MB.',
+  'Choose a file smaller than 10 MB.': 'Escolha um arquivo menor que 10 MB.',
+  'This file is not a valid GPX, TCX or FIT file.':
+    'Este arquivo não é um GPX, TCX ou FIT válido.',
+  'No track or route geometry found in this TCX.':
+    'Este TCX não contém geometria de trajeto ou rota.',
+  'No track or route geometry found in this FIT.':
+    'Este FIT não contém geometria de trajeto ou rota.',
+  'The TCX contains invalid coordinates.':
+    'O TCX contém coordenadas inválidas.',
+  'This ZIP has no GPX, TCX or FIT file.':
+    'Este ZIP não contém arquivo GPX, TCX ou FIT.',
+  'This file is not a valid FIT.': 'Este arquivo não é um FIT válido.',
+  'This FIT file is truncated.': 'Este arquivo FIT está incompleto.',
+  'This FIT file is damaged (checksum mismatch).':
+    'Este arquivo FIT está corrompido (soma de verificação não confere).',
+  'This file has too many track points.':
+    'Este arquivo tem pontos de trajeto demais.',
   'Invalid route link. Your current route has been kept.':
     'Link de rota inválido. Sua rota atual foi mantida.',
   'Invalid JSON state. Load the current state to see the expected format.':
@@ -316,6 +333,8 @@ const pt: Record<string, string> = {
     'A distância e a velocidade média devem ser números positivos válidos.',
   'Imported route': 'Rota importada',
   'Imported GPX': 'GPX importado',
+  'Imported TCX': 'TCX importado',
+  'Imported FIT': 'FIT importado',
   'Valhalla (fallback)': 'Valhalla (alternativo)',
   'Lock editing': 'Bloquear edição',
   'Unlock editing': 'Desbloquear edição',
@@ -337,7 +356,7 @@ const pt: Record<string, string> = {
   'No elevation data for this route.': 'Sem dados de elevação para esta rota.',
   'Elevation estimated from terrain.': 'Altitude estimada pelo relevo.',
   'See the help.': 'Veja a ajuda.',
-  'Recorded in the GPX file.': 'Gravada no arquivo GPX.',
+  'Recorded in the imported file.': 'Gravada no arquivo importado.',
   'Elevation data: Copernicus DEM GLO-90 via Open-Meteo':
     'Dados de elevação: Copernicus DEM GLO-90 via Open-Meteo',
   'Route marks': 'Marcas da rota',

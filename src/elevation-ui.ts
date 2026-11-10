@@ -229,7 +229,7 @@ export function setupElevation(
         document.createTextNode(' '),
         link,
       );
-    } else note.textContent = 'Recorded in the GPX file.';
+    } else note.textContent = 'Recorded in the imported file.';
     stats.replaceChildren(
       ...lines.map((line) => {
         const p = document.createElement('p');

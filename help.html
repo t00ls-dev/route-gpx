@@ -215,16 +215,25 @@
         <p>
           Set GPX name above the download button to name the file and track.
           Leave it empty to use the start and destination. Download GPX exports
-          the complete road geometry and your stops. Import preserves the
-          original geometry. A track without waypoints gets stops where its
-          shape needs them (loops, out-and-back sections and large bends).
-          Editing a point recalculates only the sections next to it; the rest of
-          the imported track stays exact. Removing a stop, Reverse and Round
-          trip reuse the imported track without a new request; a recalculated
-          section joins any gap between track segments. Calculate route
-          recalculates the whole route through your points. Shared links store
-          points and settings, then recalculate against current road data; they
-          do not embed an imported track.
+          the complete road geometry and your stops. Import GPX, FIT or TCX
+          reads GPX files, FIT courses and activities (Garmin, Wahoo and similar
+          devices) and TCX files, detected by content, up to 10 MB, also
+          compressed as .gz (such as Strava original files) or in a .zip (such
+          as Garmin Connect exports). Only the track, its name, waypoints or
+          course points and recorded elevation are read, in your browser; heart
+          rate, power, times and other sensor data are ignored. In FIT files, a
+          stretch without positions longer than 1 km starts a new track segment;
+          in TCX files each track (for example each lap) is a segment. Downloads
+          are always GPX. Import preserves the original geometry. A track
+          without waypoints gets stops where its shape needs them (loops,
+          out-and-back sections and large bends). Editing a point recalculates
+          only the sections next to it; the rest of the imported track stays
+          exact. Removing a stop, Reverse and Round trip reuse the imported
+          track without a new request; a recalculated section joins any gap
+          between track segments. Calculate route recalculates the whole route
+          through your points. Shared links store points and settings, then
+          recalculate against current road data; they do not embed an imported
+          track.
         </p>
         <p>
           Round trip adds the return itinerary. On divided roads, check that
@@ -242,13 +251,14 @@
           the last 90 UTC calendar days are accepted. Older departures and
           arrival windows beyond 16 UTC calendar days including today are
           rejected. For past dates, values are archived model estimates, not
-          exact observations at each route point. Imported GPX works too.
-          Samples include endpoints and waypoints, approximately every 20 km.
-          Below 20 km/h, spacing is reduced to about one hour of travel (5 km at
-          5 km/h, for example). The maximum of 20 points takes priority and may
-          require larger gaps. Select a weather icon on the map to open its
-          weather card in the panel. Selecting a card centers the map on its
-          point and collapses the mobile panel; Enter and Space work too.
+          exact observations at each route point. Imported GPX, FIT and TCX
+          tracks work too. Samples include endpoints and waypoints,
+          approximately every 20 km. Below 20 km/h, spacing is reduced to about
+          one hour of travel (5 km at 5 km/h, for example). The maximum of 20
+          points takes priority and may require larger gaps. Select a weather
+          icon on the map to open its weather card in the panel. Selecting a
+          card centers the map on its point and collapses the mobile panel;
+          Enter and Space work too.
         </p>
         <p>
           Speed changes recalculate locally if coverage permits; use Try again
@@ -329,17 +339,18 @@
           minimum, maximum and distance-weighted average altitude and the
           estimated elevation gain and loss for the whole route. Move over the
           chart to see the point on the map, its altitude and the elevation gain
-          and loss up to there. An imported GPX file that records elevation is
-          used as is, with no request. Otherwise, only when you open Elevation,
-          up to about 300 points along the route are sent to Open-Meteo, in
-          groups of 100, and the results stay in page memory for ten minutes.
-          That data comes from the Copernicus DEM GLO-90 terrain model (about 90
-          m), so bridges, viaducts and tunnels show the ground below or above
-          the road, and short steep ramps are smoothed. To remove noise from
-          trees, buildings and the model grid, terrain elevation is smoothed
-          over about 850 m and gain and loss ignore changes under 2 m; recorded
-          elevation is lightly smoothed and ignores changes under 0.3 m. Totals
-          are estimates. Elevation recorded by a GPS can be offset or noisy.
+          and loss up to there. An imported GPX, FIT or TCX file that records
+          elevation is used as is, with no request. Otherwise, only when you
+          open Elevation, up to about 300 points along the route are sent to
+          Open-Meteo, in groups of 100, and the results stay in page memory for
+          ten minutes. That data comes from the Copernicus DEM GLO-90 terrain
+          model (about 90 m), so bridges, viaducts and tunnels show the ground
+          below or above the road, and short steep ramps are smoothed. To remove
+          noise from trees, buildings and the model grid, terrain elevation is
+          smoothed over about 850 m and gain and loss ignore changes under 2 m;
+          recorded elevation is lightly smoothed and ignores changes under 0.3
+          m. Totals are estimates. Elevation recorded by a GPS can be offset or
+          noisy.
         </p>
         <h2>Travel the route</h2>
         <p>
@@ -647,12 +658,21 @@
         <p>
           Defina Nome do GPX acima do botão de download para nomear o arquivo e
           o trajeto. Se ficar vazio, usa origem e destino. O botão “Baixar GPX”
-          exporta o trajeto completo e suas paradas. Importar preserva a
-          geometria original. Um trajeto sem paradas ganha paradas onde o
-          formato precisa delas (laços, idas e voltas e curvas grandes). Editar
-          um ponto recalcula só os trechos vizinhos; o resto do trajeto
-          importado continua exato. Remover uma parada, Inverter e Ida e volta
-          reaproveitam o trajeto importado sem nova solicitação; um trecho
+          exporta o trajeto completo e suas paradas. Importar GPX, FIT ou TCX lê
+          arquivos GPX, cursos e atividades FIT (aparelhos Garmin, Wahoo e
+          similares) e arquivos TCX, reconhecidos pelo conteúdo, até 10 MB,
+          também compactados em .gz (como os arquivos originais do Strava) ou em
+          .zip (como as exportações do Garmin Connect). Só são lidos o trajeto,
+          o nome, as paradas ou pontos do curso e a elevação gravada, no seu
+          navegador; frequência cardíaca, potência, horários e outros dados de
+          sensores são ignorados. Em arquivos FIT, um trecho sem posições maior
+          que 1 km inicia um novo segmento; em arquivos TCX, cada trajeto (por
+          exemplo, cada volta) é um segmento. Os downloads são sempre GPX.
+          Importar preserva a geometria original. Um trajeto sem paradas ganha
+          paradas onde o formato precisa delas (laços, idas e voltas e curvas
+          grandes). Editar um ponto recalcula só os trechos vizinhos; o resto do
+          trajeto importado continua exato. Remover uma parada, Inverter e Ida e
+          volta reaproveitam o trajeto importado sem nova solicitação; um trecho
           recalculado une eventuais intervalos entre segmentos do trajeto.
           Calcular rota recalcula a rota inteira pelos seus pontos. Links
           compartilhados guardam pontos e opções e recalculam com os dados
@@ -675,14 +695,14 @@
           Saídas anteriores e janelas de chegada além de 16 dias de calendário
           UTC incluindo hoje são rejeitadas. Para datas passadas, os valores são
           estimativas arquivadas dos modelos, não observações exatas em cada
-          ponto da rota. Também funciona com GPX importado. As amostras incluem
-          origem, destino e passagens, aproximadamente a cada 20 km. Abaixo de
-          20 km/h, o espaçamento é reduzido para cerca de uma hora de
-          deslocamento (5 km a 5 km/h, por exemplo). O máximo de 20 pontos tem
-          prioridade e pode exigir intervalos maiores. Selecione um ícone de
-          tempo no mapa para abrir seu card de clima no painel. Selecionar um
-          card centraliza o mapa no ponto e recolhe o painel no celular; Enter e
-          Espaço também funcionam.
+          ponto da rota. Também funciona com trajetos GPX, FIT e TCX importados.
+          As amostras incluem origem, destino e passagens, aproximadamente a
+          cada 20 km. Abaixo de 20 km/h, o espaçamento é reduzido para cerca de
+          uma hora de deslocamento (5 km a 5 km/h, por exemplo). O máximo de 20
+          pontos tem prioridade e pode exigir intervalos maiores. Selecione um
+          ícone de tempo no mapa para abrir seu card de clima no painel.
+          Selecionar um card centraliza o mapa no ponto e recolhe o painel no
+          celular; Enter e Espaço também funcionam.
         </p>
         <p>
           Alterar a velocidade recalcula localmente se houver cobertura; use
@@ -768,18 +788,18 @@
           altitudes mínima, máxima e média ponderada pela distância e o ganho e
           a perda de elevação estimados para a rota inteira. Passe sobre o
           gráfico para ver o ponto no mapa, a altitude e o ganho e a perda de
-          elevação até ali. Um GPX importado que já grava a elevação é usado
-          como está, sem requisição. Caso contrário, só quando você abre
-          Elevação, até cerca de 300 pontos da rota são enviados ao Open-Meteo,
-          em grupos de 100, e os resultados ficam na memória da página por dez
-          minutos. Esses dados vêm do modelo de terreno Copernicus DEM GLO-90
-          (cerca de 90 m), então pontes, viadutos e túneis mostram o solo abaixo
-          ou acima da via, e rampas curtas e íngremes são suavizadas. Para
-          remover o ruído de árvores, prédios e da grade do modelo, a elevação
-          do relevo é suavizada em cerca de 850 m e ganho e perda ignoram
-          variações menores que 2 m; a elevação gravada é suavizada de leve e
-          ignora variações menores que 0,3 m. Os totais são estimativas. A
-          elevação gravada por um GPS pode ter desvio ou ruído.
+          elevação até ali. Um arquivo GPX, FIT ou TCX importado que já grava a
+          elevação é usado como está, sem requisição. Caso contrário, só quando
+          você abre Elevação, até cerca de 300 pontos da rota são enviados ao
+          Open-Meteo, em grupos de 100, e os resultados ficam na memória da
+          página por dez minutos. Esses dados vêm do modelo de terreno
+          Copernicus DEM GLO-90 (cerca de 90 m), então pontes, viadutos e túneis
+          mostram o solo abaixo ou acima da via, e rampas curtas e íngremes são
+          suavizadas. Para remover o ruído de árvores, prédios e da grade do
+          modelo, a elevação do relevo é suavizada em cerca de 850 m e ganho e
+          perda ignoram variações menores que 2 m; a elevação gravada é
+          suavizada de leve e ignora variações menores que 0,3 m. Os totais são
+          estimativas. A elevação gravada por um GPS pode ter desvio ou ruído.
         </p>
         <h2>Percorrer a rota</h2>
         <p>

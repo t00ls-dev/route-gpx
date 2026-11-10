@@ -58,6 +58,19 @@ describe('track legs', () => {
     expect(route.steps).toHaveLength(1);
     expect(route.snapped).toHaveLength(4);
   });
+  it('keeps the imported format in the provider of a partly rerouted track', async () => {
+    const t = line(30);
+    const base = {
+      route: { ...imported([t]), provider: 'Imported FIT' },
+      points: [t[0], t[10], t[20], t[29]],
+    };
+    const route = (await routeKeepingLegs(
+      stateFor([t[0], [-22.95, -43.19], t[20], t[29]]),
+      base,
+      router([]),
+    ))!;
+    expect(route.provider).toBe('Imported FIT + OSRM');
+  });
   it('keeps a segment gap in kept legs and joins it in a rerouted one', async () => {
     const a = line(10),
       b = line(10, -23);
