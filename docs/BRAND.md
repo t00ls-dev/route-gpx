@@ -4,13 +4,24 @@ Do not version project UI screenshots or embed them in the README. Use the proje
 
 The route mark connects two points with a bend, matching the app's purpose. The wordmark is **route-gpx**. Keep the interface light and compact.
 
-| Role                 | Color     |
-| -------------------- | --------- |
-| Primary / route mark | `#126447` |
-| Main text            | `#1b2934` |
-| Secondary text       | `#52616d` |
-| Background           | `#ffffff` |
-| Soft background      | `#edf5f1` |
+| Role                    | Token                    | Color     |
+| ----------------------- | ------------------------ | --------- |
+| Primary / route mark    | `--color-primary`        | `#126447` |
+| Primary, hover and text | `--color-primary-strong` | `#0d4a35` |
+| Main text               | `--color-text`           | `#1b2934` |
+| Secondary text          | `--color-text-muted`     | `#52616d` |
+| Background              | `--color-surface`        | `#ffffff` |
+| Subtle background       | `--color-subtle`         | `#f5f7f8` |
+| Soft background         | `--color-soft`           | `#edf5f1` |
+| Dividers                | `--color-border`         | `#cbd4dc` |
+| Control borders         | `--color-border-strong`  | `#8795a1` |
+| Focus ring              | `--color-focus`          | `#0b72c6` |
+| Errors                  | `--color-danger`         | `#a3262b` |
+| Warnings                | `--color-warning`        | `#74420b` |
+
+The tokens are defined once at the top of `src/style.css` for a single light, high-contrast theme. Text uses the system font stack (no web font is loaded): 15px on wide screens and 16px on phones, with at least 13px for secondary text and 16px in editable fields on touch screens. Controls are at least 44px tall, with 8px and 12px corner radii.
+
+The planner is a 400px side panel next to the map on wide screens and a bottom sheet over the map on phones (closed, half or full height). Export actions stay in a bar below the scrolling panel, and map tools are icon-only buttons with accessible names.
 
 Use the SVG in `public/icons/icon.svg` for scalable UI branding. PNG exports cover browser tabs, Apple home-screen icons, browser metadata icons and a maskable Android icon. `public/social-card.svg` is the editable source of the sharing preview.
 
