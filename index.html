@@ -157,12 +157,46 @@
             <summary>Daylight</summary>
             <ul id="daylight-list"></ul>
           </details>
+          <details id="weather-section">
+            <summary>Weather</summary>
+            <button id="weather-retry" type="button" hidden>Try again</button>
+            <p
+              id="weather-status"
+              class="hint"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <div id="weather-result" hidden>
+              <ol
+                id="weather-details"
+                aria-label="Weather along the route"
+              ></ol>
+            </div>
+          </details>
           <details id="elevation" class="elevation">
             <summary>Elevation</summary>
             <p id="elevation-status" class="hint" role="status"></p>
             <button id="elevation-retry" type="button" hidden>Try again</button>
             <div id="elevation-chart"></div>
             <div id="elevation-stats" class="elevation-stats"></div>
+          </details>
+          <details class="speed-options">
+            <summary>Average speed</summary>
+            <div class="speed-field">
+              <input
+                id="average-speed"
+                class="range-input"
+                type="range"
+                min="0"
+                max="200"
+                step="5"
+                value="60"
+                aria-label="Average speed"
+                aria-describedby="speed-range"
+              /><output id="average-speed-value" for="average-speed">60</output
+              ><span id="speed-unit">km/h</span>
+            </div>
+            <p id="speed-range" class="hint">1–200 km/h</p>
           </details>
           <details id="playback" class="playback">
             <summary>Travel the route</summary>
@@ -187,40 +221,7 @@
             </div>
             <div id="playback-readout" class="hint" aria-live="polite"></div>
           </details>
-          <details class="speed-options">
-            <summary>Average speed</summary>
-            <div class="speed-field">
-              <input
-                id="average-speed"
-                class="range-input"
-                type="range"
-                min="0"
-                max="200"
-                step="5"
-                value="60"
-                aria-label="Average speed"
-                aria-describedby="speed-range"
-              /><output id="average-speed-value" for="average-speed">60</output
-              ><span id="speed-unit">km/h</span>
-            </div>
-            <p id="speed-range" class="hint">1–200 km/h</p>
-          </details>
-          <details id="weather-section">
-            <summary>Weather</summary>
-            <button id="weather-retry" type="button" hidden>Try again</button>
-            <p
-              id="weather-status"
-              class="hint"
-              role="status"
-              aria-live="polite"
-            ></p>
-            <div id="weather-result" hidden>
-              <ol
-                id="weather-details"
-                aria-label="Weather along the route"
-              ></ol>
-            </div>
-          </details>
+          <div id="itinerary"></div>
           <div class="route-options">
             <label class="check"
               ><input id="prefer" type="checkbox" checked /><span
@@ -245,7 +246,6 @@
           </div>
           <p id="departure-error" class="hint error" role="status"></p>
         </section>
-        <div id="itinerary"></div>
         <details class="saved-routes">
           <summary>Saved routes <span id="saved-count">(0)</span></summary>
           <p id="library-status" class="hint" role="status"></p>

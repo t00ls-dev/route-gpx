@@ -9,9 +9,12 @@ import {
 import type { View } from './default-view';
 import {
   type Coord,
+  type Modifier,
   type Route,
   type State,
   type Step,
+  isExit,
+  isModifier,
   serverUrl,
   validCoord,
   validRoute,
@@ -85,7 +88,12 @@ interface OsrmResponse {
         ref?: string;
         distance: number;
         duration: number;
-        maneuver?: { type?: string };
+        maneuver?: {
+          type?: string;
+          modifier?: string;
+          exit?: number;
+          location?: [number, number];
+        };
       }[];
     }[];
   }[];
@@ -116,6 +124,12 @@ export async function osrmRoute(state: State): Promise<Route> {
           distance: s.distance,
           duration: s.duration,
           kind: s.maneuver?.type,
+          ...maneuverDetails(
+            s.maneuver?.modifier,
+            s.maneuver?.exit,
+            s.maneuver?.location &&
+              ([s.maneuver.location[1], s.maneuver.location[0]] as Coord),
+          ),
         })),
       ),
       distance: r.distance,
@@ -125,6 +139,53 @@ export async function osrmRoute(state: State): Promise<Route> {
     };
   });
 }
+/**
+ * Optional maneuver fields from untrusted router data: values outside the
+ * shared vocabulary are omitted rather than failing the route.
+ */
+function maneuverDetails(
+  modifier: unknown,
+  exit: unknown,
+  at: Coord | undefined,
+): Pick<Step, 'modifier' | 'exit' | 'at'> {
+  return {
+    ...(isModifier(modifier) ? { modifier } : {}),
+    ...(isExit(exit) ? { exit } : {}),
+    ...(at && validCoord(at) ? { at } : {}),
+  };
+}
+/** Valhalla maneuver types in the shared vocabulary (OSRM kinds and modifiers). */
+const VALHALLA_TYPES: Record<number, [kind: string, modifier?: Modifier]> = {
+  1: ['depart'],
+  2: ['depart', 'right'],
+  3: ['depart', 'left'],
+  4: ['arrive'],
+  5: ['arrive', 'right'],
+  6: ['arrive', 'left'],
+  7: ['new name'],
+  8: ['continue', 'straight'],
+  9: ['turn', 'slight right'],
+  10: ['turn', 'right'],
+  11: ['turn', 'sharp right'],
+  12: ['turn', 'uturn'],
+  13: ['turn', 'uturn'],
+  14: ['turn', 'sharp left'],
+  15: ['turn', 'left'],
+  16: ['turn', 'slight left'],
+  17: ['on ramp', 'straight'],
+  18: ['on ramp', 'right'],
+  19: ['on ramp', 'left'],
+  20: ['off ramp', 'right'],
+  21: ['off ramp', 'left'],
+  22: ['fork', 'straight'],
+  23: ['fork', 'right'],
+  24: ['fork', 'left'],
+  25: ['merge'],
+  26: ['roundabout'],
+  27: ['exit roundabout'],
+  37: ['merge', 'right'],
+  38: ['merge', 'left'],
+};
 /** Builds a route from untrusted router JSON; malformed shapes and values become one clear error. */
 function checkedRoute(
   server: 'OSRM' | 'Valhalla',
@@ -177,6 +238,8 @@ interface ValhallaResponse {
         length: number;
         time: number;
         type: number;
+        begin_shape_index?: number;
+        roundabout_exit_count?: number;
       }[];
     }[];
   };
@@ -200,18 +263,30 @@ export async function valhallaRoute(state: State): Promise<Route> {
     throw new Error(d.error || 'Valhalla could not find a route.');
   const t = d.trip;
   return checkedRoute('Valhalla', () => {
-    const steps: Step[] = t.legs.flatMap((l) =>
-      l.maneuvers.map((m) => ({
-        name: m.street_names?.join(' / ') || 'Unnamed road',
-        ref: (m.street_names ?? [])
-          .filter((n) => /\b[A-Z]{1,3}[ -]?\d{1,4}\b/.test(n))
-          .join(';'),
-        distance: m.length * 1000,
-        duration: m.time,
-      })),
+    const segments = t.legs.map((l) => decodePolyline(l.shape));
+    const steps: Step[] = t.legs.flatMap((l, leg) =>
+      l.maneuvers.map((m) => {
+        const [kind, modifier] = VALHALLA_TYPES[m.type] ?? [];
+        return {
+          name: m.street_names?.join(' / ') || 'Unnamed road',
+          ref: (m.street_names ?? [])
+            .filter((n) => /\b[A-Z]{1,3}[ -]?\d{1,4}\b/.test(n))
+            .join(';'),
+          distance: m.length * 1000,
+          duration: m.time,
+          ...(kind ? { kind } : {}),
+          ...maneuverDetails(
+            modifier,
+            m.type === 26 ? m.roundabout_exit_count : undefined,
+            Number.isInteger(m.begin_shape_index)
+              ? segments[leg][m.begin_shape_index!]
+              : undefined,
+          ),
+        };
+      }),
     );
     return {
-      segments: t.legs.map((l) => decodePolyline(l.shape)),
+      segments,
       steps,
       distance: t.summary.length * 1000,
       duration: t.summary.time,

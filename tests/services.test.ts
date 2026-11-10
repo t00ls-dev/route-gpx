@@ -66,6 +66,91 @@ describe('routing adapters', () => {
     ]);
     expect(r.steps[0].ref).toBe('BR-101');
   });
+  it('keeps OSRM turn direction, roundabout exit and location, omitting unknown values', async () => {
+    const data = structuredClone(osrm) as typeof osrm & {
+      routes: { legs: { steps: Record<string, unknown>[] }[] }[];
+    };
+    const step = (maneuver: unknown) => ({
+      name: 'Road',
+      distance: 1,
+      duration: 1,
+      maneuver,
+    });
+    data.routes[0].legs[0].steps.push(
+      step({ type: 'turn', modifier: 'left', location: [-43.5, -22.5] }),
+      step({ type: 'roundabout', exit: 2, location: [-43.6, -22.6] }),
+      step({
+        type: 'turn',
+        modifier: 'sideways',
+        exit: 1.5,
+        location: [0, 99],
+      }),
+    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(data)));
+    const r = await osrmRoute(state());
+    expect(r.steps[1]).toMatchObject({
+      kind: 'turn',
+      modifier: 'left',
+      at: [-22.5, -43.5],
+    });
+    expect(r.steps[2]).toMatchObject({ kind: 'roundabout', exit: 2 });
+    expect(r.steps[3]).not.toHaveProperty('modifier');
+    expect(r.steps[3]).not.toHaveProperty('exit');
+    expect(r.steps[3]).not.toHaveProperty('at');
+  });
+  it('maps Valhalla maneuver types to the shared vocabulary', async () => {
+    const maneuver = (type: number, extra = {}) => ({
+      street_names: ['Road'],
+      length: 0.1,
+      time: 1,
+      type,
+      begin_shape_index: 1,
+      ...extra,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({
+          trip: {
+            status: 0,
+            summary: { length: 1, time: 90 },
+            legs: [
+              {
+                shape: '??_c`|@_gayB',
+                maneuvers: [
+                  maneuver(1, { begin_shape_index: 0 }),
+                  maneuver(15),
+                  maneuver(9),
+                  maneuver(13),
+                  maneuver(26, { roundabout_exit_count: 3 }),
+                  maneuver(18),
+                  maneuver(23),
+                  maneuver(28),
+                  maneuver(4, { begin_shape_index: 9 }),
+                ],
+              },
+            ],
+          },
+        }),
+      ),
+    );
+    const r = await valhallaRoute(state());
+    expect(r.steps.map((s) => [s.kind, s.modifier, s.exit])).toEqual([
+      ['depart', undefined, undefined],
+      ['turn', 'left', undefined],
+      ['turn', 'slight right', undefined],
+      ['turn', 'uturn', undefined],
+      ['roundabout', undefined, 3],
+      ['on ramp', 'right', undefined],
+      ['fork', 'right', undefined],
+      [undefined, undefined, undefined],
+      ['arrive', undefined, undefined],
+    ]);
+    expect(r.steps[0].at).toEqual([0, 0]);
+    expect(r.steps[1].at).toEqual([1, 2]);
+    // An index outside the shape gives no location.
+    expect(r.steps[8]).not.toHaveProperty('at');
+  });
   it('rejects no-route responses', async () => {
     vi.stubGlobal(
       'fetch',

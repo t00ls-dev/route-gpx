@@ -268,6 +268,20 @@ describe('route validation', () => {
     snapped: [[-22.9, -43.1]],
   });
   it('accepts a complete route', () => expect(validRoute(good())).toBe(true));
+  it('accepts steps with and without maneuver details', () => {
+    const r = good();
+    r.steps.push({
+      name: 'Avenue',
+      ref: '',
+      distance: 5,
+      duration: 1,
+      kind: 'roundabout',
+      modifier: 'slight left',
+      exit: 2,
+      at: [-22.905, -43.105],
+    });
+    expect(validRoute(r)).toBe(true);
+  });
   it.each<[string, (r: Route) => void]>([
     ['coordinates outside Earth', (r) => (r.segments[0][0] = [91, 0])],
     ['NaN coordinates', (r) => (r.segments[0][1] = [Number.NaN, 0])],
@@ -281,6 +295,13 @@ describe('route validation', () => {
       'a non-string step kind',
       (r) => ((r.steps[0] as { kind: unknown }).kind = 1),
     ],
+    [
+      'an unknown step modifier',
+      (r) => ((r.steps[0] as { modifier: unknown }).modifier = 'backwards'),
+    ],
+    ['a fractional roundabout exit', (r) => (r.steps[0].exit = 1.5)],
+    ['an out-of-range roundabout exit', (r) => (r.steps[0].exit = 0)],
+    ['an invalid maneuver location', (r) => (r.steps[0].at = [0, 181])],
     ['invalid snapped points', (r) => (r.snapped = [[0, 200]])],
   ])('rejects %s', (_, change) => {
     const r = good();

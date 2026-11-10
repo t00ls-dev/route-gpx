@@ -79,10 +79,22 @@ for (const mobile of [false, true]) {
         'At 60 km/h · no stops',
       );
       await expect(page.locator('#summary')).toContainText('42 min');
-      // Street-by-street detail sits below the summary card, not inside it.
-      await expect(
-        page.locator('#summary .road-list, #summary .chips'),
-      ).toHaveCount(0);
+      // Summary rows in order; the itinerary is a row below Travel the route.
+      expect(
+        await page
+          .locator('#summary > :is(details, #itinerary, .route-options)')
+          .evaluateAll((rows) =>
+            rows.map((row) => row.id || row.className.split(' ')[0]),
+          ),
+      ).toEqual([
+        'daylight-details',
+        'weather-section',
+        'elevation',
+        'speed-options',
+        'playback',
+        'itinerary',
+        'route-options',
+      ]);
       await expect(page.locator('#itinerary .chips')).toHaveText('BR-101');
       await expect(page.locator('#itinerary summary')).toHaveText(
         'Itinerary (1)',
@@ -352,6 +364,118 @@ test('undo restores a moved marker and a removed stop', async ({ page }) => {
   await expect(page.locator('#points li')).toHaveCount(2);
   await page.locator('#undo').click();
   await expect(page.locator('#points li')).toHaveCount(3);
+});
+test('the itinerary shows turn directions in both languages', async ({
+  page,
+}) => {
+  await setup(page);
+  // Later routes override the shared mock: three steps with maneuvers.
+  await page.route('**/route/v1/driving/**', async (r) => {
+    const part = new URL(r.request().url()).pathname.split('/driving/')[1];
+    const coords = part.split(';').map((p) => p.split(',').map(Number));
+    const step = (name: string, maneuver: object) => ({
+      name,
+      distance: 1000,
+      duration: 60,
+      maneuver,
+    });
+    await r.fulfill({
+      json: {
+        code: 'Ok',
+        waypoints: coords.map((location) => ({ location, distance: 0 })),
+        routes: [
+          {
+            distance: 3000,
+            duration: 180,
+            geometry: { coordinates: coords },
+            legs: [
+              {
+                steps: [
+                  step('Rua A', { type: 'depart', location: coords[0] }),
+                  {
+                    ...step('Rua B', {}),
+                    ref: 'RJ-116',
+                    maneuver: {
+                      type: 'turn',
+                      modifier: 'left',
+                      location: [
+                        (coords[0][0] + coords[1][0]) / 2,
+                        (coords[0][1] + coords[1][1]) / 2,
+                      ],
+                    },
+                  },
+                  // No location: plain text, no position.
+                  step('Rua C', { type: 'roundabout', exit: 2 }),
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+  await page.goto(base);
+  await page.locator('#location-0').fill(start);
+  await page.locator('#location-0').press('Tab');
+  await page.locator('#location-1').fill(end);
+  await page.locator('#location-1').press('Tab');
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  // Long local roads: the card warning opens the itinerary at the first one.
+  await expect(page.locator('#itinerary details')).not.toHaveAttribute(
+    'open',
+    '',
+  );
+  await page.locator('.review-link').click();
+  await expect(page.locator('#itinerary details')).toHaveAttribute('open', '');
+  await expect(page.locator('#itinerary')).toContainText(
+    'Highlighted roads are local sections to review.',
+  );
+  await expect(
+    page.locator('#itinerary li.local-road').first(),
+  ).toBeInViewport();
+  const items = page.locator('#itinerary li');
+  await expect(items).toHaveText([
+    'km 0.0 Depart · R. A · 1 km',
+    'km 16.6 Turn left · R. B · 1 km',
+    'Roundabout, exit 2 · R. C · 1 km',
+  ]);
+  await expect(items.locator('button.maneuver-link')).toHaveCount(2);
+  // The highway reference is in the chips, not on the line.
+  await expect(page.locator('#itinerary .chips')).toHaveText('RJ-116');
+  // Shortened names are display only; the accessible label keeps them whole.
+  await expect(items.nth(1).locator('button')).toHaveAttribute(
+    'aria-label',
+    'Show on map: km 16.6 · Turn left · RJ-116 · Rua B · 1 km',
+  );
+  await expect(items.nth(2).locator('button')).toHaveCount(0);
+  // Choosing an instruction centers the map on it, at street zoom.
+  await items.nth(1).locator('button').click();
+  await expect(page.locator('path.maneuver-marker')).toHaveCount(1);
+  const view = await page.evaluate(() => {
+    const box = document.querySelector('#map')!.getBoundingClientRect();
+    const marker = document
+      .querySelector('path.maneuver-marker')!
+      .getBoundingClientRect();
+    return {
+      dx: Math.abs(marker.x + marker.width / 2 - (box.x + box.width / 2)),
+      dy: Math.abs(marker.y + marker.height / 2 - (box.y + box.height / 2)),
+    };
+  });
+  expect(view.dx).toBeLessThan(3);
+  expect(view.dy).toBeLessThan(3);
+  await page.locator('#units').selectOption('imperial');
+  await expect(items.nth(1)).toContainText('mi 10.3');
+  await page.locator('#units').selectOption('metric');
+  await expect(items.nth(1).locator('svg.icon-maneuver-left')).toHaveCount(1);
+  await expect(items.nth(1).locator('svg')).toHaveAttribute(
+    'aria-hidden',
+    'true',
+  );
+  await page.locator('#language').selectOption('pt');
+  await expect(items.nth(1)).toContainText('Vire à esq. · R. B');
+  await expect(items.nth(2)).toContainText('Rotatória, 2ª saída');
+  await page.locator('#language').selectOption('en');
+  await expect(items.nth(1)).toContainText('Turn left · R. B');
 });
 test('imports FIT and TCX files by content and reports damaged files', async ({
   page,
