@@ -17,6 +17,7 @@ import {
   nearestHour,
   passageTime,
   sampleRoute,
+  sampleRouteStops,
   weatherWindow,
   type WeatherHour,
 } from '../src/weather';
@@ -84,7 +85,7 @@ it('samples endpoints and projected waypoints on sparse geometry in itinerary or
   );
   expect(samples.length).toBeLessThanOrEqual(20);
 });
-it('reduces spacing on short routes, caps long routes and rejects more than 20 mandatory samples', () => {
+it('reduces spacing on short routes, caps long routes and samples at most 20 of many stops', () => {
   const short = {
     ...route,
     segments: [
@@ -115,20 +116,23 @@ it('reduces spacing on short routes, caps long routes and rejects more than 20 m
     name: String(i),
     coord: [0, i / 20] as [number, number],
   }));
-  expect(() =>
-    sampleRoute(
-      {
-        ...route,
-        segments: [
-          [
-            [0, 0],
-            [0, 1],
-          ],
-        ],
-      },
-      controls,
-    ),
-  ).toThrow('20');
+  const line = {
+    ...route,
+    segments: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+    ] as Route['segments'],
+  };
+  // 21 stops (19 inner): 20 samples, start and destination always kept.
+  const many = sampleRouteStops(line, controls);
+  expect(many.stops).toBe(21);
+  expect(many.samples).toHaveLength(20);
+  expect(many.samples[0].name).toBe('0');
+  expect(many.samples.at(-1)!.name).toBe('20');
+  expect(many.samples.every((p) => p.stop)).toBe(true);
+  expect(sampleRouteStops(line, controls)).toEqual(many);
   expect(
     sampleRoute(
       {
@@ -143,6 +147,49 @@ it('reduces spacing on short routes, caps long routes and rejects more than 20 m
       [],
     ),
   ).toHaveLength(1);
+});
+it('spreads samples along routes with up to 50 stops, preferring named stops', () => {
+  const line = {
+    ...route,
+    segments: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+    ] as Route['segments'],
+  };
+  for (const count of [23, 50]) {
+    const controls = Array.from({ length: count }, (_, i) => ({
+      name: `Stop ${i}`,
+      coord: [0, i / (count - 1)] as [number, number],
+    }));
+    const { samples, stops } = sampleRouteStops(line, controls);
+    expect(stops).toBe(count);
+    expect(samples).toHaveLength(20);
+    expect(samples[0].distance).toBe(0);
+    expect(samples.at(-1)!.name).toBe(`Stop ${count - 1}`);
+    // No gap is much larger than an even split into 19 parts.
+    const gaps = samples
+      .slice(1)
+      .map((p, i) => p.distance - samples[i].distance);
+    expect(Math.max(...gaps)).toBeLessThan((samples.at(-1)!.distance / 19) * 2);
+  }
+  // A named stop next to an automatic one wins its slot.
+  const controls = Array.from({ length: 41 }, (_, i) => ({
+    name: i === 20 ? 'Lunch' : `Stop ${i}`,
+    coord: [0, i / 40] as [number, number],
+  }));
+  expect(
+    sampleRouteStops(line, controls).samples.some((p) => p.name === 'Lunch'),
+  ).toBe(true);
+  // Up to 20 stops are all kept, with no note needed.
+  const few = Array.from({ length: 20 }, (_, i) => ({
+    name: String(i),
+    coord: [0, i / 19] as [number, number],
+  }));
+  const kept = sampleRouteStops(line, few);
+  expect(kept.samples.filter((p) => p.stop)).toHaveLength(20);
+  expect(kept.stops).toBe(20);
 });
 it('accepts recent past and future, rejecting departures beyond 90 days or the 16-day horizon', () => {
   expect(departureError(new Date(now).toISOString(), now)).toBeNull();

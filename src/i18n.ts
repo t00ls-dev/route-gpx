@@ -85,8 +85,6 @@ const pt: Record<string, string> = {
   'Departure and arrival, including the weather margin, must fit within the 16-day forecast.':
     'A saída e a chegada, incluindo a margem da previsão, devem estar no horizonte de 16 dias.',
   'Calculate or import a route first.': 'Calcule ou importe uma rota primeiro.',
-  'Weather supports at most 20 distinct route stops. Reduce the stops and try again.':
-    'O clima aceita no máximo 20 pontos de passagem distintos. Reduza os pontos e tente novamente.',
   'Weather service returned an invalid response.':
     'O serviço de clima retornou uma resposta inválida.',
   'Weather usage limit reached. Try again later.':
@@ -458,6 +456,10 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (up, down) => `Ganho de elevação ${up} · Perda de elevação ${down}`,
   ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
+  [
+    /^Weather sampled at (\d+) of (\d+) stops\.$/,
+    (a, b) => `Clima amostrado em ${a} de ${b} paradas.`,
+  ],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],
 

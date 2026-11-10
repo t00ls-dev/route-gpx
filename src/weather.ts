@@ -11,6 +11,8 @@ export interface WeatherPoint {
   distance: number;
   name?: string;
   bearing?: number | null;
+  /** A route point (start, stop or destination), not an interpolated sample. */
+  stop?: boolean;
 }
 export interface WeatherHour {
   time: number;
@@ -79,6 +81,45 @@ export function sampleRoute(
   controls: Point[],
   speedKmh = 60,
 ): WeatherPoint[] {
+  return sampleRouteStops(route, controls, speedKmh).samples;
+}
+
+/** Automatic stops placed on an imported track, as opposed to named ones. */
+const AUTOMATIC_STOP = /^Stop \d+$/;
+
+/**
+ * Keeps start and destination and, when there are too many stops, the stops
+ * closest to evenly spaced targets along the route, preferring named stops
+ * near each target over automatic ones. Deterministic for the same input.
+ */
+function chooseStops(stops: WeatherPoint[], total: number): WeatherPoint[] {
+  const inner = stops.slice(1, -1);
+  const slots = MAX_WEATHER_POINTS - 2;
+  const window = total / (slots + 1) / 2;
+  const chosen: WeatherPoint[] = [];
+  for (let k = 1; k <= slots; k++) {
+    const target = (total * k) / (slots + 1);
+    let best = -1,
+      score = Infinity;
+    inner.forEach((p, i) => {
+      if (chosen.includes(p)) return;
+      const off = Math.abs(p.distance - target);
+      // Within the slot, a named stop beats an automatic one.
+      const penalty =
+        off <= window && AUTOMATIC_STOP.test(p.name ?? '') ? window : 0;
+      if (off + penalty < score) [best, score] = [i, off + penalty];
+    });
+    if (best >= 0) chosen.push(inner[best]);
+  }
+  return [stops[0], ...chosen, stops.at(-1)!];
+}
+
+/** Weather samples plus the number of distinct route stops they represent. */
+export function sampleRouteStops(
+  route: Route,
+  controls: Point[],
+  speedKmh = 60,
+): { samples: WeatherPoint[]; stops: number } {
   travelTimeSeconds(0, speedKmh);
   const preferredSpacing = Math.min(20000, speedKmh * 1000);
   const track = cumulativeTrack(route.segments);
@@ -112,7 +153,9 @@ export function sampleRoute(
     }),
   );
   let minimum = 0;
-  const samples: WeatherPoint[] = [{ ...track[0], name: controls[0]?.name }];
+  const samples: WeatherPoint[] = [
+    { ...track[0], name: controls[0]?.name, stop: true },
+  ];
   for (const control of controls.slice(1, -1)) {
     if (!control.coord) continue;
     let best = Infinity,
@@ -138,7 +181,7 @@ export function sampleRoute(
       const error = meters(control.coord, coord);
       if (distance >= minimum - 0.01 && error < best) {
         best = error;
-        chosen = { coord, distance, name: control.name };
+        chosen = { coord, distance, name: control.name, stop: true };
       }
     }
     if (chosen) {
@@ -146,17 +189,17 @@ export function sampleRoute(
       minimum = chosen.distance;
     }
   }
-  samples.push({ ...track.at(-1)!, name: controls.at(-1)?.name });
-  const unique = samples.filter(
+  samples.push({ ...track.at(-1)!, name: controls.at(-1)?.name, stop: true });
+  const distinct = samples.filter(
     (p, i) =>
       !samples
         .slice(0, i)
         .some((other) => Math.abs(other.distance - p.distance) < 0.01),
   );
-  if (unique.length > MAX_WEATHER_POINTS)
-    throw new Error(
-      'Weather supports at most 20 distinct route stops. Reduce the stops and try again.',
-    );
+  const unique =
+    distinct.length > MAX_WEATHER_POINTS
+      ? chooseStops(distinct, total)
+      : distinct;
   const remaining = MAX_WEATHER_POINTS - unique.length;
   if (remaining > 0 && total > 0) {
     // Expand in multiples of the preferred spacing to retain every mandatory point within the cap.
@@ -175,7 +218,7 @@ export function sampleRoute(
     if (unique.length === 2 && total < preferredSpacing)
       unique.push(interpolate(total / 2));
   }
-  return unique
+  const result = unique
     .sort((a, b) => a.distance - b.distance)
     .map((point) => {
       let incoming: (typeof edges)[number] | undefined;
@@ -200,6 +243,7 @@ export function sampleRoute(
         bearing: reverse == null ? null : (reverse + 180) % 360,
       };
     });
+  return { samples: result, stops: distinct.length };
 }
 export function nearestHour(hours: WeatherHour[], time: number): WeatherHour {
   if (!hours.length)
