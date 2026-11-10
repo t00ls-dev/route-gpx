@@ -52,17 +52,17 @@ for (const width of [320, 360, 390, 430]) {
               'Usar minha localização',
               'Camadas do mapa',
               'Tela cheia',
-              '◎ Ver rota',
+              'Ver rota',
               'Bloquear edição',
-              '↶ Desfazer',
+              'Desfazer',
             ]
           : [
               'Use my location',
               'Map layers',
               'Full screen',
-              '◎ Fit route',
+              'Fit route',
               'Lock editing',
-              '↶ Undo',
+              'Undo',
             ];
       const ids = [
         'locate',
@@ -88,7 +88,7 @@ for (const width of [320, 360, 390, 430]) {
       await expect(page.locator('.map-action-control #undo')).toHaveCount(1);
       await expect(page.locator('#example')).toHaveCount(0);
       // Average speed belongs to the route summary card, with the departure.
-      await expect(page.locator('#summary .speed-options')).toHaveCount(1);
+      await expect(page.locator('#trip-options .speed-options')).toHaveCount(1);
       // Phones zoom with pinch and double tap, so the map tools column has room.
       await expect(page.locator('.leaflet-control-zoom')).toBeHidden();
       expect(lastBottom).toBeLessThanOrEqual(
@@ -157,7 +157,8 @@ for (const width of [320, 360, 390, 430]) {
       const buttons = page.locator('#points li.selected .point-actions button');
       for (const button of await buttons.all()) {
         const box = (await button.boundingBox())!;
-        expect(box.width).toBe(44);
+        // Set on map shows its label; the others are icon buttons.
+        expect(box.width).toBeGreaterThanOrEqual(44);
         expect(box.height).toBe(44);
         await expect(button).toHaveAttribute('title', /.+/);
       }

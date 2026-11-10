@@ -81,21 +81,17 @@ for (const mobile of [false, true]) {
         'At 60 km/h · no stops',
       );
       await expect(page.locator('#summary')).toContainText('42 min');
-      // Summary rows in order; the itinerary is a row below Travel the route.
+      // Route detail rows in order, below the trip options.
       expect(
         await page
-          .locator('#summary > :is(details, #itinerary, .route-options)')
-          .evaluateAll((rows) =>
-            rows.map((row) => row.id || row.className.split(' ')[0]),
-          ),
+          .locator('#route-details > *')
+          .evaluateAll((rows) => rows.map((row) => row.id)),
       ).toEqual([
-        'daylight-details',
+        'itinerary',
         'weather-section',
         'elevation',
-        'speed-options',
+        'daylight-details',
         'playback',
-        'itinerary',
-        'route-options',
       ]);
       await expect(page.locator('#itinerary .chips')).toHaveText('BR-101');
       await expect(page.locator('#itinerary summary')).toHaveText(
@@ -621,8 +617,8 @@ test('editing an imported track reroutes only the legs next to the edit', async 
   const count = await page.locator('#points li').count();
   expect(count).toBeGreaterThan(3);
 
-  await page.locator('.settings > summary').click();
   await page.locator('#route-name').fill('Renamed spur');
+  await page.locator('#open-settings').click();
   await page.locator('#save-settings').click();
   await expect(page.locator('#status')).toHaveText('Settings applied.');
   await expect(page.locator('#download')).toBeEnabled();
@@ -712,9 +708,6 @@ test('average speed: keyboard steps, units, kept on the device and never taken f
   await fillPair(page);
   // 42 km at the default 60 km/h; the router's 49 min is not used.
   await expect(page.locator('#summary')).toContainText('42 min');
-  await page.locator('.speed-options').evaluate((el) => {
-    (el as HTMLDetailsElement).open = true;
-  });
   await expect(page.locator('#average-speed')).toBeEnabled();
   await expect(page.locator('#use-average-speed, #reset-speed')).toHaveCount(0);
   await expect(page.locator('#average-speed-value')).toHaveText('60');
@@ -777,7 +770,7 @@ test('an invalid settings URL leaves every server unchanged', async ({
   await setup(page);
   await fillPair(page);
   const hash = new URL(page.url()).hash;
-  await page.locator('.settings > summary').click();
+  await page.locator('#open-settings').click();
   await page.locator('#valhalla').fill('https://example.org/valhalla');
   await page.locator('#weather-server').fill('https://example.org/weather');
   await page.locator('#nominatim').fill('not a server');

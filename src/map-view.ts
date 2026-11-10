@@ -11,6 +11,7 @@ import {
 } from './location';
 import { approximateRegion, defaultRegionUrl, regionUrl } from './services';
 import { byId as element } from './dom';
+import { compactLayout } from './panel';
 
 export function setupMapView(
   map: L.Map,
@@ -65,41 +66,14 @@ export function setupMapView(
       element<HTMLInputElement>('region-url').reportValidity();
     }
   };
-  const panelHandle = element('panel-toggle');
-  new ResizeObserver(() => {
-    document.body.style.setProperty(
-      '--route-handle-height',
-      `${panelHandle.getBoundingClientRect().height}px`,
-    );
-  }).observe(panelHandle);
-  let panelOpen = true;
-  try {
-    panelOpen = sessionStorage.getItem('panel-open') !== 'false';
-  } catch {
-    /* Optional preference. */
-  }
   const layout = () => {
-    document.body.classList.toggle('panel-closed', !panelOpen);
-    element('route-panel').hidden = !panelOpen;
-    element('panel-toggle').setAttribute('aria-expanded', String(panelOpen));
     element('fullscreen').setAttribute(
       'aria-pressed',
       String(document.body.classList.contains('map-fullscreen')),
     );
     requestAnimationFrame(() => map.invalidateSize({ pan: false }));
   };
-  element('panel-toggle').onclick = () => {
-    panelOpen = !panelOpen;
-    try {
-      sessionStorage.setItem('panel-open', String(panelOpen));
-    } catch {
-      /* Optional preference. */
-    }
-    layout();
-  };
   layout();
-  window.addEventListener('resize', layout);
-  window.addEventListener('orientationchange', layout);
   document.addEventListener('fullscreenchange', () => {
     document.body.classList.toggle(
       'map-fullscreen',
@@ -139,7 +113,7 @@ export function setupMapView(
   };
   element('locate').onclick = () => {
     interact();
-    if (panelOpen && matchMedia('(max-width: 759px)').matches)
+    if (!element('route-panel').hidden && compactLayout())
       element('panel-toggle').click();
     element('location-card').hidden = false;
     element('location-actions').hidden = true;

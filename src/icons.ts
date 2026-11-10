@@ -63,6 +63,21 @@ const paths = {
   'maneuver-roundabout':
     '<circle cx="12" cy="9" r="4"/><path d="M12 13v8m3-15 4-3m0 0h-4m4 0v4"/>',
   summit: '<path d="m3 20 7-13 4 6 2-3 5 10Z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  swap: '<path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/>',
+  roundtrip:
+    '<path d="M4 12a8 8 0 0 1 14-5l2 2m0-4v4h-4m4 3a8 8 0 0 1-14 5l-2-2m0 4v-4h4"/>',
+  refresh: '<path d="M20 12a8 8 0 1 1-3-6.2M20 4v4h-4"/>',
+  download: '<path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/>',
+  upload: '<path d="M12 20V9m0 0-4 4m4-4 4 4M5 4h14"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1m2 3.7a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  share:
+    '<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5m-7.6 7 7.6 4.4"/>',
+  settings:
+    '<path d="M4 7h10m4 0h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  sidebar:
+    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .5-1.5 1-1.5 2M12 16v1"/>',
 } as const;
 export type IconName = keyof typeof paths;

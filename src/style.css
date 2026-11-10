@@ -1,3 +1,4 @@
+/* Design tokens: one light, high-contrast theme (see docs/BRAND.md). */
 :root {
   font-family:
     system-ui,
@@ -6,31 +7,52 @@
     'Segoe UI',
     sans-serif;
   font-synthesis: none;
-  color: #1b2934;
-  background: #fff;
   color-scheme: light;
-  --paper: #fff;
-  --surface: #fff;
-  --ink: #1b2934;
-  --muted: #52616d;
-  --border: #cbd4dc;
-  --green: #126447;
-  --soft: #edf5f1;
-  --warning: #74420b;
-  --warning-bg: #fff5e1;
+  --color-surface: #fff;
+  --color-subtle: #f5f7f8;
+  --color-soft: #edf5f1;
+  --color-text: #1b2934;
+  --color-text-muted: #52616d;
+  --color-border: #cbd4dc;
+  --color-border-strong: #8795a1;
+  --color-primary: #126447;
+  --color-primary-strong: #0d4a35;
+  --color-focus: #0b72c6;
+  --color-danger: #a3262b;
+  --color-danger-bg: #fdecec;
+  --color-warning: #74420b;
+  --color-warning-bg: #fff5e1;
+  --color-warning-border: #d9a85a;
+  --radius: 8px;
+  --radius-large: 12px;
+  --shadow-control: 0 1px 4px #1b29344d;
+  --shadow-raised: 0 4px 20px #1b293433;
+  --control: 44px;
+  /* Names used by older rules below. */
+  --paper: var(--color-surface);
+  --surface: var(--color-surface);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --green: var(--color-primary);
+  --soft: var(--color-soft);
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.4;
 }
 button,
 input,
 select,
 textarea {
   font: inherit;
+  color: inherit;
 }
 button,
 a,
@@ -41,37 +63,87 @@ label.file-button {
   -webkit-tap-highlight-color: transparent;
 }
 a {
-  color: #145e49;
+  color: var(--color-primary);
   text-underline-offset: 3px;
 }
+h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 650;
+}
+h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+[hidden] {
+  display: none !important;
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Buttons: secondary by default, with primary and ghost variants. */
 button,
 .file-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--ink);
-  cursor: pointer;
-  padding: 9px 12px;
-  min-height: 44px;
+  gap: 6px;
+  min-width: var(--control);
+  min-height: var(--control);
+  padding: 8px 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 550;
   line-height: 1.3;
+  cursor: pointer;
 }
 button:hover,
 .file-button:hover {
-  background: #f0f4f6;
-  border-color: #8c9ca9;
+  background: var(--color-subtle);
 }
 button:disabled {
+  border-color: var(--color-border);
   background: #e8edf1;
   color: #586673;
-  border-color: #cbd4dc;
-  opacity: 1;
   cursor: not-allowed;
+}
+.primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 650;
+}
+.primary:hover {
+  background: var(--color-primary-strong);
+  color: #fff;
+}
+.ghost {
+  border-color: transparent;
+  background: none;
+  color: var(--color-primary);
+  padding-inline: 10px;
+}
+.ghost:hover {
+  background: var(--color-soft);
+}
+.ghost:disabled {
+  border-color: transparent;
+  background: none;
+  color: #6b7780;
 }
 button:focus-visible,
 a:focus-visible,
@@ -79,270 +151,501 @@ summary:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #0b72c6;
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
+.button-icon {
+  flex: 0 0 20px;
+  pointer-events: none;
+}
+.icon-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.icon-only {
+  width: var(--control);
+  height: var(--control);
+  padding: 0;
+}
+.icon-only .button-label {
+  display: none;
+}
+.file-button {
+  position: relative;
+  white-space: nowrap;
+}
+.file-button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-button:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+.file-button:has(input:disabled) {
+  border-color: var(--color-border);
+  color: #586673;
+}
+.file-button input:disabled {
+  cursor: not-allowed;
+}
+/* Text-style action inside a message, such as Choose departure. */
+.planner .link-button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Fields. */
 input,
 textarea,
 select {
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: white;
-  color: var(--ink);
   min-width: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
-input:not([type='checkbox'], [type='file']) {
-  padding: 11px;
-  min-height: 44px;
+input:not([type='checkbox'], [type='file'], [type='range']) {
   width: 100%;
+  min-height: var(--control);
+  padding: 10px 12px;
+}
+select {
+  min-height: var(--control);
+  padding: 8px;
 }
 input[aria-invalid='true'] {
-  outline: 2px solid #a72d22;
+  border-color: var(--color-danger);
+  outline: 2px solid var(--color-danger);
 }
 textarea {
   display: block;
-  resize: vertical;
   width: 100%;
-  padding: 10px;
-  line-height: 1.5;
   min-height: 88px;
   margin: 6px 0 10px;
-}
-header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--border);
-  background: white;
-}
-header > a:last-child {
-  font-size: 14px;
-}
-.brand {
-  text-decoration: none;
-  font-size: 22px;
-  font-weight: 750;
-  letter-spacing: -1px;
-  color: #1b2934;
-}
-.brand span {
-  color: #126447;
-  font-weight: 450;
-}
-.language-control {
-  margin-left: auto;
-}
-.language-control select {
-  font-size: 13px;
-  padding: 8px;
-  min-height: 38px;
-}
-main {
-  display: flex;
-  flex-direction: column;
-}
-.map-container {
-  order: -1;
-  height: 34dvh;
-  min-height: 230px;
-  max-height: 360px;
-  position: relative;
-  border-bottom: 1px solid var(--border);
-  isolation: isolate;
-}
-#map {
-  height: 100%;
-  width: 100%;
-  background: #e3ecea;
-}
-aside {
-  padding: 16px;
-  min-width: 0;
-  background: #fff;
-}
-.section-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.section-line > span {
-  font-size: 12px;
-  color: var(--muted);
-}
-h1 {
-  font-size: 21px;
-  line-height: 1.25;
-  letter-spacing: -0.5px;
-  margin: 0;
-  font-weight: 650;
-}
-h2 {
-  font-size: 14px;
-  margin: 0;
-  font-weight: 650;
-}
-.page-heading {
-  margin-bottom: 12px;
-}
-.page-heading button {
-  font-size: 12px;
-  min-height: 36px;
-  padding: 8px 10px;
-}
-summary {
-  cursor: pointer;
-  min-height: 44px;
-  line-height: 44px;
-  font-size: 13px;
-  font-weight: 550;
-}
-#points {
-  position: relative;
-  list-style: none;
-  padding: 0;
-  margin: 8px 0;
-  max-height: 280px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-#points li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 7px;
-  margin: 6px 0;
-  background: #fff;
-  min-height: 52px;
-}
-#points li.selected {
-  border: 2px solid #126447;
-  padding: 4px 6px;
-  background: #f8fcfa;
-}
-.point-number {
-  flex-shrink: 0;
-  width: 32px;
-  height: 36px;
-  min-height: 36px;
-  padding: 0;
-  border: 0;
-  background: #edf5f1;
-  color: #126447;
-  font-weight: 700;
-}
-.selected .point-number {
-  background: #126447;
-  color: #fff;
-}
-.point-fields {
-  flex: 1;
-  min-width: 0;
-}
-.point-fields input {
-  border: 0;
-  background: transparent;
-  min-height: 30px !important;
-  padding: 5px 0 !important;
-  border-radius: 0;
-  font-size: 13px;
-  width: 100%;
-}
-.point-fields input:last-child {
-  font-size: 12px;
-  color: #465968;
-  font-variant-numeric: tabular-nums;
-}
-.point-fields input:placeholder-shown {
-  color: #465968;
-}
-#points li:not(.selected) .point-fields input:last-child {
-  display: none;
-}
-.point-actions {
-  display: flex;
-  gap: 0;
-}
-.point-actions button {
-  border: 0;
-  min-height: 40px;
-  width: 30px;
-  padding: 3px;
-  background: transparent;
-  color: #374b58;
-  font-size: 16px;
-}
-.point-actions button:disabled {
-  color: #87949d;
-  cursor: not-allowed;
-  background: transparent;
-}
-.inline-actions {
-  display: flex;
-  gap: 6px;
-  margin: 8px 0 18px;
-}
-.inline-actions button {
-  flex: 1;
-  font-size: 12px;
-  padding: 8px 6px;
+  padding: 10px;
+  line-height: 1.5;
+  resize: vertical;
 }
 label[for] {
   display: block;
-  font-size: 13px;
+  margin: 10px 0 4px;
+  font-size: 14px;
   font-weight: 550;
-  margin: 10px 0 7px;
 }
 .check {
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  margin: 12px 0;
-  font-size: 13px;
+  gap: 10px;
+  min-height: var(--control);
   cursor: pointer;
 }
 .check input {
-  accent-color: #126447;
-  width: 18px;
-  height: 18px;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+.hint {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-text-muted);
+}
+.error {
+  color: var(--color-danger) !important;
+}
+
+/* Notices share one shape: warning by default. */
+.warning {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.notice p {
   margin: 0;
 }
-#summary:not(:empty) {
-  margin: 10px 0 14px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-}
-.stats {
+.lock-notice {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 24px;
-  margin: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
-.stats dt {
-  font-size: 12px;
-  color: var(--muted);
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
-.stats dd {
-  margin: 0;
+
+/* Disclosure rows. */
+summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
 }
-.stats strong {
-  font-size: 25px;
-  font-weight: 650;
-  letter-spacing: -0.6px;
+summary::-webkit-details-marker {
+  display: none;
+}
+summary::after {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 6px 0 auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+details[open] > summary::after {
+  transform: rotate(45deg);
+}
+
+/* Header and brand, shared with the help page. */
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control);
+  margin-right: auto;
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand span span,
+.brand > span:not(.brand-name) {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+.brand-icon {
+  display: block;
+  flex: none;
+  margin-right: 8px;
+  border-radius: 7px;
+}
+.language-control select {
+  font-size: 14px;
+}
+header .icon-control {
+  width: var(--control);
+  height: var(--control);
+  border-radius: var(--radius);
+  color: var(--color-text);
+}
+header a.icon-control .button-label,
+header .icon-only .button-label {
+  display: none;
+}
+header button.icon-control {
+  border-color: transparent;
+}
+
+/* The planner: a panel beside (or over) a map that fills the viewport. */
+.planner {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.planner main {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+.sheet {
+  position: relative;
+  z-index: 550;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 400px;
+  min-height: 0;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.planner header {
+  flex: none;
+  padding: 0 60px 0 16px;
+}
+#route-panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+#route-panel > * {
+  flex: none;
+}
+.map-container {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  isolation: isolate;
+}
+#map {
+  width: 100%;
+  height: 100%;
+  background: #e3ecea;
+  touch-action: none;
+}
+.planner.map-fullscreen .map-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100dvh;
+}
+/* Wide screens: the toggle collapses the sidebar from its header. */
+#panel-toggle {
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  right: 8px;
+  width: var(--control);
+  height: var(--control);
+  padding: 0;
+  border-color: transparent;
+}
+#panel-toggle .sheet-handle,
+#panel-toggle .peek {
+  display: none;
+}
+.toggle-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.planner.panel-closed .sheet {
+  width: 0;
+  border: 0;
+}
+.planner.panel-closed .sheet > header,
+.planner.panel-closed .action-bar {
+  display: none;
+}
+.planner.panel-closed #panel-toggle {
+  top: 10px;
+  right: auto;
+  left: 10px;
+  border: 0;
+  box-shadow: var(--shadow-control);
+}
+
+/* Points. */
+.section-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.section-line > span {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+#points {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px -8px 4px;
+  padding: 0;
+  list-style: none;
+}
+#points li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+  padding: 4px 6px 6px 2px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-large);
+}
+#points li.selected {
+  border-color: var(--color-primary);
+  background: var(--color-soft);
+}
+.point-number {
+  position: relative;
+  z-index: 0;
+  width: 44px;
+  height: 44px;
+  margin-top: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.point-number:hover {
+  background: none;
+}
+.point-number::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--color-soft);
+}
+.selected .point-number {
+  color: #fff;
+}
+.selected .point-number::before {
+  background: var(--color-primary);
+}
+.point-fields {
+  min-width: 0;
+}
+.point-fields label {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 18px;
+  color: var(--color-text-muted);
+}
+.point-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.point-location-form {
+  position: relative;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.point-location-form input {
+  height: var(--control);
+}
+.point-actions {
+  display: flex;
+  flex: 1 1 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+}
+#points li:not(.selected) .point-actions {
+  display: none;
+}
+.point-actions button {
+  width: var(--control);
+  height: var(--control);
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  color: var(--color-text);
+}
+.point-actions button:hover {
+  background: #dcebe3;
+}
+.point-actions button {
+  flex: none;
+}
+.point-actions button:first-child {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  margin-right: auto;
+  padding: 0 8px;
+  color: var(--color-primary);
+}
+.point-actions button:first-child .button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.point-actions button:last-child:not(:disabled) {
+  color: var(--color-danger);
+}
+.point-actions button:disabled {
+  border-color: transparent;
+  background: none;
+  color: #87949d;
+}
+.point-results {
+  display: grid;
+  gap: 4px;
+}
+.point-results > button {
+  justify-content: flex-start;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.4;
+  text-align: left;
+}
+.suggestions {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.suggestions [aria-selected='true'] {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+  background: var(--color-soft);
+}
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-left: -6px;
+}
+
+/* Trip options: departure, speed, units and road preference. */
+.trip-options {
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: var(--color-subtle);
+}
+.trip-options[open] {
+  padding-bottom: 6px;
 }
 .departure-field {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 10px;
-  margin-bottom: 10px;
 }
 .departure-field label {
   margin: 0;
@@ -350,42 +653,884 @@ label[for] {
 #departure-error:empty {
   display: none;
 }
+.departure-automatic {
+  margin: 2px 0;
+}
+.speed-options label {
+  margin: 4px 0 0;
+}
+.speed-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.speed-field span {
+  font-size: 14px;
+  white-space: nowrap;
+}
+#speed-range {
+  margin: -6px 0 2px;
+}
+.route-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Status line with the recalculation action. */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 2px 4px 2px 12px;
+  border-radius: var(--radius-large);
+  background: var(--color-soft);
+}
+.status-row:has(#status.error) {
+  background: var(--color-danger-bg);
+}
+#status {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.4;
+  color: var(--color-primary-strong);
+}
+
+/* Route summary. */
+#summary {
+  display: flex;
+  flex-direction: column;
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.stats > div {
+  flex: 1 1 96px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+}
+.stats dt {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.stats dd {
+  margin: 0;
+}
+.stats strong {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+  overflow-wrap: anywhere;
+}
+.stats-basis {
+  margin: 8px 0 0;
+}
+#summary-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#summary-notes:not(:empty) {
+  margin-top: 10px;
+}
+/* The road-review warning is a button that opens the itinerary. */
+.planner .review-link {
+  display: block;
+  width: 100%;
+  font-weight: 550;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+#route-details > details,
+#itinerary > details,
+.saved-routes {
+  border-top: 1px solid var(--color-border);
+}
+#route-details > details[open],
+#itinerary > details[open],
+.saved-routes[open] {
+  padding-bottom: 10px;
+}
+#itinerary:empty {
+  display: none;
+}
+.saved-routes {
+  border-bottom: 1px solid var(--color-border);
+}
+#route-details:not([hidden]) + .saved-routes {
+  margin-top: -12px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chips span {
+  padding: 3px 8px;
+  border: 1px solid #c5dbce;
+  border-radius: 6px;
+  background: var(--color-soft);
+  font-size: 13px;
+}
+.chips:empty {
+  display: none;
+}
+.road-list ul {
+  max-height: 320px;
+  margin: 8px 0 0;
+  padding: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  font-size: 14px;
+}
+.road-list li {
+  list-style: none;
+}
+.step-item {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 2px 4px;
+  text-align: left;
+}
+div.step-item {
+  display: flex;
+  align-items: center;
+}
+.step-row {
+  display: grid;
+  grid-template-columns: auto 18px minmax(0, 1fr);
+  column-gap: 6px;
+  align-items: center;
+  justify-content: start;
+  width: 100%;
+  line-height: 1.5;
+}
+.step-row.no-position {
+  grid-template-columns: 18px minmax(0, 1fr);
+}
+.step-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.maneuver-icon {
+  width: 18px;
+  height: 18px;
+}
+.maneuver-icon.mirror {
+  transform: scaleX(-1);
+}
+.maneuver {
+  font-weight: 650;
+}
+.milepost {
+  min-width: 4.4em;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.maneuver-link {
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 450;
+  cursor: pointer;
+}
+.maneuver-link:hover {
+  background: var(--color-soft);
+}
+.leaflet-pane .maneuver-marker {
+  fill: #145e49;
+  fill-opacity: 0.25;
+  stroke: #145e49;
+  stroke-width: 3;
+}
+.local-road {
+  color: var(--color-warning);
+}
 .sun-time {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-}
-.daylight-line {
-  flex-wrap: wrap;
-}
-/* Controls inside the summary card read as one list of rows. */
-#summary > details,
-#summary > .route-options,
-#summary > .departure-field {
-  margin: 0;
-  border-top: 1px solid #e2e7eb;
-  padding-block: 2px;
-}
-#summary > .route-options,
-#summary > .departure-field {
-  padding-block: 8px;
 }
 .playback-controls {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.playback-controls button,
-.playback-controls select {
-  min-height: 44px;
-}
 .playback-controls button {
-  width: 44px;
+  flex: none;
+  width: var(--control);
   padding: 0;
 }
 #playback-readout p {
   margin: 4px 0 0;
 }
+
+/* Saved routes. */
+.saved-routes #saved-count {
+  font-weight: 450;
+  color: var(--color-text-muted);
+}
+.saved-route {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+}
+.saved-route strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.saved-route small {
+  display: block;
+  margin: 2px 0 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.saved-route > div,
+.library-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#library-status:empty {
+  display: none;
+}
+.planner footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.planner footer a {
+  min-height: var(--control);
+}
+
+/* Export actions, always in view below the scrolling panel. */
+.action-bar {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: 0 -4px 12px #1b29340f;
+}
+.more-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gpx-name label {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.save-name,
+.export-actions,
+.secondary-actions {
+  display: flex;
+  gap: 8px;
+}
+.save-name input {
+  flex: 1 1 0;
+  width: 0;
+}
+.secondary-actions {
+  flex-wrap: wrap;
+}
+.secondary-actions > * {
+  flex: 1 1 auto;
+}
+#download {
+  flex: 1 1 0;
+}
+#more-actions,
+.label-long {
+  display: none;
+}
+/* Wide screens: name and save on one line, every export action on the next. */
+@media (min-width: 760px) {
+  .action-bar {
+    flex-flow: row wrap;
+  }
+  .more-panel,
+  .secondary-actions,
+  .export-actions {
+    display: contents;
+  }
+  .gpx-name {
+    flex: 1 1 100%;
+  }
+  #download {
+    order: 1;
+  }
+  #share {
+    order: 2;
+  }
+  .secondary-actions > * {
+    flex: 0 0 auto;
+    order: 3;
+  }
+}
+
+/* Settings dialog. */
+dialog.settings {
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-raised);
+}
+dialog.settings[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.settings::backdrop {
+  background: #1b293466;
+}
+.dialog-header,
+.dialog-footer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 20px;
+}
+.dialog-header {
+  border-bottom: 1px solid var(--color-border);
+}
+.dialog-header h2 {
+  font-size: 18px;
+}
+.dialog-header button {
+  border-color: transparent;
+}
+.dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 6px 20px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dialog-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border);
+}
+.dialog-footer p {
+  flex: 1 1 0;
+  margin: 0;
+}
+.dialog-body select {
+  width: 100%;
+}
+
+/* Map chrome. */
+.map-note {
+  position: absolute;
+  z-index: 450;
+  top: 10px;
+  left: 10px;
+  max-width: calc(100% - 90px);
+  padding: 8px 14px;
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-control);
+  font-size: 14px;
+  pointer-events: none;
+}
+.planner.panel-closed .map-note {
+  left: 64px;
+}
+.location-card {
+  position: absolute;
+  z-index: 1200;
+  top: 10px;
+  left: 10px;
+  width: min(360px, calc(100% - 20px));
+  max-height: calc(100% - 20px);
+  padding: 14px 16px;
+  overflow: auto;
+  border-radius: var(--radius-large);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+.location-card p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.point-menu {
+  position: absolute;
+  z-index: 1100;
+  display: grid;
+  gap: 4px;
+  max-width: calc(100% - 16px);
+  padding: 6px;
+  border-radius: var(--radius-large);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+.point-menu button {
+  justify-content: flex-start;
+  border-color: transparent;
+}
+.planner .leaflet-top {
+  top: env(safe-area-inset-top, 0px);
+}
+.planner .leaflet-right {
+  right: env(safe-area-inset-right, 0px);
+}
+.map-action-control {
+  display: grid;
+  gap: 10px;
+  width: var(--control);
+}
+.map-tool-group {
+  display: grid;
+  gap: 1px;
+  border-radius: 10px;
+  background: var(--color-border);
+  box-shadow: var(--shadow-control);
+}
+.map-tool-group button {
+  width: var(--control);
+  height: var(--control);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.map-tool-group > :first-child,
+.map-tool-group > :first-child > button {
+  border-radius: 10px 10px 0 0;
+}
+.map-tool-group > :last-child,
+.map-tool-group > :last-child > button {
+  border-radius: 0 0 10px 10px;
+}
+.map-action-control .button-label {
+  display: none;
+}
+.map-tool-group button[aria-expanded='true'],
+.map-tool-group button[aria-pressed='true'] {
+  background: var(--color-soft);
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+#fullscreen[aria-pressed='false'] .icon-minimize,
+#fullscreen[aria-pressed='true'] .icon-maximize,
+#lock[aria-pressed='false'] .icon-lock,
+#lock[aria-pressed='true'] .icon-unlock {
+  display: none;
+}
+/* Keyboard focus names an icon-only map tool; pointers get its title. */
+.map-tool-group button {
+  position: relative;
+}
+.map-tool-group button:focus-visible::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--color-text);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 450;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.map-tool-group button[aria-expanded='true']:focus-visible::after {
+  content: none;
+}
+.layer-control {
+  position: relative;
+}
+#layers-menu {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 10px);
+  display: grid;
+  gap: 4px;
+  width: 230px;
+  max-height: min(520px, calc(100dvh - 90px));
+  padding: 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border-radius: var(--radius-large);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+#layers-menu button {
+  width: 100%;
+  height: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+#layers-menu [aria-checked='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-soft);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+#layers-menu .check {
+  margin: 0 4px;
+}
+#satellite-license {
+  margin: 0 4px;
+}
+.planner .leaflet-control-zoom {
+  border: 0;
+  border-radius: 10px;
+  box-shadow: var(--shadow-control);
+}
+.leaflet-control-zoom a {
+  width: var(--control) !important;
+  height: var(--control) !important;
+  line-height: 44px !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+.leaflet-control-zoom a:first-child {
+  border-radius: 10px 10px 0 0 !important;
+}
+.leaflet-control-zoom a:last-child {
+  border-radius: 0 0 10px 10px !important;
+}
+[data-map-layer='satellite'] .route-line {
+  stroke: #b61f64;
+}
+[data-map-layer='satellite'] .route-casing {
+  stroke: #fff;
+}
+[data-map-layer='topographic'] .route-line {
+  stroke: #174cbd;
+}
+[data-map-layer='satellite'] .route-marker span {
+  background: #164e8a;
+  border-color: #fff;
+}
+/* Credits are anchored to the map, independently of Leaflet's control stack. */
+.planner .map-credits {
+  position: absolute;
+  z-index: 800;
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  width: fit-content;
+  height: 44px;
+}
+.planner .map-credits-toggle {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: var(--shadow-control);
+}
+
+/* Phones: the panel is a bottom sheet over a full-screen map. */
+@media (max-width: 759px) {
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .planner {
+    --sheet-half: min(55dvh, max(260px, calc(100dvh - 310px)));
+  }
+  .planner main {
+    display: block;
+  }
+  .map-container {
+    position: absolute;
+    inset: 0;
+  }
+  .sheet,
+  .planner.panel-closed .sheet {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    height: var(--sheet-half);
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 16px #1b29342e;
+  }
+  .planner.sheet-full .sheet {
+    height: calc(100dvh - 60px);
+  }
+  .planner.panel-closed .sheet {
+    height: auto;
+  }
+  .planner:not(.sheet-dragging) .sheet {
+    transition: height 180ms ease-out;
+  }
+  .planner header,
+  .planner.panel-closed .sheet > header {
+    position: fixed;
+    z-index: 600;
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    left: calc(8px + env(safe-area-inset-left, 0px));
+    display: flex;
+    gap: 0;
+    width: max-content;
+    height: 44px;
+    padding: 0 0 0 8px;
+    border: 0;
+    border-radius: 10px;
+    box-shadow: var(--shadow-control);
+  }
+  .planner .brand {
+    margin-right: 4px;
+    font-size: 17px;
+  }
+  .planner .brand-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 6px;
+  }
+  .planner .language-control select {
+    min-height: 44px;
+    padding: 4px;
+    border-color: transparent;
+    background: none;
+  }
+  #panel-toggle,
+  .planner.panel-closed #panel-toggle {
+    position: static;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    height: auto;
+    min-height: 52px;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    background: none;
+    box-shadow: none;
+    text-align: left;
+    touch-action: none;
+  }
+  #panel-toggle .button-icon {
+    display: none;
+  }
+  #panel-toggle .sheet-handle {
+    display: block;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--color-border-strong);
+  }
+  #panel-toggle .peek {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  #peek-main {
+    font-size: 19px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  #peek-main:empty {
+    display: none;
+  }
+  #peek-status {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 450;
+    color: var(--color-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #panel-toggle.error #peek-status {
+    color: var(--color-danger);
+    white-space: normal;
+  }
+  #route-panel {
+    padding: 4px 16px 12px;
+  }
+  .action-bar,
+  .planner.panel-closed .action-bar {
+    display: flex;
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .more-panel {
+    display: none;
+  }
+  .more-open .more-panel {
+    display: flex;
+  }
+  #more-actions,
+  .label-long {
+    display: inline-flex;
+  }
+  .label-short {
+    display: none;
+  }
+  #more-actions[aria-expanded='true'] {
+    border-color: var(--color-primary);
+    background: var(--color-soft);
+  }
+  #share {
+    width: var(--control);
+    padding: 0;
+  }
+  #share .button-label {
+    display: none;
+  }
+  .map-note,
+  .planner.panel-closed .map-note {
+    top: calc(60px + env(safe-area-inset-top, 0px));
+    left: calc(8px + env(safe-area-inset-left, 0px));
+    max-width: calc(100% - 76px);
+    font-size: 13px;
+  }
+  .location-card {
+    top: calc(60px + env(safe-area-inset-top, 0px));
+  }
+  /* Phones zoom with pinch and double tap; the column keeps room for map tools. */
+  .planner .leaflet-control-zoom {
+    display: none;
+  }
+  #layers-menu {
+    width: min(230px, calc(100vw - 76px));
+    max-height: calc(100dvh - var(--sheet-height, 55dvh) - 76px);
+  }
+  .map-fullscreen #layers-menu {
+    max-height: calc(100dvh - 90px);
+  }
+  .planner .leaflet-bottom {
+    bottom: var(--sheet-height, 0px);
+  }
+  .planner.map-fullscreen .leaflet-bottom {
+    bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .planner .map-credits {
+    bottom: calc(var(--sheet-height, 120px) + 10px);
+  }
+  .planner:not(.panel-closed):not(.map-fullscreen) .map-credits {
+    visibility: hidden;
+  }
+  .planner.map-fullscreen .map-credits {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-width: 339px) {
+  .planner .brand-name {
+    display: none;
+  }
+}
+/* Touch rows keep a 44px target. */
+@media (max-width: 759px), (pointer: coarse) {
+  .step-item,
+  .planner .climb {
+    min-height: 44px;
+  }
+}
+/* Short landscape screens: the tools sit in one row. */
+@media (max-height: 500px) {
+  .map-action-control {
+    display: flex;
+    width: auto;
+    gap: 6px;
+  }
+  .map-tool-group {
+    display: flex;
+  }
+  .map-tool-group > :first-child,
+  .map-tool-group > :first-child > button {
+    border-radius: 10px 0 0 10px;
+  }
+  .map-tool-group > :last-child,
+  .map-tool-group > :last-child > button {
+    border-radius: 0 10px 10px 0;
+  }
+  #layers-menu {
+    top: calc(100% + 8px);
+    right: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .planner .sheet {
+    transition: none;
+  }
+}
+
+/* Help page. */
+.help-page main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+.help-page header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+}
+.help-page h1 {
+  margin: 12px 0 22px;
+  font-size: 28px;
+}
+.help-page h2 {
+  margin: 32px 0 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+  font-size: 20px;
+}
+.help-page p,
+.help-page li {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #334754;
+}
+.help-page pre {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-subtle);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+#back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control);
+  font-weight: 550;
+}
+
 .playback-cursor {
   background: transparent;
   border: 0;
@@ -406,308 +1551,6 @@ label[for] {
   stroke: #0b72c6;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-#summary > details > summary {
-  font-size: 13px;
-  color: #145e49;
-  min-height: 40px;
-  line-height: 40px;
-}
-#summary > details[open] {
-  padding-bottom: 10px;
-}
-.stats-basis {
-  margin-top: 2px;
-}
-
-.hint {
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.5;
-  margin: 5px 0 10px;
-}
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.chips span {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 5px;
-  background: #edf5f1;
-  border: 1px solid #c5dbce;
-}
-.chips:empty {
-  display: none;
-}
-.warning {
-  font-size: 12px;
-  line-height: 1.5;
-  background: #fff5e1;
-  color: #74420b;
-  border-left: 3px solid #be812b;
-  padding: 8px 10px;
-  margin: 10px 0;
-  border-radius: 3px;
-}
-#server-notice p,
-.lock-notice p {
-  margin: 0;
-}
-.lock-notice {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.file-button:has(input:disabled) {
-  color: #586673;
-}
-.file-button input:disabled {
-  cursor: not-allowed;
-}
-.notice-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 8px;
-}
-/* Text-style action inside a message, such as Choose departure. */
-.planner .link-button {
-  min-width: 0;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #145e49;
-  font: inherit;
-  font-weight: 550;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.departure-automatic {
-  margin: 2px 0 6px;
-}
-#summary > #itinerary {
-  margin: 0;
-  border-top: 1px solid #e2e7eb;
-}
-#itinerary:empty {
-  display: none;
-}
-/* The road-review warning is a button that opens the itinerary. */
-.planner .review-link {
-  display: block;
-  width: 100%;
-  min-height: 0;
-  border: 0;
-  border-left: 3px solid #be812b;
-  border-radius: 3px;
-  background: #fff5e1;
-  color: #74420b;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.5;
-  text-align: left;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.road-list > summary {
-  color: #145e49;
-}
-.road-list ul {
-  max-height: 220px;
-  overflow: auto;
-  font-size: 12px;
-  line-height: 1.8;
-  padding-left: 0;
-}
-.road-list li {
-  list-style: none;
-}
-.step-item {
-  display: block;
-  width: 100%;
-  min-height: 32px;
-  padding: 2px 4px;
-  text-align: left;
-}
-.step-row {
-  display: grid;
-  grid-template-columns: auto 16px minmax(0, 1fr);
-  column-gap: 5px;
-  align-items: center;
-  justify-content: start;
-  width: 100%;
-  min-height: 28px;
-  line-height: 1.5;
-}
-.step-row.no-position {
-  grid-template-columns: 16px minmax(0, 1fr);
-}
-.step-text {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.maneuver-icon {
-  width: 16px;
-  height: 16px;
-}
-.maneuver-icon.mirror {
-  transform: scaleX(-1);
-}
-.maneuver {
-  font-weight: 600;
-}
-.milepost {
-  min-width: 4.4em;
-  color: #465968;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.planner .maneuver-link {
-  /* Full-width rows: 32px stays above the 24px minimum touch target. */
-  min-width: 0;
-  min-height: 32px;
-}
-.maneuver-link {
-  border: 0;
-  border-radius: 4px;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-.maneuver-link:hover {
-  background: #eef4f1;
-}
-.maneuver-link:focus-visible {
-  outline: 2px solid #145e49;
-  outline-offset: 1px;
-}
-.leaflet-pane .maneuver-marker {
-  fill: #145e49;
-  fill-opacity: 0.25;
-  stroke: #145e49;
-  stroke-width: 3;
-}
-.local-road {
-  color: #74420b;
-}
-#status {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #465968;
-  min-height: 18px;
-  margin: 12px 0;
-}
-.error {
-  color: #a72d22 !important;
-}
-.export-actions {
-  display: flex;
-  gap: 7px;
-}
-.primary {
-  background: #126447;
-  color: #fff;
-  border-color: #126447;
-  flex: 1;
-  font-weight: 650;
-}
-.primary:hover {
-  background: #0c5139;
-  color: #fff;
-}
-.secondary-actions {
-  margin-top: 12px;
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding-top: 4px;
-}
-.file-button {
-  position: relative;
-  border: 0;
-  border-radius: 0;
-  color: #145e49;
-  padding: 0;
-  font-size: 13px;
-  white-space: nowrap;
-  font-weight: 500;
-}
-.file-button input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  width: 100%;
-  cursor: pointer;
-}
-.file-button:focus-within {
-  outline: 3px solid #0b72c6;
-}
-.settings {
-  flex: 1;
-  min-width: 0;
-}
-.settings input {
-  margin-bottom: 6px;
-}
-.settings[open] {
-  padding-bottom: 10px;
-}
-.settings[open] ~ * {
-  display: none;
-}
-.settings summary {
-  color: #145e49;
-}
-.json-settings {
-  margin-top: 8px;
-}
-.json-settings button {
-  font-size: 12px;
-  margin: 3px 0;
-}
-footer {
-  font-size: 11px;
-  color: #52616d;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid #e2e7eb;
-  padding-top: 12px;
-  margin-top: 8px;
-}
-footer a {
-  font-size: 12px;
-}
-.map-note {
-  position: absolute;
-  z-index: 450;
-  top: 12px;
-  left: 12px;
-  max-width: calc(100% - 24px);
-  font-size: 12px;
-  color: #20362d;
-  background: #fffffff5;
-  box-shadow: 0 1px 6px #18382a25;
-  border: 1px solid #d1dbd4;
-  padding: 9px 12px;
-  border-radius: 6px;
-  pointer-events: none;
-}
-.fit-button {
-  position: absolute;
-  z-index: 450;
-  bottom: 25px;
-  left: 12px;
-  min-height: 40px;
-  font-size: 12px;
-  box-shadow: 0 1px 6px #18382a25;
 }
 .route-marker {
   background: none;
@@ -754,55 +1597,6 @@ html.map-touching body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-}
-/* Credits are anchored to the map, independently of Leaflet's control stack. */
-.planner .map-credits {
-  position: absolute;
-  z-index: 800;
-  right: calc(12px + env(safe-area-inset-right, 0px));
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  width: fit-content;
-  height: 44px;
-}
-.planner .map-credits-toggle {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: none;
-  color: var(--ink);
-}
-.map-credits-toggle::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 4px #0003;
-}
-.map-credits-toggle .button-icon {
-  position: relative;
-}
-@media (max-width: 759px) {
-  .planner .map-credits {
-    /* Centered under the map tools column, which phones show without zoom. */
-    right: calc(10px + env(safe-area-inset-right, 0px));
-    bottom: calc(
-      var(--route-handle-height, 48px) + 10px + env(safe-area-inset-bottom, 0px)
-    );
-  }
-  .planner:not(.panel-closed):not(.map-fullscreen) .map-credits {
-    visibility: hidden;
-  }
-  .planner.map-fullscreen .map-credits {
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  }
 }
 .map-credits-dialog {
   width: min(
@@ -879,217 +1673,6 @@ html.map-touching body {
     animation: none;
   }
 }
-.leaflet-control-zoom a {
-  background: #fff !important;
-  color: #1b2934 !important;
-}
-.sr-only {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-}
-@media (min-width: 760px) {
-  header {
-    padding: 0 24px;
-  }
-  main {
-    display: grid;
-    grid-template-columns: 360px 1fr;
-    height: calc(100dvh - 56px);
-  }
-  aside {
-    overflow-y: auto;
-    scrollbar-width: thin;
-    padding: 20px;
-    border-right: 1px solid var(--border);
-  }
-  .map-container {
-    order: 0;
-    height: 100%;
-    max-height: none;
-    border: 0;
-  }
-  #points {
-    max-height: 360px;
-  }
-}
-@media (min-width: 1200px) {
-  main {
-    grid-template-columns: 380px 1fr;
-  }
-}
-.help-page main {
-  display: block;
-  height: auto;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 24px 20px;
-}
-.help-page h1 {
-  margin: 12px 0 22px;
-  font-size: 26px;
-}
-.help-page h2 {
-  font-size: 18px;
-  margin: 24px 0 8px;
-}
-.help-page p,
-.help-page li {
-  line-height: 1.7;
-  color: #334754;
-}
-.help-page pre {
-  white-space: pre-wrap;
-  background: #f0f4f6;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 14px;
-  line-height: 1.6;
-}
-.help-page [hidden] {
-  display: none !important;
-}
-.secondary-actions:has(.settings[open]) {
-  display: block;
-}
-.settings[open] {
-  margin-top: 8px;
-}
-/* Every point edits a location; names are no longer disguised as location fields. */
-#points li {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  align-items: start;
-  padding: 10px;
-  gap: 8px;
-}
-#points li.selected {
-  padding: 9px;
-}
-.point-number {
-  margin-top: 22px;
-  min-height: 44px;
-  width: 32px;
-}
-.point-fields {
-  grid-column: 2;
-}
-.point-fields label {
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 18px;
-  margin: 0 0 6px;
-}
-.point-location-form {
-  display: flex;
-  gap: 5px;
-}
-.point-fields .point-location-form input {
-  display: block !important;
-  width: 0;
-  flex: 1;
-  background: #fff;
-  border: 1px solid #b4c2cb;
-  border-radius: 6px;
-  padding: 10px !important;
-  min-height: 44px !important;
-  font-size: 13px;
-}
-
-.point-actions {
-  grid-column: 2;
-  justify-content: flex-end;
-  gap: 5px;
-}
-.point-actions button {
-  min-height: 36px;
-  width: 32px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  font-size: 14px;
-}
-.point-actions button:first-child {
-  width: auto;
-  margin-right: auto;
-  padding: 6px 10px;
-  font-size: 12px;
-  color: #145e49;
-}
-#points li:not(.selected) .point-actions {
-  display: none;
-}
-#points {
-  max-height: 360px;
-}
-.route-action {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-.route-action button {
-  min-height: 46px;
-}
-.point-results {
-  display: grid;
-  gap: 5px;
-}
-.point-results > button {
-  font-size: 12px;
-  text-align: left;
-  justify-content: flex-start;
-  line-height: 1.5;
-  margin-top: 5px;
-}
-@media (min-width: 760px) {
-  #points {
-    max-height: 440px;
-  }
-}
-.route-options {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.unit-control select {
-  min-height: 40px;
-  padding: 8px;
-  font-size: 13px;
-}
-.speed-options {
-  margin-bottom: 12px;
-}
-.speed-options summary {
-  font-size: 13px;
-  color: #145e49;
-  min-height: 36px;
-  line-height: 36px;
-}
-.speed-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 260px;
-  padding-bottom: 10px;
-}
-.speed-field input {
-  flex: 1;
-  width: 0;
-}
-.speed-field span {
-  font-size: 13px;
-  white-space: nowrap;
-}
-.speed-field {
-  max-width: none;
-  gap: 8px;
-}
 input[type='range'].range-input {
   --range-thumb: #126447;
   --range-rail: #bdccc4;
@@ -1157,624 +1740,6 @@ input[type='range'].range-input:disabled {
 .speed-field:has(input:disabled) span {
   color: #64727c;
 }
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  white-space: nowrap;
-}
-.brand-icon {
-  display: block;
-  margin-right: 7px;
-  flex-shrink: 0;
-  border-radius: 6px;
-}
-@media (max-width: 420px) {
-  header {
-    gap: 12px;
-  }
-  .brand {
-    font-size: 20px;
-  }
-  .brand-icon {
-    width: 25px;
-    height: 25px;
-    margin-right: 5px;
-  }
-  .language-control select {
-    font-size: 12px;
-    padding: 7px;
-  }
-}
-.gpx-name {
-  margin: 12px 0;
-}
-.gpx-name label {
-  margin-top: 0;
-}
-.save-name {
-  display: flex;
-  gap: 6px;
-}
-.save-name input {
-  flex: 1;
-  width: 0 !important;
-}
-.save-name button {
-  font-size: 12px;
-  max-width: 120px;
-}
-.saved-routes {
-  margin: 0 0 16px;
-}
-.saved-routes > summary {
-  color: #145e49;
-}
-.saved-routes #saved-count {
-  margin-left: 4px;
-  font-weight: 400;
-}
-.saved-route {
-  border: 1px solid var(--border);
-  padding: 10px;
-  border-radius: 7px;
-  margin: 8px 0;
-}
-.saved-route strong {
-  display: block;
-  overflow-wrap: anywhere;
-  font-size: 13px;
-}
-.saved-route small {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  margin: 5px 0;
-}
-.saved-route > div {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-.saved-route button {
-  font-size: 12px;
-  min-height: 40px;
-  padding: 8px 10px;
-}
-.library-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 0 14px;
-}
-.library-actions button {
-  font-size: 12px;
-}
-.library-actions .file-button {
-  font-size: 12px;
-}
-
-/* The map fills the viewport; route controls scroll independently. */
-.planner {
-  overflow: hidden;
-  height: 100vh;
-  height: 100dvh;
-}
-.planner header {
-  position: fixed;
-  z-index: 600;
-  top: env(safe-area-inset-top, 0px);
-  left: env(safe-area-inset-left, 0px);
-  right: env(safe-area-inset-right, 0px);
-  width: max-content;
-  max-width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 0 0 8px 0;
-}
-.planner main {
-  display: block;
-  height: 100%;
-}
-.planner .map-container {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  max-height: none;
-  min-height: 0;
-  border: 0;
-}
-.planner aside {
-  position: absolute;
-  z-index: 550;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 48dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 16px max(12px, env(safe-area-inset-right))
-    max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -3px 16px #18382a25;
-}
-.planner [hidden] {
-  display: none !important;
-}
-#panel-toggle {
-  position: absolute;
-  z-index: 560;
-  bottom: 48dvh;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 140px;
-  flex-direction: column;
-  border-radius: 12px 12px 0 0;
-}
-.sheet-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 4px;
-  background: var(--muted);
-}
-.panel-closed #panel-toggle {
-  bottom: env(safe-area-inset-bottom, 0px);
-}
-.planner .map-note {
-  top: calc(65px + env(safe-area-inset-top, 0px));
-}
-.map-tools {
-  position: absolute;
-  z-index: 450;
-  left: max(12px, env(safe-area-inset-left));
-  top: calc(105px + env(safe-area-inset-top, 0px));
-  display: grid;
-  gap: 8px;
-}
-.location-card {
-  position: absolute;
-  z-index: 580;
-  top: calc(62px + env(safe-area-inset-top, 0px));
-  left: 12px;
-  right: 12px;
-  max-width: 360px;
-  max-height: calc(100dvh - 90px);
-  overflow: auto;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--paper);
-  box-shadow: 0 2px 14px #18382a40;
-}
-.location-card p {
-  line-height: 1.5;
-}
-.planner .fit-button {
-  bottom: calc(48dvh + 60px);
-  min-height: 44px;
-}
-.planner .leaflet-bottom {
-  bottom: calc(48dvh + 5px);
-}
-.panel-closed .fit-button {
-  bottom: calc(60px + env(safe-area-inset-bottom));
-}
-.panel-closed .leaflet-bottom {
-  bottom: calc(48px + env(safe-area-inset-bottom));
-}
-.leaflet-control-zoom a {
-  min-width: 44px;
-  min-height: 44px;
-  line-height: 44px !important;
-}
-.point-actions button,
-.point-number {
-  min-width: 44px;
-  min-height: 44px;
-}
-#points li {
-  grid-template-columns: 44px minmax(0, 1fr);
-}
-@media (min-width: 760px) {
-  .planner aside {
-    top: calc(56px + env(safe-area-inset-top, 0px));
-    right: auto;
-    width: 360px;
-    height: auto;
-    border-top: 0;
-  }
-  .planner .map-container {
-    left: 360px;
-    width: calc(100% - 360px);
-  }
-  .planner.panel-closed .map-container {
-    left: 0;
-    width: 100%;
-  }
-  #panel-toggle,
-  .panel-closed #panel-toggle {
-    left: 372px;
-    top: 12px;
-    bottom: auto;
-    transform: none;
-    border-radius: 7px;
-  }
-  .panel-closed #panel-toggle {
-    left: auto;
-    right: 12px;
-  }
-  .sheet-handle {
-    display: none;
-  }
-  .planner .map-note {
-    top: 65px;
-  }
-  .map-tools {
-    left: auto;
-    right: max(12px, env(safe-area-inset-right));
-    top: 12px;
-  }
-  .panel-closed .map-tools {
-    top: 65px;
-  }
-  .planner .fit-button {
-    bottom: 25px;
-  }
-  .planner .leaflet-bottom {
-    bottom: 0;
-  }
-}
-.planner.map-fullscreen .map-container {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100dvh;
-  z-index: 1000;
-}
-.map-fullscreen .map-tools {
-  top: max(12px, env(safe-area-inset-top));
-}
-.map-fullscreen .fit-button {
-  bottom: 30px;
-}
-.map-fullscreen .leaflet-bottom {
-  bottom: env(safe-area-inset-bottom);
-}
-
-.planner button {
-  min-width: 44px;
-  min-height: 44px;
-}
-
-.planner .language-control select {
-  min-height: 44px;
-}
-.planner .leaflet-right {
-  right: env(safe-area-inset-right, 0px);
-}
-
-.point-menu {
-  position: absolute;
-  z-index: 590;
-  display: grid;
-  gap: 4px;
-  padding: 6px;
-  max-width: calc(100% - 16px);
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 2px 14px #18382a40;
-}
-#map {
-  touch-action: none;
-}
-.suggestions {
-  max-height: 240px;
-  overflow-y: auto;
-}
-.suggestions [aria-selected='true'] {
-  outline: 3px solid #0b72c6;
-  outline-offset: -3px;
-  background: var(--soft);
-}
-.export-actions {
-  flex-wrap: wrap;
-}
-
-.layer-control {
-  position: absolute;
-  z-index: 480;
-  top: calc(105px + env(safe-area-inset-top, 0px));
-  right: max(12px, env(safe-area-inset-right));
-}
-#layers-menu {
-  position: absolute;
-  top: 52px;
-  right: 0;
-  display: grid;
-  width: min(210px, calc(100vw - 24px));
-  max-height: min(156px, calc(52dvh - 222px));
-  overflow-y: auto;
-  padding: 8px;
-  gap: 4px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--paper);
-  box-shadow: 0 2px 14px #18382a40;
-}
-#layers-menu [aria-checked='true'] {
-  background: var(--soft);
-  outline: 2px solid var(--green);
-  outline-offset: -3px;
-}
-#label-option {
-  margin: 4px;
-}
-[data-map-layer='satellite'] .route-line {
-  stroke: #b61f64;
-}
-[data-map-layer='satellite'] .route-casing {
-  stroke: #fff;
-}
-[data-map-layer='topographic'] .route-line {
-  stroke: #174cbd;
-}
-[data-map-layer='satellite'] .route-marker span {
-  background: #164e8a;
-  border-color: #fff;
-}
-@media (min-width: 760px) {
-  .layer-control {
-    top: 120px;
-    right: max(12px, env(safe-area-inset-right));
-  }
-  #layers-menu {
-    max-height: min(340px, calc(100dvh - 260px));
-  }
-  .panel-closed .layer-control {
-    top: 173px;
-  }
-}
-.map-fullscreen .layer-control {
-  top: calc(105px + env(safe-area-inset-top));
-}
-@media (min-width: 760px) {
-  .map-fullscreen .layer-control {
-    top: calc(120px + env(safe-area-inset-top));
-  }
-}
-
-/* Compact map tools share Leaflet's right column, including zoom. */
-.button-icon {
-  flex: 0 0 20px;
-  pointer-events: none;
-}
-.icon-control {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.icon-only {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-}
-.icon-only .button-label {
-  display: none;
-}
-.map-action-control {
-  display: grid;
-  gap: 6px;
-  width: 145px;
-}
-.planner .map-action-control > button,
-.planner .map-action-control .layer-control > button {
-  width: 100%;
-  min-height: 44px;
-}
-.planner .map-action-control .fit-button,
-.planner .map-action-control .layer-control {
-  position: relative;
-  inset: auto;
-  font-size: 14px;
-  box-shadow: none;
-}
-.planner .map-action-control .layer-control {
-  z-index: auto;
-}
-.planner .leaflet-top {
-  top: calc(56px + env(safe-area-inset-top));
-}
-.planner.map-fullscreen .leaflet-top {
-  top: env(safe-area-inset-top);
-}
-.map-action-control #layers-menu {
-  top: 0;
-  right: calc(100% + 8px);
-  width: 210px;
-  max-height: min(340px, calc(100dvh - 160px));
-}
-.map-action-control button[aria-expanded='true'],
-.map-action-control button[aria-pressed='true'] {
-  background: var(--soft);
-  border: 2px solid var(--green);
-}
-#fullscreen[aria-pressed='false'] .icon-minimize,
-#fullscreen[aria-pressed='true'] .icon-maximize,
-#lock[aria-pressed='false'] .icon-lock,
-#lock[aria-pressed='true'] .icon-unlock {
-  display: none;
-}
-.point-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-.point-location-form {
-  position: relative;
-  flex: 1 1 140px;
-  min-width: 0;
-}
-.point-controls .point-actions {
-  flex: 0 0 auto;
-  gap: 0;
-  margin-left: auto;
-}
-.point-controls .point-actions button,
-.point-controls .point-actions button:first-child {
-  width: 44px;
-  height: 44px;
-  margin: 0;
-  padding: 0;
-}
-
-@media (max-width: 759px) {
-  .planner {
-    --route-sheet-height: min(
-      48dvh,
-      max(100px, calc(100dvh - 400px - env(safe-area-inset-top)))
-    );
-  }
-  .planner aside {
-    height: var(--route-sheet-height);
-    padding-top: 10px;
-  }
-  #panel-toggle {
-    bottom: var(--route-sheet-height);
-  }
-  .panel-closed #panel-toggle {
-    bottom: env(safe-area-inset-bottom);
-  }
-  .planner header {
-    height: 44px;
-    padding: 0 6px;
-    gap: 6px;
-  }
-  .planner .brand {
-    font-size: 18px;
-    letter-spacing: -0.6px;
-  }
-  .planner .brand-icon {
-    width: 22px;
-    height: 22px;
-  }
-  .planner .language-control select {
-    min-height: 44px;
-    padding: 4px;
-    font-size: 12px;
-  }
-  .planner header .icon-control {
-    width: 44px;
-    height: 44px;
-  }
-  .planner header .button-label,
-  .map-action-control .button-label {
-    display: none;
-  }
-  .planner .map-note {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    border: 0;
-  }
-  .planner .leaflet-top {
-    top: calc(44px + env(safe-area-inset-top));
-  }
-  .planner.map-fullscreen .leaflet-top {
-    top: env(safe-area-inset-top);
-  }
-  .map-action-control {
-    width: 44px;
-  }
-  /* Phones zoom with pinch and double tap; the column keeps room for map tools. */
-  .planner .leaflet-control-zoom {
-    display: none;
-  }
-  .planner .map-action-control > button,
-  .planner .map-action-control .layer-control > button {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-  }
-  .map-action-control #layers-menu {
-    width: min(210px, calc(100vw - 76px));
-    max-height: calc(100dvh - var(--route-sheet-height) - 168px);
-  }
-  .panel-closed .map-action-control #layers-menu,
-  .map-fullscreen .map-action-control #layers-menu {
-    max-height: min(340px, calc(100dvh - 180px));
-  }
-  #points li,
-  #points li.selected {
-    padding: 6px;
-    gap: 4px;
-    margin: 4px 0;
-  }
-  .point-number {
-    margin-top: 16px;
-  }
-  .point-fields label {
-    font-size: 12px;
-    line-height: 16px;
-    margin-bottom: 2px;
-  }
-  .point-controls .point-actions button {
-    border: 0;
-  }
-  .page-heading {
-    margin-bottom: 6px;
-  }
-  .page-heading h1 {
-    font-size: 18px;
-  }
-  .saved-routes {
-    margin-bottom: 4px;
-  }
-  .saved-routes > summary {
-    min-height: 44px;
-    line-height: 44px;
-  }
-}
-.point-menu {
-  z-index: 1100;
-}
-.location-card {
-  z-index: 1200;
-}
-@media (max-width: 759px) {
-  .planner .brand {
-    min-height: 44px;
-  }
-}
-
-@media (max-height: 500px) {
-  .planner .leaflet-top {
-    top: calc(44px + env(safe-area-inset-top));
-  }
-  .map-action-control {
-    grid-template-columns: repeat(6, 44px);
-    width: fit-content;
-    gap: 4px;
-  }
-  .map-action-control .button-label {
-    display: none;
-  }
-  .planner .map-action-control > button,
-  .planner .map-action-control .layer-control > button {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-  }
-  .planner .leaflet-top .leaflet-control-zoom {
-    margin-top: 4px;
-  }
-}
-
 #weather-section {
   min-width: 0;
 }
@@ -2356,4 +2321,62 @@ input[type='range'].range-input:disabled {
   fill-opacity: 1;
   stroke: #fff;
   stroke-width: 3;
+}
+
+/* Adjustments to the feature rules above for the current layout. */
+.departure-field > #departure {
+  flex: 1 1 200px;
+  width: auto;
+}
+.weather-card {
+  border-left-width: 1px;
+  border-radius: var(--radius-large);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.weather-card-severity {
+  font-size: 13px;
+}
+.daylight-line {
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+.daylight-details {
+  margin: 0;
+  font-size: 14px;
+}
+.climbs ol {
+  font-size: 14px;
+}
+.planner .climb {
+  min-height: 36px;
+  font-weight: 450;
+}
+.elevation-stats p {
+  font-size: 14px;
+}
+.coloring-heading {
+  font-size: 13px;
+}
+.coloring-group button,
+.coloring-group button + button {
+  margin-top: 4px;
+}
+.location-card-header {
+  margin-bottom: 0;
+}
+.location-card-header #close-location {
+  border-color: transparent;
+}
+.route-legend {
+  border: 0;
+  box-shadow: var(--shadow-control);
+  font-size: 13px;
+}
+.map-credits-dialog {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: var(--shadow-raised);
 }

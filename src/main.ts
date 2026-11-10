@@ -96,6 +96,7 @@ import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
 import { setupMapLayers } from './map-layers';
 import { setupMapControls } from './map-controls';
+import { compactLayout, setupPanel } from './panel';
 import { icon, iconControl } from './icons';
 import {
   maneuverIcon,
@@ -214,8 +215,7 @@ map.createPane('maneuver').style.zIndex = '587';
 const maneuverLayer = L.layerGroup().addTo(map);
 map.on('click', () => maneuverLayer.clearLayers());
 function showManeuver(coord: Coord) {
-  if (!$('route-panel').hidden && matchMedia('(max-width: 759px)').matches)
-    $('panel-toggle').click();
+  if (!$('route-panel').hidden && compactLayout()) $('panel-toggle').click();
   map.stop();
   map.setView(coord, Math.max(map.getZoom(), 17), { animate: false });
   maneuverLayer.clearLayers();
@@ -291,17 +291,14 @@ function fit() {
     current?.segments.flat() ??
     state.points.flatMap((p) => (p.coord ? [p.coord] : []));
   if (pts.length) {
-    const panel = $('route-panel');
-    const bottom =
-      matchMedia('(max-width: 759px)').matches && !panel.hidden
-        ? panel.getBoundingClientRect().height + 55
-        : 70;
+    // The bottom sheet covers the lower part of the map on phones.
+    const compact = compactLayout();
+    const bottom = compact
+      ? $('sheet').getBoundingClientRect().height + 30
+      : 70;
     map.fitBounds(L.latLngBounds(pts), {
-      paddingTopLeft: [45, 105],
-      paddingBottomRight: [
-        matchMedia('(max-width: 759px)').matches ? 76 : 176,
-        bottom,
-      ],
+      paddingTopLeft: [45, compact ? 125 : 60],
+      paddingBottomRight: [76, bottom],
       maxZoom: 15,
       animate: false,
     });
@@ -601,7 +598,7 @@ function renderPoints() {
     actions.className = 'point-actions';
     const onMap = text('button', 'Set on map') as HTMLButtonElement;
     onMap.type = 'button';
-    iconControl(onMap, 'pin', 'Set on map', true);
+    iconControl(onMap, 'pin', 'Set on map');
     onMap.onclick = () => selectPoint(i, true);
     actions.append(onMap);
     for (const [symbol, delta] of [
@@ -729,6 +726,8 @@ map.on('zoomend', () => {
 });
 function clearSummary() {
   $('summary').hidden = true;
+  $('route-details').hidden = true;
+  $('peek-main').textContent = '';
   for (const id of ['summary-content', 'summary-notes', 'itinerary'])
     $(id).replaceChildren();
   renderDaylight(state, null, speedKmh);
@@ -830,6 +829,7 @@ function renderSummary(route: Route) {
     notes = $('summary-notes'),
     itinerary = $('itinerary');
   $('summary').hidden = false;
+  $('route-details').hidden = false;
   summary.replaceChildren();
   notes.replaceChildren();
   itinerary.replaceChildren();
@@ -845,15 +845,17 @@ function renderSummary(route: Route) {
     item.append(term, data);
     stats.append(item);
   };
-  stat('Distance', distanceLabel(route.distance, state.units, locale));
-  stat(
-    'Time',
+  const distance = distanceLabel(route.distance, state.units, locale);
+  const time =
     minutes === null
       ? '—'
       : minutes < 60
         ? `${minutes} min`
-        : `${Math.floor(minutes / 60)}h ${minutes % 60} min`,
-  );
+        : `${Math.floor(minutes / 60)}h ${minutes % 60} min`;
+  stat('Distance', distance);
+  stat('Time', time);
+  // Shown on the handle of the closed bottom sheet.
+  $('peek-main').textContent = `${distance} · ${time}`;
   if (duration !== null && Number.isFinite(departure)) {
     const arrival = new Date(departure + duration * 1000);
     stat(
@@ -1271,8 +1273,11 @@ $('save-settings').onclick = () => {
       }
       status('Settings applied.');
     }
+    $<HTMLDialogElement>('settings-dialog').close();
   } catch (e) {
     status((e as Error).message, true);
+    // The status line is behind the dialog; repeat the reason inside it.
+    $('settings-status').textContent = (e as Error).message;
   }
 };
 $<HTMLInputElement>('route-name').oninput = () => {
@@ -1409,11 +1414,12 @@ $('apply-json').onclick = () => {
     selected = 0;
     changed();
     fit();
+    $<HTMLDialogElement>('settings-dialog').close();
   } catch {
-    status(
-      'Invalid JSON state. Load the current state to see the expected format.',
-      true,
-    );
+    const message =
+      'Invalid JSON state. Load the current state to see the expected format.';
+    status(message, true);
+    $('settings-status').textContent = message;
   }
 };
 
@@ -1625,6 +1631,7 @@ $<HTMLInputElement>('restore-routes').onchange = () => {
 void refreshSavedRoutes();
 updateSaveButton();
 
+setupPanel(map);
 setupMapView(map, {
   hasRoute: () => state.points.some((p) => p.coord !== null),
   addPoint: (coord, asStart) => {

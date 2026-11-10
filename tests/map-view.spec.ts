@@ -376,7 +376,7 @@ test('IP detection can be disabled in Settings and stays disabled after reload',
   page,
 }) => {
   await page.goto(base);
-  await page.locator('.settings > summary').click();
+  await page.locator('#open-settings').click();
   await page.locator('#detect-region').uncheck();
   await page.evaluate(() => sessionStorage.removeItem('region-attempted'));
   let calls = 0;
@@ -384,7 +384,7 @@ test('IP detection can be disabled in Settings and stays disabled after reload',
     if (r.url().includes('ipwho.is')) calls++;
   });
   await page.reload();
-  await page.locator('.settings > summary').click();
+  await page.locator('#open-settings').click();
   await expect(page.locator('#detect-region')).not.toBeChecked();
   await page.waitForTimeout(200);
   expect(calls).toBe(0);

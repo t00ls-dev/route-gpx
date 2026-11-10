@@ -77,7 +77,7 @@ test('loads only the selected layer, updates credits and keeps layer preferences
     'MapServer',
   );
   await page.keyboard.press('Escape');
-  await page.locator('.settings > summary').click();
+  await page.locator('#open-settings').click();
   await page.locator('#satellite-vintage').selectOption('2016');
   await expect(page.locator('.map-credits-dialog')).toContainText('2016');
   await page.reload();

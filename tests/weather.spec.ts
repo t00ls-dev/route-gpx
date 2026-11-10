@@ -757,7 +757,6 @@ test('selected speeds recalculate weather locally and support slow/fast travel a
     .locator('.weather-marker')
     .last()
     .getAttribute('aria-label');
-  await page.locator('.speed-options > summary').click();
   await page.locator('#average-speed').fill('30');
   await expect(page.locator('#summary .stats-basis')).toHaveText(
     'At 30 km/h · no stops',
@@ -787,7 +786,7 @@ test('changing only the weather server refreshes weather without rerouting', asy
     if (r.url().includes('/v1/forecast?')) hosts.push(new URL(r.url()).host);
     if (r.url().includes('/route/v1/')) hosts.push('routing');
   });
-  await page.locator('.settings > summary').click();
+  await page.locator('#open-settings').click();
   await page.locator('#weather-server').fill('https://weather.example.org');
   await page.locator('#save-settings').click();
   await expect(page.locator('#status')).toHaveText('Settings applied.');
@@ -1034,7 +1033,6 @@ test('slower travel adds hourly samples automatically and faster travel reuses t
   await expect(page.locator('.weather-card')).toHaveCount(7);
   expect(requests).toHaveLength(1);
   expect(requests[0].searchParams.get('latitude')!.split(',')).toHaveLength(7);
-  await page.locator('.speed-options > summary').click();
   await page.clock.install({ time: new Date('2026-11-07T10:00:00Z') });
   await page.locator('#average-speed').fill('15');
   await page.locator('#average-speed').fill('60');
@@ -1280,7 +1278,6 @@ test('changing passage speed selects the wind at the new hour without another re
   await expect(page.locator('.weather-card-wind').nth(3)).toContainText(
     'Tailwind',
   );
-  await page.locator('.speed-options > summary').click();
   await page.locator('#average-speed').fill('120');
   await expect(page.locator('.weather-card-wind').nth(3)).toContainText(
     'Headwind',
