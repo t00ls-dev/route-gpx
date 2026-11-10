@@ -326,6 +326,9 @@ const pt: Record<string, string> = {
   'Editing unlocked.': 'Edição desbloqueada.',
   Daylight: 'Luz do dia',
   'Route coloring': 'Colorir a rota',
+  'Route marks': 'Marcas da rota',
+  'Direction arrows': 'Setas de direção',
+  'Halfway point': 'Metade da rota',
   None: 'Nenhuma',
   Day: 'Dia',
   Twilight: 'Crepúsculo',
@@ -407,6 +410,7 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (time, light) =>
       `${time} · ${({ daylight: 'dia', twilight: 'crepúsculo', dark: 'escuro' } as Record<string, string>)[light]}`,
   ],
+  [/^Halfway · (.+)$/, (distance) => `Metade · ${distance}`],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],
