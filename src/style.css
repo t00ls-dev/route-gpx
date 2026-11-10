@@ -370,6 +370,43 @@ label[for] {
 #summary > .departure-field {
   padding-block: 8px;
 }
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.playback-controls button,
+.playback-controls select {
+  min-height: 44px;
+}
+.playback-controls button {
+  width: 44px;
+  padding: 0;
+}
+#playback-readout p {
+  margin: 4px 0 0;
+}
+.playback-cursor {
+  background: transparent;
+  border: 0;
+}
+.playback-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #126447;
+  box-shadow:
+    0 0 0 6px #12644733,
+    0 1px 4px #0006;
+}
+.leaflet-pane .playback-trace {
+  stroke: #0b72c6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 #summary > details > summary {
   font-size: 13px;
   color: #145e49;
@@ -946,7 +983,7 @@ html.map-touching body {
   max-width: none;
   gap: 8px;
 }
-.speed-field input[type='range'] {
+input[type='range'].range-input {
   --range-thumb: #126447;
   --range-rail: #bdccc4;
   appearance: none;
@@ -959,17 +996,18 @@ html.map-touching body {
   padding: 0;
   border: 0;
   border-radius: 0;
-  /* Thumb centers travel from 10px to width − 10px. Match the visible rail. */
+  /* Shared by every slider: thumb centers travel from 10px to width − 10px,
+     so the visible rail matches that travel and the ends are reachable. */
   background: linear-gradient(var(--range-rail), var(--range-rail)) center /
     calc(100% - 20px) 6px no-repeat;
   cursor: pointer;
 }
-.speed-field input[type='range']::-webkit-slider-runnable-track {
+input[type='range'].range-input::-webkit-slider-runnable-track {
   height: 6px;
   border: 0;
   background: transparent;
 }
-.speed-field input[type='range']::-webkit-slider-thumb {
+input[type='range'].range-input::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
   box-sizing: border-box;
@@ -981,12 +1019,12 @@ html.map-touching body {
   background: var(--range-thumb);
   box-shadow: 0 0 0 1px var(--range-thumb);
 }
-.speed-field input[type='range']::-moz-range-track {
+input[type='range'].range-input::-moz-range-track {
   height: 6px;
   border: 0;
   background: transparent;
 }
-.speed-field input[type='range']::-moz-range-thumb {
+input[type='range'].range-input::-moz-range-thumb {
   box-sizing: border-box;
   width: 20px;
   height: 20px;
@@ -995,7 +1033,7 @@ html.map-touching body {
   background: var(--range-thumb);
   box-shadow: 0 0 0 1px var(--range-thumb);
 }
-.speed-field input[type='range']:disabled {
+input[type='range'].range-input:disabled {
   --range-thumb: #87978e;
   --range-rail: #d6dfda;
   cursor: not-allowed;

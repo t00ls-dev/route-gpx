@@ -325,6 +325,11 @@ const pt: Record<string, string> = {
     'Rota bloqueada. Desbloqueie a edição para alterá-la.',
   'Editing unlocked.': 'Edição desbloqueada.',
   Daylight: 'Luz do dia',
+  'Travel the route': 'Percorrer a rota',
+  Play: 'Reproduzir',
+  Pause: 'Pausar',
+  'Playback speed': 'Velocidade da reprodução',
+  'Position along the route': 'Posição na rota',
   'Very high UV': 'UV muito alto',
   'Extreme UV': 'UV extremo',
   Departure: 'Saída',
@@ -388,6 +393,13 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     /^UV (\d+) · (Low|Moderate|High|Very high|Extreme)$/,
     (value, category) =>
       `UV ${value} · ${({ Low: 'baixo', Moderate: 'moderado', High: 'alto', 'Very high': 'muito alto', Extreme: 'extremo' } as Record<string, string>)[category]}`,
+  ],
+  [/^(.+) · (.+) left$/, (done, left) => `${done} · faltam ${left}`],
+  [/^(\S+ (?:km|mi)) of (\S+ (?:km|mi))$/, (done, all) => `${done} de ${all}`],
+  [
+    /^(.+) · (daylight|twilight|dark)$/,
+    (time, light) =>
+      `${time} · ${({ daylight: 'dia', twilight: 'crepúsculo', dark: 'escuro' } as Record<string, string>)[light]}`,
   ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
