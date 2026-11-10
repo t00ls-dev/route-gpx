@@ -10,8 +10,12 @@ import {
   parseRouteBackup,
   importRouteBackup,
   savedRouteKey,
+  markDirectionsChecked,
+  updateSavedSteps,
   type SavedRoute,
 } from './saved-routes';
+import { missingDirections, sameRoad } from './directions';
+import { legDistances } from './track-position';
 import {
   speedToKmh,
   speedFromKmh,
@@ -61,11 +65,15 @@ import {
   type ServerUrls,
   type State,
 } from './core';
-import { calculate, searchAddress, defaultPhotonUrl } from './services';
+import {
+  calculate,
+  defaultPhotonUrl,
+  osrmMatch,
+  searchAddress,
+} from './services';
 import { simplifyTrack } from './simplify';
 import {
   isImportedRoute,
-  isMixedRoute,
   legsAt,
   rememberLegs,
   routeKeepingLegs,
@@ -730,6 +738,88 @@ function clearSummary() {
   overlays.refresh();
   marks.refresh();
 }
+const ROAD_CHANGED =
+  'Directions not added: the road has changed. Calculate route to update it.';
+/** Routes already asked for directions, so reopening never asks again. */
+const directionsTried = new WeakSet<Route>();
+/** Progress or outcome of a directions request, per route. */
+const directionsStatus = new WeakMap<Route, string>();
+/** Itinerary open across re-renders (language, units, new directions). */
+let itineraryOpen = false;
+/** The saved entry the shown route came from, to store added directions. */
+let savedOrigin: { id: string; route: Route } | null = null;
+
+/**
+ * Adds missing turn directions without changing the geometry: map matching
+ * for an imported track, or one step-only route request for a route saved
+ * before directions existed (kept only when it follows the same road).
+ */
+async function addDirections(route: Route) {
+  const need = missingDirections(route);
+  if (!need || directionsTried.has(route)) return;
+  directionsTried.add(route);
+  const version = revision;
+  const shown = () => current === route && revision === version;
+  const show = (message: string) => {
+    directionsStatus.set(route, message);
+    const element = document.getElementById('directions-status');
+    if (element && shown()) {
+      element.textContent = t(message);
+      element.hidden = false;
+    }
+  };
+  show('Finding directions…');
+  try {
+    let steps: Route['steps'] | null;
+    if (need === 'match')
+      // Traces restart at every route point, so after an edit only the legs
+      // next to the changed point are requested again; the rest is cached.
+      steps = await osrmMatch(
+        state.osrm,
+        route.segments,
+        legDistances(
+          route.segments,
+          state.points.flatMap((p) => (p.coord ? [p.coord] : [])),
+        ),
+        shown,
+        (done, all) => show(`Finding directions… ${done}/${all}`),
+      );
+    else {
+      const fresh = await calculate(structuredClone(state), shown);
+      steps = sameRoad(route, fresh) ? fresh.steps : null;
+    }
+    if (!shown()) return;
+    if (steps) {
+      route.steps = steps;
+      directionsStatus.delete(route);
+      if (savedOrigin?.route === route)
+        void updateSavedSteps(savedOrigin.id, route)
+          .then(() => refreshSavedRoutes())
+          .catch(() => {
+            /* Directions still show; the saved entry keeps its old steps. */
+          });
+    } else {
+      directionsStatus.set(route, ROAD_CHANGED);
+      // Remembered in the saved entry: reopening does not ask again.
+      if (savedOrigin?.route === route)
+        void markDirectionsChecked(savedOrigin.id)
+          .then(() => refreshSavedRoutes())
+          .catch(() => {
+            /* Only means it may be asked again next time. */
+          });
+    }
+  } catch (error) {
+    if (!shown() || (error as Error).name === 'AbortError') return;
+    directionsStatus.set(
+      route,
+      need === 'match'
+        ? 'Directions unavailable for this track.'
+        : 'Directions unavailable. Try again later.',
+    );
+  }
+  if (current === route) renderSummary(route);
+}
+
 /** Route summary card; departure, units, speed and language changes only re-render this. */
 function renderSummary(route: Route) {
   const locale = state.language === 'pt' ? 'pt-BR' : 'en';
@@ -813,35 +903,18 @@ function renderSummary(route: Route) {
       'hint',
     ),
   );
-  // Imported files carry no turn-by-turn steps; only rerouted sections do.
-  if (isMixedRoute(route) && route.steps.length)
-    roads.append(
-      text(
-        'p',
-        'The itinerary covers only recalculated sections. Calculate route gives it for the whole route, replacing the imported track.',
-        'hint',
-      ),
-    );
-  else if (
-    !isImportedRoute(route) &&
-    route.steps.length > 1 &&
-    route.steps.every((s) => !s.modifier && !s.at)
-  )
-    roads.append(
-      text(
-        'p',
-        'This route was saved before turn directions existed. Calculate route adds them.',
-        'hint',
-      ),
-    );
-  else if (isImportedRoute(route) && !route.steps.length)
-    roads.append(
-      text(
-        'p',
-        'Imported tracks have no turn-by-turn itinerary. Calculate route gives it from the road network, replacing the imported track.',
-        'hint',
-      ),
-    );
+  // Directions missing (imported track, or saved before they existed) are
+  // fetched when the itinerary is opened; their progress or outcome shows here.
+  const directions = text('p', directionsStatus.get(route) ?? '', 'hint');
+  directions.id = 'directions-status';
+  directions.hidden = !directionsStatus.has(route);
+  roads.append(directions);
+  roads.open = itineraryOpen;
+  roads.addEventListener('toggle', () => {
+    itineraryOpen = roads.open;
+    if (roads.open) void addDirections(route);
+  });
+  if (roads.open) void addDirections(route);
   if (local.length) {
     roads.append(
       text('p', 'Highlighted roads are local sections to review.', 'hint'),
@@ -1445,6 +1518,12 @@ async function refreshSavedRoutes() {
         selected = 0;
         weather.invalidate();
         current = structuredClone(record.route);
+        savedOrigin = { id: record.id, route: current };
+        // Tried before and the road had changed: show that, ask nothing.
+        if (record.directionsChecked) {
+          directionsTried.add(current);
+          directionsStatus.set(current, ROAD_CHANGED);
+        }
         syncUrl();
         settings();
         renderPoints();

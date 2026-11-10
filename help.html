@@ -440,12 +440,17 @@
           warning in the summary to open the itinerary at the first one. To keep
           each instruction on one line, common words in road names are
           abbreviated (R., Av., Estr., Prof., St, Ave…); the full name appears
-          when you hover and is read by screen readers. Imported tracks have no
-          instructions; after an edit, only the recalculated sections have them,
-          and Calculate route gives them for the whole route, replacing the
-          imported track. A route saved before turn directions existed shows its
-          roads without them; Calculate route adds them. Instructions follow the
-          driving profile and describe the road network.
+          when you hover and is read by screen readers. When you open the
+          Itinerary of an imported track, the app asks the OSRM server to match
+          the track to the roads (points about every 300 to 400 m, 10 per
+          request, so long tracks take up to a minute; after an edit, only the
+          stretches next to the changed point are asked again) and shows the
+          directions on the exact imported track; stretches off the road network
+          have none. A route saved before turn directions existed gets them with
+          one request when you open its Itinerary, only if the road is the same;
+          the saved route keeps its geometry and stores the directions; if the
+          road has changed, it remembers that and does not ask again.
+          Instructions follow the driving profile and describe the road network.
         </p>
         <h2>Distance units and undo</h2>
         <p>
@@ -940,12 +945,16 @@
           deles. Para cada instrução caber em uma linha, palavras comuns dos
           nomes das vias são abreviadas (R., Av., Estr., Prof., St, Ave…); o
           nome completo aparece ao passar o mouse e é lido por leitores de tela.
-          Trajetos importados não têm instruções; depois de uma edição, só os
-          trechos recalculados as têm, e Calcular rota as gera para a rota
-          inteira, substituindo o trajeto importado. Uma rota salva antes das
-          direções de manobra mostra as vias sem elas; Calcular rota as
-          adiciona. As instruções seguem o perfil de carro e descrevem a malha
-          viária.
+          Ao abrir o Itinerário de um trajeto importado, o app pede ao servidor
+          OSRM para ajustar o trajeto às vias (pontos a cada cerca de 300 a 400
+          m, 10 por pedido, então trajetos longos levam até um minuto; depois de
+          uma edição, só os trechos vizinhos ao ponto alterado são pedidos de
+          novo) e mostra as direções sobre o trajeto importado exato; trechos
+          fora da malha viária ficam sem elas. Uma rota salva antes das direções
+          de manobra as recebe com um pedido ao abrir o Itinerário, só se a via
+          for a mesma; a rota salva mantém a geometria e guarda as direções; se
+          a via mudou, ela registra isso e não pede de novo. As instruções
+          seguem o perfil de carro e descrevem a malha viária.
         </p>
         <h2>Unidades de distância e desfazer</h2>
         <p>

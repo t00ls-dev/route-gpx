@@ -544,10 +544,6 @@ test('imports FIT and TCX files by content and reports damaged files', async ({
   });
   await expect(page.locator('#itinerary')).toContainText('TCX importado ·');
   await expect(page.locator('#route-name')).toHaveValue('Costa');
-  // Imported files have no steps: the itinerary says why it is empty.
-  await expect(page.locator('#itinerary')).toContainText(
-    'Trajetos importados não têm itinerário com manobras.',
-  );
 
   const damaged = Buffer.from(bytes);
   damaged[30] ^= 0xff;
@@ -646,9 +642,6 @@ test('editing an imported track reroutes only the legs next to the edit', async 
     track.slice(-150).map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`),
   );
   await expect(page.locator('#itinerary')).toContainText('Imported GPX + OSRM');
-  await expect(page.locator('#summary')).toContainText(
-    'The itinerary covers only recalculated sections.',
-  );
 
   // Undo returns to the renamed step with the exact imported track, no request.
   await page.locator('#undo').click();
@@ -1007,10 +1000,58 @@ test('route backups restore deleted routes and skip existing names', async ({
     'Existing names were kept.',
   );
 });
-test('a route saved before turn directions shows positions and explains how to add them', async ({
+test('a route saved before turn directions gets them once, keeping its geometry', async ({
   page,
 }) => {
   await setup(page);
+  // One step-only request: the same road, now with directions.
+  const routeRequests: string[] = [];
+  await page.route('**/route/v1/driving/**', (r) => {
+    routeRequests.push(r.request().url());
+    return r.fulfill({
+      json: {
+        code: 'Ok',
+        waypoints: [
+          { location: [-43.2, -22.9], distance: 0 },
+          { location: [-43.1, -22.9], distance: 0 },
+        ],
+        routes: [
+          {
+            distance: 10200,
+            duration: 600,
+            geometry: {
+              coordinates: [
+                [-43.2, -22.9],
+                [-43.1, -22.9],
+              ],
+            },
+            legs: [
+              {
+                steps: [
+                  {
+                    name: 'Rua A',
+                    distance: 5000,
+                    duration: 300,
+                    maneuver: { type: 'depart', location: [-43.2, -22.9] },
+                  },
+                  {
+                    name: 'Rua B',
+                    distance: 5200,
+                    duration: 300,
+                    maneuver: {
+                      type: 'turn',
+                      modifier: 'left',
+                      location: [-43.15, -22.9],
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
   await page.goto(base);
   const state = defaults();
   state.name = 'Old route';
@@ -1019,6 +1060,13 @@ test('a route saved before turn directions shows positions and explains how to a
     { name: 'End', coord: [-22.9, -43.1] },
   ];
   // Steps as saved before #23: a kind, but no turn direction or location.
+  const segments = [
+    [
+      [-22.9, -43.2],
+      [-22.9, -43.15],
+      [-22.9, -43.1],
+    ],
+  ];
   const backup = {
     format: 'route-gpx-library',
     version: 1,
@@ -1027,10 +1075,127 @@ test('a route saved before turn directions shows positions and explains how to a
         name: 'Old route',
         state,
         route: {
+          segments,
+          steps: [
+            {
+              name: 'Rua A',
+              ref: '',
+              distance: 5000,
+              duration: 300,
+              kind: 'depart',
+            },
+            {
+              name: 'Rua B',
+              ref: '',
+              distance: 5200,
+              duration: 300,
+              kind: 'turn',
+            },
+          ],
+          distance: 10200,
+          duration: 600,
+          provider: 'OSRM',
+        },
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+    ],
+  };
+  await page.locator('.saved-routes summary').click();
+  await page.locator('#restore-routes').setInputFiles({
+    name: 'backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup)),
+  });
+  const open = () =>
+    page
+      .getByRole('button', { name: 'Open saved route: Old route', exact: true })
+      .click();
+  await open();
+  await expect(page.locator('#download')).toBeEnabled();
+  expect(routeRequests).toHaveLength(0);
+  await page.locator('#itinerary summary').click();
+  await expect(page.locator('#itinerary li')).toHaveText([
+    'km 0.0 Depart · R. A · 5 km',
+    'km 5.1 Turn left · R. B · 5.2 km',
+  ]);
+  expect(routeRequests).toHaveLength(1);
+  // The saved geometry is kept: three points, not the router's two.
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#download').click(),
+  ]);
+  const xml = await readFile((await download.path())!, 'utf8');
+  expect((xml.match(/<trkpt /g) || []).length).toBe(3);
+  // The saved entry now has the directions: reopening asks nothing.
+  await page.reload();
+  await page.locator('.saved-routes summary').click();
+  await open();
+  await page.locator('#itinerary summary').click();
+  await expect(page.locator('#itinerary li').nth(1)).toContainText('Turn left');
+  expect(routeRequests).toHaveLength(1);
+});
+test('a saved route whose road changed keeps its steps and is not asked again', async ({
+  page,
+}) => {
+  await setup(page);
+  const routeRequests: string[] = [];
+  // The router now takes another road, 2 km off the saved one.
+  await page.route('**/route/v1/driving/**', (r) => {
+    routeRequests.push(r.request().url());
+    return r.fulfill({
+      json: {
+        code: 'Ok',
+        waypoints: [
+          { location: [-43.2, -22.9], distance: 0 },
+          { location: [-43.1, -22.9], distance: 0 },
+        ],
+        routes: [
+          {
+            distance: 14000,
+            duration: 900,
+            geometry: {
+              coordinates: [
+                [-43.2, -22.9],
+                [-43.15, -22.88],
+                [-43.1, -22.9],
+              ],
+            },
+            legs: [
+              {
+                steps: [
+                  {
+                    name: 'Rua X',
+                    distance: 14000,
+                    duration: 900,
+                    maneuver: { type: 'depart', location: [-43.2, -22.9] },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+  await page.goto(base);
+  const state = defaults();
+  state.name = 'Changed road';
+  state.points = [
+    { name: 'Start', coord: [-22.9, -43.2] },
+    { name: 'End', coord: [-22.9, -43.1] },
+  ];
+  const backup = {
+    format: 'route-gpx-library',
+    version: 1,
+    routes: [
+      {
+        name: 'Changed road',
+        state,
+        route: {
           segments: [
             [
               [-22.9, -43.2],
-              [-22.9, -43.15],
               [-22.9, -43.1],
             ],
           ],
@@ -1065,19 +1230,123 @@ test('a route saved before turn directions shows positions and explains how to a
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(backup)),
   });
-  await page
-    .getByRole('button', { name: 'Open saved route: Old route', exact: true })
-    .click();
-  await expect(page.locator('#download')).toBeEnabled();
+  const open = () =>
+    page
+      .getByRole('button', {
+        name: 'Open saved route: Changed road',
+        exact: true,
+      })
+      .click();
+  await open();
   await page.locator('#itinerary summary').click();
-  // Positions from the step lengths, so the km column is never empty.
-  await expect(page.locator('#itinerary li')).toHaveText([
-    'km 0.0 Depart · R. A · 5 km',
-    'km 5.0 R. B · 5.2 km',
-  ]);
-  await expect(page.locator('#itinerary')).toContainText(
-    'This route was saved before turn directions existed. Calculate route adds them.',
+  await expect(page.locator('#directions-status')).toHaveText(
+    'Directions not added: the road has changed. Calculate route to update it.',
   );
+  await expect(page.locator('#itinerary li').nth(1)).toContainText('R. B');
+  expect(routeRequests).toHaveLength(1);
+  // Remembered in the saved entry: after a reload, no new request.
+  await page.waitForTimeout(500);
+  await page.reload();
+  await page.locator('.saved-routes summary').click();
+  await open();
+  await page.locator('#itinerary summary').click();
+  await expect(page.locator('#directions-status')).toContainText(
+    'the road has changed',
+  );
+  await page.waitForTimeout(2000);
+  expect(routeRequests).toHaveLength(1);
+});
+test('an imported track gets directions by map matching when the itinerary opens', async ({
+  page,
+}) => {
+  await setup(page);
+  const matches: string[] = [];
+  await page.route('**/match/v1/driving/**', (r) => {
+    matches.push(r.request().url());
+    const coords = new URL(r.request().url()).pathname
+      .split('/driving/')[1]
+      .split(';')
+      .map((p) => p.split(',').map(Number));
+    return r.fulfill({
+      json: {
+        code: 'Ok',
+        matchings: [
+          {
+            legs: [
+              {
+                steps: [
+                  {
+                    name: matches.length === 1 ? 'Rua A' : 'Rua B',
+                    distance: 900,
+                    duration: 90,
+                    maneuver: {
+                      type: 'depart',
+                      location: coords[0],
+                    },
+                  },
+                  {
+                    name: 'Rua B',
+                    distance: 900,
+                    duration: 90,
+                    maneuver: {
+                      type: 'turn',
+                      modifier: 'right',
+                      location: coords[5],
+                    },
+                  },
+                  {
+                    name: 'Rua B',
+                    distance: 0,
+                    duration: 0,
+                    maneuver: { type: 'arrive', location: coords.at(-1) },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+  await page.goto(base);
+  const track = Array.from({ length: 60 }, (_, i) => [
+    -22.9,
+    -43.4 + i * 0.001,
+  ]);
+  const gpx = `<gpx><trk><name>Ride</name><trkseg>${track.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg></trk></gpx>`;
+  await page.locator('#import').setInputFiles({
+    name: 'ride.gpx',
+    mimeType: 'application/gpx+xml',
+    buffer: Buffer.from(gpx),
+  });
+  await expect(page.locator('#download')).toBeEnabled();
+  expect(matches).toHaveLength(0);
+  await page.locator('#itinerary summary').click();
+  // 6.5 km traced every 300 m: 23 points in 3 chunks of up to 10.
+  await expect(page.locator('#itinerary li').first()).toContainText(
+    'Depart · R. A',
+    { timeout: 15000 },
+  );
+  await expect(page.locator('#itinerary li').nth(1)).toContainText(
+    'Turn right · R. B',
+  );
+  expect(matches).toHaveLength(3);
+  expect(
+    matches.every(
+      (u) => new URL(u).pathname.split('/driving/')[1].split(';').length <= 10,
+    ),
+  ).toBe(true);
+  // The exact imported track is kept.
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#download').click(),
+  ]);
+  const xml = await readFile((await download.path())!, 'utf8');
+  expect((xml.match(/<trkpt /g) || []).length).toBe(60);
+  // Closing and reopening asks nothing more.
+  await page.locator('#itinerary summary').click();
+  await page.locator('#itinerary summary').click();
+  expect(matches).toHaveLength(3);
 });
 test('download still works if persistent browser storage is unavailable', async ({
   page,

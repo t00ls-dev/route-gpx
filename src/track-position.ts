@@ -196,3 +196,19 @@ export function trackSlice(
   out.at(-1)!.push(end.coord);
   return out.filter((part) => part.length >= 2);
 }
+
+/**
+ * Along-track distance of each route point, in order (points farther than
+ * 200 m from the track are left out). Sampling that restarts at these points
+ * keeps the samples of unchanged legs identical after an edit.
+ */
+export function legDistances(segments: Coord[][], points: Coord[]): number[] {
+  const index = indexTrack(segments);
+  let progress = 0;
+  return points.flatMap((coord) => {
+    const position = locateOnTrack(index, coord, { progress, backtrack: 0 });
+    if (!position || position.offTrack > 200) return [];
+    progress = position.distance;
+    return [position.distance];
+  });
+}
