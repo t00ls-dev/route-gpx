@@ -336,7 +336,7 @@ test('recorded GPX elevations need no request', async ({ page }) => {
     'Min 100 m · Max 200 m',
   );
   await expect(page.locator('#elevation-stats')).toContainText(
-    'Recorded in the GPX file.',
+    'Recorded in the imported file.',
   );
   expect(requests).toHaveLength(0);
 });

@@ -9,7 +9,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 - **Plan:** set start, destination and stops with addresses, coordinates, map clicks or your location.
 - **Edit:** move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits.
 - **Review:** distance, estimated duration and road references, in kilometers or miles, estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics, and a virtual playback that travels the route.
-- **GPX:** import files up to 10 MB and export GPX 1.1 with complete track segments and named waypoints.
+- **GPX, FIT and TCX:** import GPX, FIT and TCX files up to 10 MB, also as `.gz` or `.zip` (only geometry, names, course points and recorded elevation are read, locally) and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates.
 
 - **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight and route marks (direction arrows, separate out-and-back lines, halfway point).
@@ -29,7 +29,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 
 - Nothing is saved automatically: use **Save route** to keep the exact geometry in this browser, and export backups, since clearing browser data can remove saved routes.
 - Routing currently uses a car profile. **Prefer main roads** flags possible local sections but does not guarantee their exclusion; estimates exclude stops and real-time traffic.
-- Imported GPX tracks stay intact. Editing a point recalculates only the sections next to it, and the rest of the imported track is kept exactly; **Calculate route** recalculates the whole route. Share links store points and options, not imported geometry.
+- Imported GPX, FIT and TCX tracks stay intact. Editing a point recalculates only the sections next to it, and the rest of the imported track is kept exactly; **Calculate route** recalculates the whole route. Share links store points and options, not imported geometry.
 - Weather risks are a review aid, not an official warning, and the exported GPX carries no forecast or timestamps.
 
 ## Privacy

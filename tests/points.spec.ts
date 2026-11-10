@@ -1,6 +1,7 @@
 import { holdMap } from './map-helpers';
 import { defaults, encodeState, encodeStateV1 } from '../src/core';
 import { readFile } from 'node:fs/promises';
+import { Fit, le, name, recordFields, semi } from './fit-fixture';
 import { test, expect, type Page } from '@playwright/test';
 const base = 'http://127.0.0.1:5173/';
 const start = '-22.930929, -43.238286',
@@ -351,6 +352,74 @@ test('undo restores a moved marker and a removed stop', async ({ page }) => {
   await expect(page.locator('#points li')).toHaveCount(2);
   await page.locator('#undo').click();
   await expect(page.locator('#points li')).toHaveCount(3);
+});
+test('imports FIT and TCX files by content and reports damaged files', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.goto(base);
+  const fit = new Fit()
+    .define(1, 31, [[5, 16, 0x07]])
+    .data(1, name('Serra FIT'))
+    .define(0, 20, recordFields);
+  for (let i = 0; i < 20; i++)
+    fit.record(-22.9, -43.2 + i * 0.005, 100 + i * 5);
+  fit
+    .define(2, 32, [
+      [2, 4, 0x85],
+      [3, 4, 0x85],
+      [6, 16, 0x07],
+    ])
+    .data(2, le(semi(-22.9), 4), le(semi(-43.15), 4), name('Viewpoint'));
+  const bytes = Buffer.from(fit.file());
+  await page.locator('#import').setInputFiles({
+    name: 'serra.fit',
+    mimeType: 'application/octet-stream',
+    buffer: bytes,
+  });
+  await expect(page.locator('#status')).toHaveText(
+    'Route imported. Edits recalculate only the changed sections.',
+  );
+  await expect(page.locator('#download')).toBeEnabled();
+  await expect(page.locator('#itinerary')).toContainText('Imported FIT ·');
+  await expect(page.locator('#location-1')).toHaveValue('Viewpoint');
+  // Recorded FIT altitude needs no elevation request.
+  const requests: string[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('/v1/elevation')) requests.push(r.url());
+  });
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Recorded in the imported file.',
+  );
+  expect(requests).toEqual([]);
+
+  // TCX detected by content even with another extension, in Portuguese.
+  await page.locator('#language').selectOption('pt');
+  const point = (lon: number) =>
+    `<Trackpoint><Position><LatitudeDegrees>-22.95</LatitudeDegrees><LongitudeDegrees>${lon}</LongitudeDegrees></Position></Trackpoint>`;
+  await page.locator('#import').setInputFiles({
+    name: 'course.xml',
+    mimeType: 'application/xml',
+    buffer: Buffer.from(
+      `<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"><Courses><Course><Name>Costa</Name><Track>${point(-43.3)}${point(-43.25)}${point(-43.2)}</Track></Course></Courses></TrainingCenterDatabase>`,
+    ),
+  });
+  await expect(page.locator('#itinerary')).toContainText('TCX importado ·');
+  await expect(page.locator('#route-name')).toHaveValue('Costa');
+
+  const damaged = Buffer.from(bytes);
+  damaged[30] ^= 0xff;
+  await page.locator('#import').setInputFiles({
+    name: 'damaged.fit',
+    mimeType: 'application/octet-stream',
+    buffer: damaged,
+  });
+  await expect(page.locator('#status')).toHaveText(
+    'Este arquivo FIT está corrompido (soma de verificação não confere).',
+  );
+  // The previous route is kept.
+  await expect(page.locator('#itinerary')).toContainText('TCX importado ·');
 });
 test('undo restores the geometry of each GPX import, even with equal points', async ({
   page,

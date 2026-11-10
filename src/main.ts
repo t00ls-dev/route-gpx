@@ -41,7 +41,7 @@ import {
   filename,
   generateGpx,
   highways,
-  importGpx,
+  importTrackFile,
   linkServerOverrides,
   localSections,
   meters,
@@ -1138,19 +1138,19 @@ $<HTMLInputElement>('import').onchange = () => {
     return;
   }
   if (file.size > 10_000_000) {
-    status('Choose a GPX smaller than 10 MB.', true);
+    status('Choose a file smaller than 10 MB.', true);
     return;
   }
   void file
-    .text()
-    .then((xml) => {
-      const imported = importGpx(xml);
+    .arrayBuffer()
+    .then((buffer) => {
+      const imported = importTrackFile(new Uint8Array(buffer));
       revision++;
       clearTimeout(timer);
       dirty.clear();
       drafts = new WeakMap();
       state.points = imported.points;
-      // A GPX without a name gets one in the current interface language.
+      // A file without a name gets one in the current interface language.
       state.name = imported.name || t('Imported route');
       selected = 0;
       weather.invalidate();
@@ -1164,7 +1164,7 @@ $<HTMLInputElement>('import').onchange = () => {
       settings();
       renderRoute(current);
       fit();
-      status('GPX imported. Edits recalculate only the changed sections.');
+      status('Route imported. Edits recalculate only the changed sections.');
     })
     .catch((e) => status((e as Error).message, true))
     .finally(() => {
