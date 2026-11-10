@@ -256,6 +256,90 @@ test('route coloring by daylight needs a departure, colors dark stretches, persi
   await expect(page.locator('.route-legend')).toBeHidden();
   expect(routes).toBe(0);
 });
+test('elevation is requested only when opened, shows stats and the map cursor, and converts units without refetching', async ({
+  page,
+}) => {
+  await setup(page, true);
+  // Registered after setup so it takes precedence over its catch-all route.
+  let fail = true;
+  const requests: URL[] = [];
+  await page.route('**/v1/elevation?**', (r) => {
+    const url = new URL(r.request().url());
+    requests.push(url);
+    if (fail) return r.fulfill({ status: 500 });
+    // Elevation rises with longitude: 0 m at the start, 1,000 m at the end.
+    const lons = url.searchParams.get('longitude')!.split(',').map(Number);
+    return r.fulfill({ json: { elevation: lons.map((lon) => lon * 1000) } });
+  });
+  await page.waitForTimeout(300);
+  expect(requests).toHaveLength(0);
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('#elevation-status')).toHaveText(
+    'Elevation unavailable. Try again.',
+  );
+  fail = false;
+  await page.locator('#elevation-retry').click();
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Min 0 m · Max 1,000 m · Avg 500 m',
+  );
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Elevation gain 1,000 m · Elevation loss 0 m',
+  );
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Elevation estimated from terrain. See the help.',
+  );
+  await expect(page.locator('#elevation-stats a')).toHaveAttribute(
+    'href',
+    /^\.\/help\.html\?lang=en&section=elevation#v2=/,
+  );
+  // About 300 samples in chunks of 100, plus the failed first attempt.
+  expect(requests.length).toBeLessThanOrEqual(5);
+  const count = requests.length;
+  const chart = (await page.locator('.elevation-frame').boundingBox())!;
+  await page.mouse.move(chart.x + chart.width / 2, chart.y + chart.height / 2);
+  await expect(page.locator('path.elevation-cursor')).toHaveCount(1);
+  // Halfway along a steady climb from 0 to 1,000 m: about 500 m gained so far.
+  await expect(page.locator('.elevation-readout')).toContainText(
+    /Gain so far (4|5)\d\d m · Loss so far 0 m/,
+  );
+  await page.locator('#units').selectOption('imperial');
+  await expect(page.locator('#elevation-stats')).toContainText('Max 3,281 ft');
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('#elevation-stats')).toContainText('Mín 0 ft');
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Ganho de elevação 3.281 ft',
+  );
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Altitude estimada pelo relevo. Veja a ajuda.',
+  );
+  expect(requests).toHaveLength(count);
+});
+test('recorded GPX elevations need no request', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('/v1/elevation')) requests.push(r.url());
+  });
+  await setup(page);
+  const track = Array.from(
+    { length: 11 },
+    (_, i) =>
+      `<trkpt lat="0" lon="${i * 0.01}"><ele>${100 + i * 10}</ele></trkpt>`,
+  ).join('');
+  await page.locator('#import').setInputFiles({
+    name: 'climb.gpx',
+    mimeType: 'application/gpx+xml',
+    buffer: Buffer.from(`<gpx><trk><trkseg>${track}</trkseg></trk></gpx>`),
+  });
+  await expect(page.locator('#download')).toBeEnabled();
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Min 100 m · Max 200 m',
+  );
+  await expect(page.locator('#elevation-stats')).toContainText(
+    'Recorded in the GPX file.',
+  );
+  expect(requests).toHaveLength(0);
+});
 test('no date or invalid dates never request weather', async ({ page }) => {
   await setup(page);
   let calls = 0;

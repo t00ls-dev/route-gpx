@@ -8,7 +8,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 
 - **Plan:** set start, destination and stops with addresses, coordinates, map clicks or your location.
 - **Edit:** move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits.
-- **Review:** distance, estimated duration and road references, in kilometers or miles, estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, and a virtual playback that travels the route.
+- **Review:** distance, estimated duration and road references, in kilometers or miles, estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics, and a virtual playback that travels the route.
 - **GPX:** import files up to 10 MB and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates.
 
@@ -36,7 +36,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 
 - No cookies, analytics or account.
 - Map, routing, search and weather providers receive the locations each request needs and your IP address.
-- Weather is requested only after you choose a departure date, and only for the route.
+- Weather is requested only after you choose a departure date, and only for the route. Elevation is requested only when you open Elevation (points along the route go to Open-Meteo); GPX files that record elevation need no request.
 - Exact GPS coordinates stay in memory; using your location as a route point creates a coordinate rounded to about 100 m.
 - Approximate region detection by IP can be turned off in **Settings**.
 - Every service URL is configurable in **Settings**. Route links that suggest other routing or search servers open with the defaults until you choose **Use link servers**.
@@ -75,7 +75,7 @@ See the [contributing guide](CONTRIBUTING.md) before opening a pull request. Par
 
 ## Credits and license
 
-Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), with passage times and risk summaries calculated here. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+Built with [Leaflet](https://leafletjs.com/), [OSRM](https://project-osrm.org/), [Valhalla](https://valhalla.github.io/valhalla/), [Nominatim](https://nominatim.org/), [Photon](https://github.com/komoot/photon), [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/). IP region by [ipwho.is](https://ipwhois.io/). Additional maps by [OpenTopoMap](https://opentopomap.org/about) and [EOX](https://maps.eox.at/). Weather data by [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), with passage times and risk summaries calculated here; elevation from the [Copernicus DEM GLO-90](https://doi.org/10.5270/ESA-c5d3d65) via Open-Meteo. Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
 The bundled Leaflet library uses the BSD 2-Clause license and [fflate](https://github.com/101arrowz/fflate) (route-link compression) uses the MIT license; their complete notices are included in [third-party notices](public/THIRD_PARTY_NOTICES.txt) and copied into the production build.
 

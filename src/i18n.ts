@@ -326,6 +326,20 @@ const pt: Record<string, string> = {
   'Editing unlocked.': 'Edição desbloqueada.',
   Daylight: 'Luz do dia',
   'Route coloring': 'Colorir a rota',
+  Elevation: 'Elevação',
+  'Loading elevation…': 'Buscando elevação…',
+  'Elevation usage limit reached. Try again later.':
+    'Limite de uso da elevação atingido. Tente mais tarde.',
+  'Elevation unavailable. Try again.':
+    'Elevação indisponível. Tente novamente.',
+  'Elevation service returned an invalid response.':
+    'O serviço de elevação retornou uma resposta inválida.',
+  'No elevation data for this route.': 'Sem dados de elevação para esta rota.',
+  'Elevation estimated from terrain.': 'Altitude estimada pelo relevo.',
+  'See the help.': 'Veja a ajuda.',
+  'Recorded in the GPX file.': 'Gravada no arquivo GPX.',
+  'Elevation data: Copernicus DEM GLO-90 via Open-Meteo':
+    'Dados de elevação: Copernicus DEM GLO-90 via Open-Meteo',
   'Route marks': 'Marcas da rota',
   'Direction arrows': 'Setas de direção',
   'Halfway point': 'Metade da rota',
@@ -411,6 +425,19 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
       `${time} · ${({ daylight: 'dia', twilight: 'crepúsculo', dark: 'escuro' } as Record<string, string>)[light]}`,
   ],
   [/^Halfway · (.+)$/, (distance) => `Metade · ${distance}`],
+  [
+    /^Min (.+) · Max (.+) · Avg (.+)$/,
+    (min, max, avg) => `Mín ${min} · Máx ${max} · Média ${avg}`,
+  ],
+  [
+    /^(.+) · (.+) · Gain so far (.+) · Loss so far (.+)$/,
+    (at, ele, up, down) =>
+      `${at} · ${ele} · Ganho até aqui ${up} · Perda até aqui ${down}`,
+  ],
+  [
+    /^Elevation gain (.+) · Elevation loss (.+)$/,
+    (up, down) => `Ganho de elevação ${up} · Perda de elevação ${down}`,
+  ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],

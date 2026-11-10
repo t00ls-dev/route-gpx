@@ -416,6 +416,30 @@ export async function photonSearch(
 const weatherQueue = new RequestQueue(6000);
 const weatherCache = new WeatherCache();
 const weatherUsage: { time: number; cost: number }[] = [];
+/**
+ * Open-Meteo counts each location as one call (600 per minute and larger
+ * hourly, daily and monthly budgets). Weather and elevation share this page
+ * budget; returns false, reserving nothing, when the cost would exceed it.
+ */
+function reserveOpenMeteo(cost: number): boolean {
+  const now = Date.now();
+  for (const [window, limit] of [
+    [60000, 599],
+    [HOUR, 4999],
+    [24 * HOUR, 9999],
+    [31 * 24 * HOUR, 299999],
+  ])
+    if (
+      weatherUsage
+        .filter((u) => now - u.time < window)
+        .reduce((n, u) => n + u.cost, cost) > limit
+    )
+      return false;
+  weatherUsage.push({ time: now, cost });
+  while (weatherUsage.length && now - weatherUsage[0].time >= 31 * 24 * HOUR)
+    weatherUsage.shift();
+  return true;
+}
 export const WEATHER_VARIABLES = {
   temperature: 'temperature_2m',
   probability: 'precipitation_probability',
@@ -564,29 +588,11 @@ export async function weatherForecast(
       if (!missing.size) return { hours: hours as WeatherHour[][], start, end };
       const needed = [...missing.values()];
       const url = weatherUrl(base, needed, start, end);
-      const now = Date.now();
       // Conservative whole-call accounting per location, including >14-day ranges.
       const cost =
         needed.length * Math.ceil((end - start + HOUR) / (14 * 24 * HOUR));
-      for (const [window, limit] of [
-        [60000, 599],
-        [HOUR, 4999],
-        [24 * HOUR, 9999],
-        [31 * 24 * HOUR, 299999],
-      ]) {
-        if (
-          weatherUsage
-            .filter((u) => now - u.time < window)
-            .reduce((n, u) => n + u.cost, cost) > limit
-        )
-          throw new Error('Weather usage limit reached. Try again later.');
-      }
-      weatherUsage.push({ time: now, cost });
-      while (
-        weatherUsage.length &&
-        now - weatherUsage[0].time >= 31 * 24 * HOUR
-      )
-        weatherUsage.shift();
+      if (!reserveOpenMeteo(cost))
+        throw new Error('Weather usage limit reached. Try again later.');
       try {
         const response = await request(url, 20000, { signal, noStore: true });
         if (response.status === 429)
@@ -636,4 +642,107 @@ export async function weatherForecast(
     },
     () => !signal.aborted && isCurrent(),
   );
+}
+
+/**
+ * Elevation (Open-Meteo `/v1/elevation`, Copernicus DEM GLO-90): requested
+ * only when the user opens Elevation, in chunks of 100 coordinates,
+ * serialized, without retries. Values stay in a bounded page-memory cache.
+ */
+const ELEVATION_CHUNK = 100,
+  ELEVATION_CACHE = 5000,
+  ELEVATION_TTL = 10 * 60 * 1000;
+const elevationQueue = new RequestQueue(1100);
+const elevationCache = new Map<string, { value: number | null; at: number }>();
+const elevationKey = ([lat, lon]: Coord) =>
+  `${lat.toFixed(4)},${lon.toFixed(4)}`;
+export function elevationUrl(base: string, coords: Coord[]): string {
+  if (
+    !coords.length ||
+    coords.length > ELEVATION_CHUNK ||
+    coords.some((c) => !validCoord(c))
+  )
+    throw new Error('Elevation unavailable. Try again.');
+  const url = new URL(`${serverUrl(base)}/v1/elevation`);
+  url.search = new URLSearchParams({
+    latitude: coords.map((c) => c[0].toFixed(4)).join(','),
+    longitude: coords.map((c) => c[1].toFixed(4)).join(','),
+  }).toString();
+  return url.href;
+}
+export function parseElevation(
+  data: unknown,
+  count: number,
+): (number | null)[] {
+  const values = (data as { elevation?: unknown })?.elevation;
+  if (
+    !Array.isArray(values) ||
+    values.length !== count ||
+    values.some(
+      (v) =>
+        v !== null &&
+        (typeof v !== 'number' || !Number.isFinite(v) || v < -500 || v > 9000),
+    )
+  )
+    throw new Error('Elevation service returned an invalid response.');
+  return values as (number | null)[];
+}
+export async function fetchElevations(
+  base: string,
+  coords: Coord[],
+  signal: AbortSignal,
+  isCurrent: () => boolean,
+): Promise<(number | null)[]> {
+  const now = () => Date.now();
+  const fresh = (key: string) => {
+    const hit = elevationCache.get(key);
+    return hit && now() - hit.at < ELEVATION_TTL ? hit : undefined;
+  };
+  const missing = [
+    ...new Map(
+      coords
+        .filter((c) => !fresh(elevationKey(c)))
+        .map((c) => [elevationKey(c), c]),
+    ).values(),
+  ];
+  for (let i = 0; i < missing.length; i += ELEVATION_CHUNK) {
+    const chunk = missing.slice(i, i + ELEVATION_CHUNK);
+    const url = elevationUrl(base, chunk);
+    const values = await elevationQueue.run(
+      async () => {
+        signal.throwIfAborted();
+        // Each coordinate counts against the shared Open-Meteo budget.
+        if (!reserveOpenMeteo(chunk.length))
+          throw new Error('Elevation usage limit reached. Try again later.');
+        let response: Response;
+        try {
+          response = await request(url, 20000, { signal, noStore: true });
+        } catch (error) {
+          if ((error as Error).name === 'AbortError' && signal.aborted)
+            throw error;
+          throw new Error('Elevation unavailable. Try again.', {
+            cause: error,
+          });
+        }
+        if (response.status === 429)
+          throw new Error('Elevation usage limit reached. Try again later.');
+        if (!response.ok) throw new Error('Elevation unavailable. Try again.');
+        let data: unknown;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error('Elevation service returned an invalid response.');
+        }
+        return parseElevation(data, chunk.length);
+      },
+      () => !signal.aborted && isCurrent(),
+    );
+    chunk.forEach((c, j) =>
+      elevationCache.set(elevationKey(c), { value: values[j], at: now() }),
+    );
+    // Bounded: drop the oldest entries first.
+    while (elevationCache.size > ELEVATION_CACHE)
+      elevationCache.delete(elevationCache.keys().next().value!);
+  }
+  return coords.map((c) => fresh(elevationKey(c))?.value ?? null);
 }

@@ -470,6 +470,8 @@ export function setupWeather(
         ? localDateTime(getState().departure!)
         : '';
     },
+    /** The Open-Meteo base URL (device preference), also used for elevation. */
+    endpoint: () => endpoint,
     applyServer() {
       const value = serverUrl(
         $<HTMLInputElement>('weather-server').value.trim(),

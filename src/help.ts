@@ -24,4 +24,11 @@ select.onchange = () => {
   if (isLanguage(select.value)) rememberLanguage(select.value);
   apply();
 };
+// `?section=elevation` opens the help at that section in the chosen language;
+// the hash is reserved for the route state used by Back to map.
+const section = new URLSearchParams(location.search).get('section');
 apply();
+if (section && /^[a-z-]{1,40}$/.test(section))
+  document
+    .getElementById(`${section}-${select.value === 'pt' ? 'pt' : 'en'}`)
+    ?.scrollIntoView();

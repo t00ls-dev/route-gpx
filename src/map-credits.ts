@@ -78,6 +78,10 @@ export function setupMapCredits(map: L.Map) {
         ...mapCredits(layer, vintage, labels),
         { text: 'Weather data by Open-Meteo', url: 'https://open-meteo.com/' },
         {
+          text: 'Elevation data: Copernicus DEM GLO-90 via Open-Meteo',
+          url: 'https://doi.org/10.5270/ESA-c5d3d65',
+        },
+        {
           text: 'Weather data license: CC BY 4.0',
           url: 'https://creativecommons.org/licenses/by/4.0/',
         },
