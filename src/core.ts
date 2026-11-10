@@ -24,13 +24,37 @@ export interface State {
   valhalla: string;
   nominatim: string;
 }
+/** Normalized turn directions shared by the routing adapters (OSRM's set). */
+const MODIFIERS = [
+  'uturn',
+  'sharp right',
+  'right',
+  'slight right',
+  'straight',
+  'slight left',
+  'left',
+  'sharp left',
+] as const;
+export type Modifier = (typeof MODIFIERS)[number];
+export const isModifier = (value: unknown): value is Modifier =>
+  (MODIFIERS as readonly unknown[]).includes(value);
+/** Roundabout exit numbers kept from routers. */
+export const isExit = (value: unknown): value is number =>
+  Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 20;
 export interface Step {
   name: string;
   ref: string;
   distance: number;
   duration: number;
+  /** Maneuver type in OSRM's vocabulary (depart, turn, roundabout, on ramp…). */
   kind?: string;
   roadClass?: string;
+  /** Turn direction of the maneuver that starts this step. */
+  modifier?: Modifier;
+  /** Roundabout exit to take. */
+  exit?: number;
+  /** Maneuver location on the route. */
+  at?: Coord;
 }
 export interface Route {
   segments: Coord[][];
@@ -86,7 +110,10 @@ export function validRoute(value: unknown): value is Route {
         typeof s.ref === 'string' &&
         validAmount(s.distance) &&
         validAmount(s.duration) &&
-        (s.kind === undefined || typeof s.kind === 'string'),
+        (s.kind === undefined || typeof s.kind === 'string') &&
+        (s.modifier === undefined || isModifier(s.modifier)) &&
+        (s.exit === undefined || isExit(s.exit)) &&
+        (s.at === undefined || validCoord(s.at)),
     ) &&
     (route.snapped === undefined ||
       (Array.isArray(route.snapped) && route.snapped.every(validCoord)))

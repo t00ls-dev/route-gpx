@@ -55,6 +55,13 @@ const paths = {
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   unlock:
     '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+  'maneuver-straight': '<path d="M12 21V4m-5 5 5-5 5 5"/>',
+  'maneuver-left': '<path d="M16 21v-8a3 3 0 0 0-3-3H5m4-4-4 4 4 4"/>',
+  'maneuver-slight-left': '<path d="M15 21v-7L7 6m0 0h6M7 6v6"/>',
+  'maneuver-sharp-left': '<path d="M16 21V5L7 14m0 0h6m-6 0V8"/>',
+  'maneuver-uturn': '<path d="M16 21V9a4 4 0 0 0-8 0v9m-4-4 4 4 4-4"/>',
+  'maneuver-roundabout':
+    '<circle cx="12" cy="9" r="4"/><path d="M12 13v8m3-15 4-3m0 0h-4m4 0v4"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .5-1.5 1-1.5 2M12 16v1"/>',
 } as const;
 export type IconName = keyof typeof paths;

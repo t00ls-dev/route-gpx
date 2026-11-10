@@ -37,6 +37,47 @@ function record(): SavedRoute {
 it('roundtrips complete saved geometry, state and names in a portable backup', () => {
   expect(parseRouteBackup(exportRouteBackup([record()]))).toEqual([record()]);
 });
+it('imports backups with old steps and with maneuver details, rejecting invalid ones', () => {
+  const old = record();
+  old.route = {
+    ...route,
+    steps: [{ name: 'Road', ref: '', distance: 2000, duration: 120 }],
+  };
+  expect(parseRouteBackup(exportRouteBackup([old]))[0].route).toEqual(
+    old.route,
+  );
+  const current = record();
+  current.route = {
+    ...route,
+    steps: [
+      {
+        name: 'Road',
+        ref: '',
+        distance: 2000,
+        duration: 120,
+        kind: 'turn',
+        modifier: 'left',
+        at: [-22.9, -43.1],
+      },
+      {
+        name: 'Ring',
+        ref: '',
+        distance: 0,
+        duration: 0,
+        kind: 'roundabout',
+        exit: 3,
+      },
+    ],
+  };
+  expect(parseRouteBackup(exportRouteBackup([current]))[0].route).toEqual(
+    current.route,
+  );
+  const broken = JSON.parse(exportRouteBackup([old, current]));
+  broken.routes[1].route.steps[0].modifier = 'sideways';
+  expect(() => parseRouteBackup(JSON.stringify(broken))).toThrow(
+    'Invalid saved route geometry.',
+  );
+});
 it('recognizes matching names without adding case or whitespace duplicates', () => {
   expect(savedRouteKey(' Weekend ')).toBe(savedRouteKey('WEEKEND'));
 });

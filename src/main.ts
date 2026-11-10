@@ -20,7 +20,13 @@ import {
   storedSpeedKmh,
   rememberSpeedKmh,
 } from './travel-time';
-import { distanceLabel, shortDistanceLabel, type DistanceUnits } from './units';
+import {
+  distanceLabel,
+  milepostLabel,
+  shortDistanceLabel,
+  stepDistanceLabel,
+  type DistanceUnits,
+} from './units';
 import { UndoHistory } from './history';
 import {
   getLanguage,
@@ -82,6 +88,12 @@ import { defaultView } from './default-view';
 import { setupMapLayers } from './map-layers';
 import { setupMapControls } from './map-controls';
 import { icon, iconControl } from './icons';
+import {
+  maneuverIcon,
+  maneuverPositions,
+  maneuverText,
+  shortRoadName,
+} from './maneuvers';
 import { byId as $ } from './dom';
 const text = (tag: string, value: string, className = '') => {
   const e = document.createElement(tag);
@@ -188,6 +200,23 @@ map.on('zoomend', () => {
 const zoom = L.control.zoom({ position: 'bottomright' }).addTo(map);
 const markers = L.layerGroup().addTo(map),
   line = L.featureGroup().addTo(map);
+// Maneuver chosen in the itinerary, shown until the next map click or route.
+map.createPane('maneuver').style.zIndex = '587';
+const maneuverLayer = L.layerGroup().addTo(map);
+map.on('click', () => maneuverLayer.clearLayers());
+function showManeuver(coord: Coord) {
+  if (!$('route-panel').hidden && matchMedia('(max-width: 759px)').matches)
+    $('panel-toggle').click();
+  map.stop();
+  map.setView(coord, Math.max(map.getZoom(), 17), { animate: false });
+  maneuverLayer.clearLayers();
+  L.circleMarker(coord, {
+    pane: 'maneuver',
+    radius: 9,
+    className: 'maneuver-marker',
+    interactive: false,
+  }).addTo(maneuverLayer);
+}
 /** The traveler's average speed (km/h): a device preference, changed only by the user. */
 let speedKmh = storedSpeedKmh();
 const weather = setupWeather(
@@ -693,6 +722,7 @@ function clearSummary() {
   for (const id of ['summary-content', 'summary-notes', 'itinerary'])
     $(id).replaceChildren();
   renderDaylight(state, null, speedKmh);
+  maneuverLayer.clearLayers();
   playback.setRoute(null);
   elevation.setRoute(null);
   overlays.refresh();
@@ -765,24 +795,8 @@ function renderSummary(route: Route) {
   chips.className = 'chips';
   const refs = highways(route.steps);
   refs.forEach((ref) => chips.append(text('span', ref)));
-  if (isMixedRoute(route) && route.steps.length)
-    notes.append(
-      text('p', 'Road summary covers only recalculated sections.', 'hint'),
-    );
-  if (state.prefer) {
-    const local = localSections(route.steps);
-    if (local.length)
-      notes.append(
-        text(
-          'p',
-          local.length === 1
-            ? '1 road section to review'
-            : `${local.length} road sections to review`,
-          'warning',
-        ),
-      );
-  }
-  // Street-by-street detail lives outside the summary card.
+  const local = state.prefer ? localSections(route.steps) : [];
+  // Street-by-street detail: the Itinerary row of the summary card.
   const roads = document.createElement('details');
   roads.className = 'road-list';
   roads.append(
@@ -796,18 +810,96 @@ function renderSummary(route: Route) {
       'hint',
     ),
   );
+  if (isMixedRoute(route) && route.steps.length)
+    roads.append(
+      text('p', 'Road summary covers only recalculated sections.', 'hint'),
+    );
+  if (local.length) {
+    roads.append(
+      text('p', 'Highlighted roads are local sections to review.', 'hint'),
+    );
+    // The warning stays visible on the card and leads to the first section.
+    const review = text(
+      'button',
+      local.length === 1
+        ? '1 road section to review'
+        : `${local.length} road sections to review`,
+      'warning review-link',
+    ) as HTMLButtonElement;
+    review.type = 'button';
+    review.onclick = () => {
+      roads.open = true;
+      const first = roads.querySelector<HTMLElement>('.local-road');
+      if (!first) return;
+      first.scrollIntoView({ block: 'nearest' });
+      (first.querySelector('button') ?? first).focus({ preventScroll: true });
+    };
+    notes.append(review);
+  }
   const ul = document.createElement('ul');
-  route.steps
-    .filter((s) => s.distance > 0)
-    .forEach((s) => {
-      const li = text(
-        'li',
-        `${s.ref ? `${s.ref} · ` : ''}${t(s.name)} — ${distanceLabel(s.distance, state.units, locale, 2)}`,
+  const positions = maneuverPositions(route);
+  maneuverLayer.clearLayers();
+  route.steps.forEach((s, n) => {
+    if (s.distance <= 0) return;
+    const li = document.createElement('li');
+    // A step with a maneuver location is a button that shows it on the map.
+    // Columns: position along the route, arrow, instruction and road.
+    const row: HTMLElement = document.createElement(s.at ? 'button' : 'div');
+    row.className = 'step-row';
+    // Turn direction from the router; the instruction stays an English key
+    // that the DOM translation handles.
+    const arrow = maneuverIcon(s);
+    const instruction = maneuverText(s);
+    const at = positions[n];
+    row.append(
+      text(
+        'span',
+        // Trailing space keeps the text readable when copied or read aloud.
+        at === null ? '' : `${milepostLabel(at, state.units, locale)} `,
+        'milepost',
+      ),
+    );
+    if (arrow) {
+      const svg = icon(arrow.name);
+      svg.classList.add('maneuver-icon');
+      if (arrow.mirror) svg.classList.add('mirror');
+      row.append(svg);
+    } else row.append(text('span', '', 'maneuver-icon'));
+    // One line: shortened road names and compact lengths; the full text stays
+    // in the tooltip and accessible label.
+    const road = t(s.name);
+    const length = stepDistanceLabel(s.distance, state.units, locale);
+    // Highway references are in the chips above the list; on the line they
+    // stand in only for a road without a name.
+    const shortRoad =
+      s.ref && s.name === 'Unnamed road' ? s.ref : shortRoadName(road);
+    const full = `${instruction ? `${t(instruction)} · ` : ''}${s.ref ? `${s.ref} · ` : ''}${road} · ${length}`;
+    const body = document.createElement('span');
+    body.className = 'step-text';
+    if (instruction)
+      body.append(
+        text('span', instruction, 'maneuver'),
+        document.createTextNode(' · '),
       );
-      if (state.prefer && localSections([s]).length)
-        li.className = 'local-road';
-      ul.append(li);
-    });
+    body.append(document.createTextNode(`${shortRoad} · ${length}`));
+    row.append(body);
+    row.title = full;
+    if (s.at) {
+      const button = row as HTMLButtonElement;
+      button.type = 'button';
+      button.classList.add('maneuver-link');
+      button.setAttribute('aria-controls', 'map');
+      button.setAttribute(
+        'aria-label',
+        `${t('Show on map')}: ${at === null ? '' : `${milepostLabel(at, state.units, locale)} · `}${full}`,
+      );
+      const coord = s.at;
+      button.onclick = () => showManeuver(coord);
+    }
+    li.append(row);
+    if (local.includes(s)) li.className = 'local-road';
+    ul.append(li);
+  });
   roads.append(chips, ul);
   itinerary.append(roads);
   if (route.snapped) {

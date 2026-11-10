@@ -474,8 +474,29 @@ label[for] {
   gap: 7px;
   margin-top: 8px;
 }
-#itinerary {
-  margin: 0 0 8px;
+#summary > #itinerary {
+  margin: 0;
+  border-top: 1px solid #e2e7eb;
+}
+#itinerary:empty {
+  display: none;
+}
+/* The road-review warning is a button that opens the itinerary. */
+.planner .review-link {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  border-left: 3px solid #be812b;
+  border-radius: 3px;
+  background: #fff5e1;
+  color: #74420b;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .road-list > summary {
   color: #145e49;
@@ -485,7 +506,68 @@ label[for] {
   overflow: auto;
   font-size: 12px;
   line-height: 1.8;
-  padding-left: 18px;
+  padding-left: 0;
+}
+.road-list li {
+  list-style: none;
+}
+.step-row {
+  display: grid;
+  grid-template-columns: auto 16px minmax(0, 1fr);
+  column-gap: 5px;
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  padding: 2px 4px;
+  line-height: 1.5;
+  text-align: left;
+}
+.step-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.maneuver-icon {
+  width: 16px;
+  height: 16px;
+}
+.maneuver-icon.mirror {
+  transform: scaleX(-1);
+}
+.maneuver {
+  font-weight: 600;
+}
+.milepost {
+  min-width: 4.4em;
+  color: #465968;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.planner .maneuver-link {
+  /* Full-width rows: 32px stays above the 24px minimum touch target. */
+  min-width: 0;
+  min-height: 32px;
+}
+.maneuver-link {
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.maneuver-link:hover {
+  background: #eef4f1;
+}
+.maneuver-link:focus-visible {
+  outline: 2px solid #145e49;
+  outline-offset: 1px;
+}
+.leaflet-pane .maneuver-marker {
+  fill: #145e49;
+  fill-opacity: 0.25;
+  stroke: #145e49;
+  stroke-width: 3;
 }
 .local-road {
   color: #74420b;
