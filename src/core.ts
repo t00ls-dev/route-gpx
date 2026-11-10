@@ -705,7 +705,9 @@ function unpack(bytes: Uint8Array): Uint8Array {
     } catch (error) {
       if (error instanceof Error && error.message.includes('10 MB'))
         throw error;
-      throw new Error('This file is not a valid GPX, TCX or FIT file.');
+      throw new Error('This file is not a valid GPX, TCX or FIT file.', {
+        cause: error,
+      });
     }
     const out = Object.values(files)[0];
     if (!out) throw new Error('This ZIP has no GPX, TCX or FIT file.');
