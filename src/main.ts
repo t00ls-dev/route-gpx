@@ -67,6 +67,7 @@ import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
+import { setupElevation } from './elevation-ui';
 import { setupRouteOverlays, sliceByRanges } from './route-overlays';
 import {
   offsetSlices,
@@ -196,6 +197,13 @@ const weather = setupWeather(
   syncUrl,
   () => speedKmh,
 );
+/** Recorded `<ele>` of imported GPX routes, in page memory only. */
+const recordedElevation = new WeakMap<Route, (number | null)[][]>();
+const elevation = setupElevation(map, {
+  state: () => state,
+  endpoint: () => weather.endpoint(),
+  recorded: (route) => recordedElevation.get(route),
+});
 const playback = setupPlayback(map, {
   state: () => state,
   speedKmh: () => speedKmh,
@@ -686,6 +694,7 @@ function clearSummary() {
     $(id).replaceChildren();
   renderDaylight(state, null, speedKmh);
   playback.setRoute(null);
+  elevation.setRoute(null);
   overlays.refresh();
   marks.refresh();
 }
@@ -749,6 +758,7 @@ function renderSummary(route: Route) {
   summary.append(stats, text('p', basis, 'hint stats-basis'), daylight);
   renderDaylight(state, route, speedKmh);
   playback.setRoute(route);
+  elevation.setRoute(route);
   overlays.refresh();
   marks.refresh();
   const chips = document.createElement('div');
@@ -1145,6 +1155,8 @@ $<HTMLInputElement>('import').onchange = () => {
       selected = 0;
       weather.invalidate();
       current = imported.route;
+      if (imported.elevations)
+        recordedElevation.set(current, imported.elevations);
       if (imported.indices)
         rememberLegs(current, legsAt(current.segments, imported.indices));
       syncUrl();

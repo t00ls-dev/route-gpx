@@ -117,3 +117,17 @@ test('help switches language and metadata while preserving the route in its retu
   await expect(page.locator('#help-pt')).toBeVisible();
   await expect(page.locator('#back')).toHaveText('Voltar ao mapa');
 });
+
+test('help opens at a linked section and keeps the route hash for Back to map', async ({
+  page,
+}) => {
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  await page.goto(
+    'http://127.0.0.1:5173/help.html?lang=pt&section=elevation#v2=abc',
+  );
+  await expect(page.locator('#elevation-pt')).toBeInViewport();
+  await expect(page.locator('#back')).toHaveAttribute(
+    'href',
+    './index.html#v2=abc',
+  );
+});

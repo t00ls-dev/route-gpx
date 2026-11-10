@@ -323,6 +323,24 @@
             >meteorological convention</a
           >.
         </p>
+        <h2 id="elevation-en">Elevation</h2>
+        <p>
+          Open Elevation in the route summary to see the elevation profile with
+          minimum, maximum and distance-weighted average altitude and the
+          estimated elevation gain and loss for the whole route. Move over the
+          chart to see the point on the map, its altitude and the elevation gain
+          and loss up to there. An imported GPX file that records elevation is
+          used as is, with no request. Otherwise, only when you open Elevation,
+          up to about 300 points along the route are sent to Open-Meteo, in
+          groups of 100, and the results stay in page memory for ten minutes.
+          That data comes from the Copernicus DEM GLO-90 terrain model (about 90
+          m), so bridges, viaducts and tunnels show the ground below or above
+          the road, and short steep ramps are smoothed. To remove noise from
+          trees, buildings and the model grid, terrain elevation is smoothed
+          over about 850 m and gain and loss ignore changes under 2 m; recorded
+          elevation is lightly smoothed and ignores changes under 0.3 m. Totals
+          are estimates. Elevation recorded by a GPS can be offset or noisy.
+        </p>
         <h2>Travel the route</h2>
         <p>
           Open Travel the route in the route summary to follow the route before
@@ -449,15 +467,15 @@
           IP region requests use https://ipwho.is/. Its free-endpoint
           documentation permits keyless commercial use, but general terms also
           contain account and redistribution clauses whose applicability should
-          be confirmed before scaling. Weather uses https://api.open-meteo.com.
-          Map images use https://tile.openstreetmap.org,
-          https://a.tile.opentopomap.org or https://tiles.maps.eox.at, including
-          the EOX label overlay. Only the active layer requests images. GitHub
-          Pages receives requests for the site files. External providers receive
-          the request IP and normal browser metadata and may keep their own
-          logs. URL fragments are not sent in HTTP requests. Browser HTTP
-          caching of ordinary map tiles follows provider headers; there is no
-          added offline storage.
+          be confirmed before scaling. Weather and, when Elevation is opened,
+          elevation use https://api.open-meteo.com. Map images use
+          https://tile.openstreetmap.org, https://a.tile.opentopomap.org or
+          https://tiles.maps.eox.at, including the EOX label overlay. Only the
+          active layer requests images. GitHub Pages receives requests for the
+          site files. External providers receive the request IP and normal
+          browser metadata and may keep their own logs. URL fragments are not
+          sent in HTTP requests. Browser HTTP caching of ordinary map tiles
+          follows provider headers; there is no added offline storage.
         </p>
         <h2>Open source</h2>
         <p>
@@ -470,8 +488,9 @@
             >OpenStreetMap contributors</a
           >. Built with Leaflet, OSRM, Valhalla, Nominatim and Photon. IP region
           by ipwho.is; maps by OpenTopoMap and EOX. Weather data by Open-Meteo
-          (CC BY 4.0). Source and license links appear in the respective
-          sections above and in the
+          (CC BY 4.0); elevation data from the Copernicus DEM GLO-90 via
+          Open-Meteo. Source and license links appear in the respective sections
+          above and in the
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >services and privacy details</a
@@ -743,6 +762,25 @@
             >convenção meteorológica</a
           >.
         </p>
+        <h2 id="elevation-pt">Elevação</h2>
+        <p>
+          Abra Elevação no resumo da rota para ver o perfil de elevação com as
+          altitudes mínima, máxima e média ponderada pela distância e o ganho e
+          a perda de elevação estimados para a rota inteira. Passe sobre o
+          gráfico para ver o ponto no mapa, a altitude e o ganho e a perda de
+          elevação até ali. Um GPX importado que já grava a elevação é usado
+          como está, sem requisição. Caso contrário, só quando você abre
+          Elevação, até cerca de 300 pontos da rota são enviados ao Open-Meteo,
+          em grupos de 100, e os resultados ficam na memória da página por dez
+          minutos. Esses dados vêm do modelo de terreno Copernicus DEM GLO-90
+          (cerca de 90 m), então pontes, viadutos e túneis mostram o solo abaixo
+          ou acima da via, e rampas curtas e íngremes são suavizadas. Para
+          remover o ruído de árvores, prédios e da grade do modelo, a elevação
+          do relevo é suavizada em cerca de 850 m e ganho e perda ignoram
+          variações menores que 2 m; a elevação gravada é suavizada de leve e
+          ignora variações menores que 0,3 m. Os totais são estimativas. A
+          elevação gravada por um GPS pode ter desvio ou ruído.
+        </p>
         <h2>Percorrer a rota</h2>
         <p>
           Abra Percorrer a rota no resumo para acompanhar a rota antes de sair.
@@ -873,16 +911,16 @@
           Consultas de região por IP usam https://ipwho.is/. A documentação do
           endpoint gratuito permite uso comercial sem chave, mas os termos
           gerais também contêm cláusulas de conta e redistribuição cuja
-          aplicação deve ser confirmada antes de ampliar o uso. O clima usa
-          https://api.open-meteo.com. Imagens do mapa usam
-          https://tile.openstreetmap.org, https://a.tile.opentopomap.org ou
-          https://tiles.maps.eox.at, incluindo a sobreposição de rótulos EOX. Só
-          a camada ativa solicita imagens. O GitHub Pages recebe pedidos dos
-          arquivos do site. Provedores externos recebem o IP da requisição e
-          metadados normais do navegador e podem manter logs próprios.
-          Fragmentos de URL não são enviados nas requisições HTTP. O cache HTTP
-          comum dos tiles segue os cabeçalhos dos provedores; não há
-          armazenamento offline adicional.
+          aplicação deve ser confirmada antes de ampliar o uso. O clima e,
+          quando Elevação é aberta, a elevação usam https://api.open-meteo.com.
+          Imagens do mapa usam https://tile.openstreetmap.org,
+          https://a.tile.opentopomap.org ou https://tiles.maps.eox.at, incluindo
+          a sobreposição de rótulos EOX. Só a camada ativa solicita imagens. O
+          GitHub Pages recebe pedidos dos arquivos do site. Provedores externos
+          recebem o IP da requisição e metadados normais do navegador e podem
+          manter logs próprios. Fragmentos de URL não são enviados nas
+          requisições HTTP. O cache HTTP comum dos tiles segue os cabeçalhos dos
+          provedores; não há armazenamento offline adicional.
         </p>
         <h2>Código aberto</h2>
         <p>
@@ -895,8 +933,9 @@
             >OpenStreetMap e colaboradores</a
           >. Feito com Leaflet, OSRM, Valhalla, Nominatim e Photon. Região por
           IP pelo ipwho.is; mapas por OpenTopoMap e EOX. Dados do tempo por
-          Open-Meteo (CC BY 4.0). Links das fontes e licenças estão nas
-          respectivas seções acima e nos
+          Open-Meteo (CC BY 4.0); dados de elevação do Copernicus DEM GLO-90 via
+          Open-Meteo. Links das fontes e licenças estão nas respectivas seções
+          acima e nos
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >detalhes de serviços e privacidade</a

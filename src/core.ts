@@ -438,6 +438,8 @@ export function importGpx(xml: string): {
   name: string;
   /** Flat track index of every point, when the points were placed on the track. */
   indices?: number[];
+  /** Recorded `<ele>` per track point, parallel to `route.segments`; only when most points have one. */
+  elevations?: (number | null)[][];
 } {
   if (xml.length > 10_000_000)
     throw new Error('Choose a GPX smaller than 10 MB.');
@@ -460,13 +462,23 @@ export function importGpx(xml: string): {
       throw new Error('The GPX contains invalid coordinates.');
     return c;
   };
-  let segments = all(doc, 'trkseg')
-    .map((seg) => all(seg, 'trkpt').map(coord))
+  let elements = all(doc, 'trkseg')
+    .map((seg) => all(seg, 'trkpt'))
     .filter((s) => s.length >= 2);
-  if (!segments.length)
-    segments = all(doc, 'rte')
-      .map((seg) => all(seg, 'rtept').map(coord))
+  if (!elements.length)
+    elements = all(doc, 'rte')
+      .map((seg) => all(seg, 'rtept'))
       .filter((s) => s.length >= 2);
+  const segments = elements.map((s) => s.map(coord));
+  const ele = (e: Element): number | null => {
+    const text = all(e, 'ele')[0]?.textContent?.trim();
+    const value = text ? Number(text) : NaN;
+    return Number.isFinite(value) && value > -500 && value < 9000
+      ? value
+      : null;
+  };
+  const elevationRows = elements.map((s) => s.map(ele));
+  const withElevation = elevationRows.flat().filter((v) => v !== null).length;
   if (!segments.length)
     throw new Error('No track or route geometry found in this GPX.');
   const flat = segments.flat();
@@ -518,5 +530,8 @@ export function importGpx(xml: string): {
     // Empty when the file has no name; the interface supplies a localized default.
     name: (all(doc, 'name')[0]?.textContent || '').slice(0, 160),
     indices,
+    ...(withElevation >= 0.8 * flat.length
+      ? { elevations: elevationRows }
+      : {}),
   };
 }

@@ -14,3 +14,14 @@ export function shortDistanceLabel(
 ): string {
   return `${Math.round(units === 'imperial' ? meters * 3.280839895 : meters)} ${units === 'imperial' ? 'ft' : 'm'}`;
 }
+/** Altitude in meters or feet, rounded to whole units. */
+export function elevationLabel(
+  meters: number,
+  units: DistanceUnits = 'metric',
+  locale = 'en',
+): string {
+  const value = Math.round(
+    units === 'imperial' ? meters * 3.280839895 : meters,
+  );
+  return `${value.toLocaleString(locale)} ${units === 'imperial' ? 'ft' : 'm'}`;
+}
