@@ -70,9 +70,11 @@ for (const mobile of [false, true]) {
       await fillPair(page);
       await expect(page.locator('.route-marker')).toHaveCount(2);
       await expect(page.locator('#summary')).toContainText('42 km');
+      // The automatic departure (next half hour) also gives an arrival.
       await expect(page.locator('#summary dt')).toHaveText([
         'Distance',
         'Time',
+        'Arrival',
       ]);
       // Our own estimate from the default 60 km/h, never the router's 49 min.
       await expect(page.locator('#summary')).toContainText(

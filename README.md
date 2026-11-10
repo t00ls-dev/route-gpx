@@ -36,7 +36,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 
 - No cookies, analytics or account.
 - Map, routing, search and weather providers receive the locations each request needs and your IP address.
-- Weather is requested only after you choose a departure date, and only for the route. Elevation is requested only when you open Elevation (points along the route go to Open-Meteo); GPX files that record elevation need no request.
+- Weather is requested only for the route and its departure. Without a chosen departure, the route leaves at the next half hour automatically, so weather is requested from Open-Meteo once the route is ready and at each new half hour; uncheck Automatic departure below the Departure field to turn this off on the device. Elevation is requested only when you open Elevation (points along the route go to Open-Meteo); GPX files that record elevation need no request.
 - Exact GPS coordinates stay in memory; using your location as a route point creates a coordinate rounded to about 100 m.
 - Approximate region detection by IP can be turned off in **Settings**.
 - Every service URL is configurable in **Settings**. Route links that suggest other routing or search servers open with the defaults until you choose **Use link servers**.

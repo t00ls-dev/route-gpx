@@ -1,3 +1,4 @@
+import { departureOf } from './departure';
 import L from 'leaflet';
 import { meters, type Coord, type Route, type State, type Step } from './core';
 import { byId as $ } from './dom';
@@ -153,7 +154,8 @@ export function setupPlayback(
       `${label(distance)} · ${label(index.total - distance)} left`,
     ];
     const state = deps.state();
-    const departure = state.departure ? Date.parse(state.departure) : NaN;
+    const leaving = departureOf(state);
+    const departure = leaving ? Date.parse(leaving) : NaN;
     if (Number.isFinite(departure)) {
       const time =
         departure + travelTimeSeconds(distance, deps.speedKmh()) * 1000;

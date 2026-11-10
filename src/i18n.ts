@@ -81,6 +81,11 @@ const pt: Record<string, string> = {
   'Passage times and risk summaries calculated by route-gpx.':
     'Horários de passagem e resumos de risco calculados pelo route-gpx.',
   'Open-Meteo server': 'Servidor Open-Meteo',
+  'Automatic departure (next half hour)':
+    'Saída automática (próxima meia hora)',
+  'Choose departure': 'Escolher saída',
+  'Choose a departure to see the weather along the route.':
+    'Escolha uma saída para ver o clima ao longo da rota.',
   'Choose a departure date and time.': 'Escolha uma data e hora de saída.',
   'Departure and arrival, including the weather margin, must fit within the 16-day forecast.':
     'A saída e a chegada, incluindo a margem da previsão, devem estar no horizonte de 16 dias.',

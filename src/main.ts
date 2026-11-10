@@ -1,3 +1,4 @@
+import { departureOf } from './departure';
 import { RoutingCache } from './routing-cache';
 import { setupWeather } from './weather-ui';
 import { renderDaylight } from './daylight-ui';
@@ -250,7 +251,7 @@ const marks = setupRouteMarks(map, {
   state: () => state,
 });
 const departureTime = () =>
-  state.departure ? Date.parse(state.departure) : NaN;
+  departureOf(state) ? Date.parse(departureOf(state)!) : NaN;
 overlays.register({
   id: 'daylight',
   label: 'Daylight',
@@ -741,7 +742,8 @@ function renderSummary(route: Route) {
   summary.replaceChildren();
   notes.replaceChildren();
   itinerary.replaceChildren();
-  const departure = state.departure ? Date.parse(state.departure) : NaN;
+  const leaving = departureOf(state);
+  const departure = leaving ? Date.parse(leaving) : NaN;
   const stats = document.createElement('dl');
   stats.className = 'stats';
   const stat = (label: string, value: string) => {
