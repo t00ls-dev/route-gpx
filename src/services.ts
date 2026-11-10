@@ -496,24 +496,83 @@ const weatherUsage: { time: number; cost: number }[] = [];
  * hourly, daily and monthly budgets). Weather and elevation share this page
  * budget; returns false, reserving nothing, when the cost would exceed it.
  */
-function reserveOpenMeteo(cost: number): boolean {
+/**
+ * Reserves `cost` coordinates in the shared Open-Meteo budget. Returns 0 when
+ * reserved, otherwise the milliseconds until enough of the budget frees up.
+ */
+function reserveOpenMeteo(cost: number): number {
   const now = Date.now();
+  let wait = 0;
   for (const [window, limit] of [
     [60000, 599],
     [HOUR, 4999],
     [24 * HOUR, 9999],
     [31 * 24 * HOUR, 299999],
-  ])
-    if (
-      weatherUsage
-        .filter((u) => now - u.time < window)
-        .reduce((n, u) => n + u.cost, cost) > limit
-    )
-      return false;
+  ]) {
+    const recent = weatherUsage.filter((u) => now - u.time < window);
+    let used = recent.reduce((n, u) => n + u.cost, cost);
+    if (used <= limit) continue;
+    // Oldest first: wait until enough entries leave this window.
+    for (const u of recent) {
+      used -= u.cost;
+      if (used <= limit) {
+        wait = Math.max(wait, u.time + window - now);
+        break;
+      }
+    }
+    if (used > limit) wait = Math.max(wait, window);
+  }
+  if (wait) return wait;
   weatherUsage.push({ time: now, cost });
   while (weatherUsage.length && now - weatherUsage[0].time >= 31 * 24 * HOUR)
     weatherUsage.shift();
-  return true;
+  return 0;
+}
+/** The server's Retry-After in milliseconds, or null when absent or odd. */
+function retryAfterMs(response: Response): number | null {
+  const seconds = Number(response.headers?.get('Retry-After'));
+  return seconds > 0 && seconds < 86400 ? seconds * 1000 : null;
+}
+/** Wait after HTTP 429 when the server does not expose Retry-After. */
+const DEFAULT_LIMIT_WAIT = 60_000;
+/**
+ * The Open-Meteo usage limit (the shared budget or HTTP 429), with the
+ * milliseconds until it frees up. The interface counts down and retries once.
+ */
+export class UsageLimitError extends Error {
+  constructor(
+    readonly service: 'Weather' | 'Elevation',
+    readonly wait: number,
+  ) {
+    super(`${service} usage limit reached. ${retryIn(wait)}`);
+    this.name = 'UsageLimitError';
+  }
+}
+/**
+ * Calls `tick` with the seconds left, once a second, then `done`. Counted by
+ * timer ticks, not the clock. Returns a function that cancels it.
+ */
+export function countdown(
+  wait: number,
+  tick: (seconds: number) => void,
+  done: () => void,
+): () => void {
+  let left = Math.max(1, Math.ceil(wait / 1000));
+  let timer: ReturnType<typeof setTimeout>;
+  const step = () => {
+    if (left <= 0) return done();
+    tick(left--);
+    timer = setTimeout(step, 1000);
+  };
+  step();
+  return () => clearTimeout(timer);
+}
+/** "Try again in 30s." (or minutes, hours) for a usage-limit message. */
+export function retryIn(ms: number): string {
+  if (ms < 120_000)
+    return `Try again in ${Math.max(1, Math.ceil(ms / 1000))}s.`;
+  if (ms < HOUR) return `Try again in ${Math.ceil(ms / 60000)} min.`;
+  return `Try again in ${Math.ceil(ms / HOUR)} h.`;
 }
 export const WEATHER_VARIABLES = {
   temperature: 'temperature_2m',
@@ -666,12 +725,15 @@ export async function weatherForecast(
       // Conservative whole-call accounting per location, including >14-day ranges.
       const cost =
         needed.length * Math.ceil((end - start + HOUR) / (14 * 24 * HOUR));
-      if (!reserveOpenMeteo(cost))
-        throw new Error('Weather usage limit reached. Try again later.');
+      const wait = reserveOpenMeteo(cost);
+      if (wait) throw new UsageLimitError('Weather', wait);
       try {
         const response = await request(url, 20000, { signal, noStore: true });
         if (response.status === 429)
-          throw new Error('Weather usage limit reached. Try again later.');
+          throw new UsageLimitError(
+            'Weather',
+            retryAfterMs(response) ?? DEFAULT_LIMIT_WAIT,
+          );
         if (!response.ok) throw new Error('Weather unavailable. Try again.');
         let data: unknown;
         try {
@@ -787,8 +849,8 @@ export async function fetchElevations(
       async () => {
         signal.throwIfAborted();
         // Each coordinate counts against the shared Open-Meteo budget.
-        if (!reserveOpenMeteo(chunk.length))
-          throw new Error('Elevation usage limit reached. Try again later.');
+        const wait = reserveOpenMeteo(chunk.length);
+        if (wait) throw new UsageLimitError('Elevation', wait);
         let response: Response;
         try {
           response = await request(url, 20000, { signal, noStore: true });
@@ -800,7 +862,10 @@ export async function fetchElevations(
           });
         }
         if (response.status === 429)
-          throw new Error('Elevation usage limit reached. Try again later.');
+          throw new UsageLimitError(
+            'Elevation',
+            retryAfterMs(response) ?? DEFAULT_LIMIT_WAIT,
+          );
         if (!response.ok) throw new Error('Elevation unavailable. Try again.');
         let data: unknown;
         try {

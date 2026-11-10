@@ -507,6 +507,138 @@ test('routes with more than 20 stops still get weather', async ({ page }) => {
     'Clima amostrado em 20 de 25 paradas.',
   );
 });
+test('climbs are listed, shaded in the chart and shown on the map', async ({
+  page,
+}) => {
+  await setup(page, true);
+  // Flat at 100 m, a 500 m climb between longitude 0.40 and 0.45 (about 9%),
+  // then flat again: one climb near km 44.
+  await page.route('**/v1/elevation?**', (r) => {
+    const lons = new URL(r.request().url()).searchParams
+      .get('longitude')!
+      .split(',')
+      .map(Number);
+    const ele = (lon: number) =>
+      100 + 500 * Math.min(1, Math.max(0, (lon - 0.4) / 0.05));
+    return r.fulfill({ json: { elevation: lons.map(ele) } });
+  });
+  await date(page);
+  await page.locator('#elevation > summary').click();
+  const climbs = page.locator('.climbs .climb');
+  await expect(page.locator('.climbs-heading')).toHaveText('Climbs (1)');
+  await expect(climbs).toHaveCount(1);
+  // Position, length, gain, average and steepest grade, then passage time.
+  await expect(climbs.first()).toHaveText(
+    /^km 4[45]\.\d · [56](\.\d)? km · \+(49\d|500) m · (9|8\.\d|9\.\d)% · max (9|1\d)(\.\d)?% · \d\d:\d\d( [AP]M)?Hardest$/,
+  );
+  await expect(page.locator('rect.elevation-climb')).toHaveCount(1);
+  await expect(page.locator('path.climb-line')).toHaveCount(0);
+  await climbs.first().click();
+  await expect(climbs.first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('rect.elevation-climb.selected')).toHaveCount(1);
+  await expect(page.locator('path.climb-line')).toHaveCount(1);
+  await expect(page.locator('.climb-summit svg')).toHaveCount(1);
+  // Units and language re-render without a new request.
+  await page.locator('#units').selectOption('imperial');
+  await expect(climbs.first()).toContainText('mi 2');
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('.climbs-heading')).toHaveText('Subidas (1)');
+  await expect(climbs.first()).toContainText('máx');
+  // The hardest climb: a summit icon on the row, its name for screen readers.
+  await expect(climbs.first().locator('svg.climb-mark')).toHaveCount(1);
+  await expect(climbs.first().locator('.sr-only')).toHaveText('Mais difícil');
+  // Closing Elevation removes the highlight from the map.
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('path.climb-line')).toHaveCount(0);
+});
+test('a recalculated route waits to settle and reuses cached elevation', async ({
+  page,
+}) => {
+  await setup(page, true);
+  const requests: string[] = [];
+  await page.route('**/v1/elevation?**', (r) => {
+    requests.push(r.request().url());
+    const count = new URL(r.request().url()).searchParams
+      .get('longitude')!
+      .split(',').length;
+    return r.fulfill({ json: { elevation: Array(count).fill(80) } });
+  });
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('#elevation-stats')).toContainText('Min 80 m');
+  const first = requests.length;
+  expect(first).toBeGreaterThan(0);
+  // Editing a point recalculates the route (the mock returns the same road):
+  // the row waits for the route to settle, then every sample is cached.
+  await page.locator('#location-1').fill('0, 1.0000001');
+  await page.locator('#location-1').press('Tab');
+  await expect(page.locator('#elevation-status')).toHaveText(
+    'Loading elevation…',
+  );
+  await expect(page.locator('#elevation-stats')).toContainText('Min 80 m', {
+    timeout: 10000,
+  });
+  expect(requests).toHaveLength(first);
+});
+test('a usage limit counts down, retries once by itself, then offers the button', async ({
+  page,
+}) => {
+  await setup(page, true);
+  let refusals = 2;
+  const requests: string[] = [];
+  await page.route('**/v1/elevation?**', (r) => {
+    requests.push(r.request().url());
+    if (refusals-- > 0)
+      // Exposed, as a cross-origin script can only read exposed headers.
+      return r.fulfill({
+        status: 429,
+        headers: {
+          'Retry-After': '2',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Expose-Headers': 'Retry-After',
+        },
+      });
+    const count = new URL(r.request().url()).searchParams
+      .get('longitude')!
+      .split(',').length;
+    return r.fulfill({ json: { elevation: Array(count).fill(70) } });
+  });
+  await page.locator('#elevation > summary').click();
+  const status = page.locator('#elevation-status');
+  // A live countdown and no button while waiting.
+  await expect(status).toHaveText(
+    'Elevation usage limit reached. Try again in 2s.',
+  );
+  await expect(page.locator('#elevation-retry')).toBeHidden();
+  await expect(status).toHaveText(
+    'Elevation usage limit reached. Try again in 1s.',
+  );
+  // It retried once on its own, was refused again, counted down again and
+  // only then offers the button: two requests, no third attempt.
+  await expect(page.locator('#elevation-retry')).toBeVisible({
+    timeout: 10000,
+  });
+  await expect(status).toHaveText('Elevation usage limit reached.');
+  expect(requests).toHaveLength(2);
+  await page.waitForTimeout(2500);
+  expect(requests).toHaveLength(2);
+  await page.locator('#elevation-retry').click();
+  await expect(page.locator('#elevation-stats')).toContainText('Min 70 m');
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('#elevation-stats')).toContainText('Mín 70 m');
+});
+test('a flat route has no climbs', async ({ page }) => {
+  await setup(page, true);
+  await page.route('**/v1/elevation?**', (r) => {
+    const count = new URL(r.request().url()).searchParams
+      .get('longitude')!
+      .split(',').length;
+    return r.fulfill({ json: { elevation: Array(count).fill(50) } });
+  });
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('.climbs')).toHaveText(
+    'No significant climbs on this route.',
+  );
+});
 test('recorded GPX elevations need no request', async ({ page }) => {
   const requests: string[] = [];
   page.on('request', (r) => {
@@ -587,6 +719,19 @@ for (const failure of ['429', 'network', 'invalid', 'timeout'])
     );
     await expect(page.locator('#download')).toBeEnabled();
     expect(calls).toBe(1);
+    if (failure === '429') {
+      // Usage limit: a countdown (60 s without Retry-After), no button, then
+      // one retry on its own.
+      await expect(page.locator('#weather-status')).toHaveText(
+        'Weather usage limit reached. Try again in 60s.',
+      );
+      await expect(page.locator('#weather-retry')).toBeHidden();
+      for (let i = 0; i < 61; i++) await page.clock.runFor(1000);
+      await page.clock.fastForward(6500);
+      await fetchWeather(page);
+      expect(calls).toBe(2);
+      return;
+    }
     await page.locator('#weather-retry').click();
     // Pass only the 6 s weather queue spacing: advancing past the retry's 20 s
     // request deadline would race the mocked response and time it out again.

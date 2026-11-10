@@ -210,3 +210,12 @@ it('translates the daylight phrases', () => {
   );
   expect(t('Today at the start:')).toBe('Hoje no início:');
 });
+
+it('translates usage-limit waits for weather and elevation', () => {
+  expect(
+    translate('Elevation usage limit reached. Try again in 30s.', 'pt'),
+  ).toBe('Limite de uso da elevação atingido. Tente em 30s.');
+  expect(
+    translate('Weather usage limit reached. Try again in 2 min.', 'pt'),
+  ).toBe('Limite de uso do clima atingido. Tente em 2 min.');
+});

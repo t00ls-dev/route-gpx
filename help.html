@@ -353,14 +353,36 @@
           elevation is used as is, with no request. Otherwise, only when you
           open Elevation, up to about 300 points along the route are sent to
           Open-Meteo, in groups of 100, and the results stay in page memory for
-          ten minutes. That data comes from the Copernicus DEM GLO-90 terrain
-          model (about 90 m), so bridges, viaducts and tunnels show the ground
-          below or above the road, and short steep ramps are smoothed. To remove
-          noise from trees, buildings and the model grid, terrain elevation is
-          smoothed over about 850 m and gain and loss ignore changes under 2 m;
-          recorded elevation is lightly smoothed and ignores changes under 0.3
-          m. Totals are estimates. Elevation recorded by a GPS can be offset or
-          noisy.
+          ten minutes. After an edit, only the legs next to the changed point
+          need new points; while the route is still being recalculated,
+          Elevation waits two seconds before asking. Weather and elevation share
+          a usage budget for Open-Meteo; when it runs out, a countdown shows how
+          long to wait, then the app tries once more on its own. If it is still
+          refused, Try again appears when the next countdown ends. That data
+          comes from the Copernicus DEM GLO-90 terrain model (about 90 m), so
+          bridges, viaducts and tunnels show the ground below or above the road,
+          and short steep ramps are smoothed. To remove noise from trees,
+          buildings and the model grid, terrain elevation is smoothed over about
+          850 m and gain and loss ignore changes under 2 m; recorded elevation
+          is lightly smoothed and ignores changes under 0.3 m. Totals are
+          estimates. Elevation recorded by a GPS can be offset or noisy.
+        </p>
+        <p>
+          Climbs, below the statistics, lists each sustained climb in route
+          order: where it starts, its length, the elevation gain, the average
+          grade, the steepest grade and, with a departure, when you get there. A
+          climb runs from a low point to the summit; it ends when the route
+          drops more than 15 m or stays below its summit for 1.5 km, so short
+          dips do not split it. Only climbs with at least 40 m of gain, 400 m of
+          length and a 2.5% average are listed. The steepest grade is measured
+          over 500 m with terrain elevation, which exaggerates short ramps, and
+          over 100 m with recorded elevation. A summit icon marks the hardest
+          climb, the one with the highest gain × average grade, a planning aid
+          that does not depend on how you travel. Climb stretches are shaded in
+          the chart; select one to see it on the map with its start and summit.
+          Bridges and tunnels can create false climbs with terrain elevation: a
+          climb steeper than 15% over 500 m is marked Check: tunnel or bridge?
+          and is never the hardest.
         </p>
         <h2>Travel the route</h2>
         <p>
@@ -418,7 +440,11 @@
           warning in the summary to open the itinerary at the first one. To keep
           each instruction on one line, common words in road names are
           abbreviated (R., Av., Estr., Prof., St, Ave…); the full name appears
-          when you hover and is read by screen readers. Instructions follow the
+          when you hover and is read by screen readers. Imported tracks have no
+          instructions; after an edit, only the recalculated sections have them,
+          and Calculate route gives them for the whole route, replacing the
+          imported track. A route saved before turn directions existed shows its
+          roads without them; Calculate route adds them. Instructions follow the
           driving profile and describe the road network.
         </p>
         <h2>Distance units and undo</h2>
@@ -824,14 +850,38 @@
           elevação é usado como está, sem requisição. Caso contrário, só quando
           você abre Elevação, até cerca de 300 pontos da rota são enviados ao
           Open-Meteo, em grupos de 100, e os resultados ficam na memória da
-          página por dez minutos. Esses dados vêm do modelo de terreno
-          Copernicus DEM GLO-90 (cerca de 90 m), então pontes, viadutos e túneis
-          mostram o solo abaixo ou acima da via, e rampas curtas e íngremes são
-          suavizadas. Para remover o ruído de árvores, prédios e da grade do
-          modelo, a elevação do relevo é suavizada em cerca de 850 m e ganho e
-          perda ignoram variações menores que 2 m; a elevação gravada é
-          suavizada de leve e ignora variações menores que 0,3 m. Os totais são
-          estimativas. A elevação gravada por um GPS pode ter desvio ou ruído.
+          página por dez minutos. Depois de uma edição, só os trechos vizinhos
+          ao ponto alterado precisam de pontos novos; enquanto a rota ainda está
+          sendo recalculada, a Elevação espera dois segundos antes de pedir. O
+          clima e a elevação dividem uma cota de uso do Open-Meteo; quando ela
+          acaba, uma contagem regressiva mostra quanto esperar, e então o app
+          tenta de novo sozinho uma vez. Se ainda for recusado, Tentar novamente
+          aparece quando a próxima contagem termina. Esses dados vêm do modelo
+          de terreno Copernicus DEM GLO-90 (cerca de 90 m), então pontes,
+          viadutos e túneis mostram o solo abaixo ou acima da via, e rampas
+          curtas e íngremes são suavizadas. Para remover o ruído de árvores,
+          prédios e da grade do modelo, a elevação do relevo é suavizada em
+          cerca de 850 m e ganho e perda ignoram variações menores que 2 m; a
+          elevação gravada é suavizada de leve e ignora variações menores que
+          0,3 m. Os totais são estimativas. A elevação gravada por um GPS pode
+          ter desvio ou ruído.
+        </p>
+        <p>
+          Subidas, abaixo das estatísticas, lista cada subida contínua na ordem
+          da rota: onde começa, a extensão, o ganho de elevação, a inclinação
+          média, a inclinação máxima e, com uma saída, quando você chega lá. Uma
+          subida vai de um ponto baixo até o topo; ela termina quando a rota
+          desce mais de 15 m ou fica abaixo do topo por 1,5 km, então pequenas
+          descidas não a dividem. Só aparecem subidas com pelo menos 40 m de
+          ganho, 400 m de extensão e 2,5% de média. A inclinação máxima é medida
+          em 500 m com a elevação do relevo, que exagera rampas curtas, e em 100
+          m com a elevação gravada. Um ícone de topo marca a subida mais
+          difícil, a de maior ganho × inclinação média, uma ajuda para planejar
+          que não depende de como você se desloca. Os trechos de subida ficam
+          sombreados no gráfico; selecione um para vê-lo no mapa com o início e
+          o topo. Pontes e túneis podem criar subidas falsas com a elevação do
+          relevo: uma subida mais íngreme que 15% em 500 m é marcada Confira:
+          túnel ou ponte? e nunca é a mais difícil.
         </p>
         <h2>Percorrer a rota</h2>
         <p>
@@ -890,7 +940,12 @@
           deles. Para cada instrução caber em uma linha, palavras comuns dos
           nomes das vias são abreviadas (R., Av., Estr., Prof., St, Ave…); o
           nome completo aparece ao passar o mouse e é lido por leitores de tela.
-          As instruções seguem o perfil de carro e descrevem a malha viária.
+          Trajetos importados não têm instruções; depois de uma edição, só os
+          trechos recalculados as têm, e Calcular rota as gera para a rota
+          inteira, substituindo o trajeto importado. Uma rota salva antes das
+          direções de manobra mostra as vias sem elas; Calcular rota as
+          adiciona. As instruções seguem o perfil de carro e descrevem a malha
+          viária.
         </p>
         <h2>Unidades de distância e desfazer</h2>
         <p>

@@ -92,8 +92,8 @@ const pt: Record<string, string> = {
   'Calculate or import a route first.': 'Calcule ou importe uma rota primeiro.',
   'Weather service returned an invalid response.':
     'O serviço de clima retornou uma resposta inválida.',
-  'Weather usage limit reached. Try again later.':
-    'Limite de uso do clima atingido. Tente mais tarde.',
+  'Weather usage limit reached.': 'Limite de uso do clima atingido.',
+  'Elevation usage limit reached.': 'Limite de uso da elevação atingido.',
   'Weather unavailable. Try again.': 'Clima indisponível. Tente novamente.',
   'Weather request timed out. Try again.':
     'O tempo da consulta de clima esgotou. Tente novamente.',
@@ -253,8 +253,12 @@ const pt: Record<string, string> = {
   'Settings applied.': 'Configurações aplicadas.',
   'Highlighted roads are local sections to review.':
     'As vias destacadas são trechos locais para conferir.',
-  'Road summary covers only recalculated sections.':
-    'O resumo de vias cobre só os trechos recalculados.',
+  'The itinerary covers only recalculated sections. Calculate route gives it for the whole route, replacing the imported track.':
+    'O itinerário cobre só os trechos recalculados. Calcular rota o gera para a rota inteira, substituindo o trajeto importado.',
+  'This route was saved before turn directions existed. Calculate route adds them.':
+    'Esta rota foi salva antes das direções de manobra existirem. Calcular rota as adiciona.',
+  'Imported tracks have no turn-by-turn itinerary. Calculate route gives it from the road network, replacing the imported track.':
+    'Trajetos importados não têm itinerário com manobras. Calcular rota o gera pela malha viária, substituindo o trajeto importado.',
   'Import GPX, FIT or TCX': 'Importar GPX, FIT ou TCX',
   'Route points': 'Pontos da rota',
   '↶ Round trip': '↶ Ida e volta',
@@ -376,9 +380,12 @@ const pt: Record<string, string> = {
   Daylight: 'Luz do dia',
   'Route coloring': 'Colorir a rota',
   Elevation: 'Elevação',
+  'No significant climbs on this route.':
+    'Nenhuma subida relevante nesta rota.',
+  max: 'máx',
+  Hardest: 'Mais difícil',
+  'Check: tunnel or bridge?': 'Confira: túnel ou ponte?',
   'Loading elevation…': 'Buscando elevação…',
-  'Elevation usage limit reached. Try again later.':
-    'Limite de uso da elevação atingido. Tente mais tarde.',
   'Elevation unavailable. Try again.':
     'Elevação indisponível. Tente novamente.',
   'Elevation service returned an invalid response.':
@@ -488,6 +495,12 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (up, down) => `Ganho de elevação ${up} · Perda de elevação ${down}`,
   ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
+  [
+    /^(Weather|Elevation) usage limit reached\. Try again in (\d+)(s| min| h)\.$/,
+    (kind, n, unit) =>
+      `Limite de uso ${kind === 'Weather' ? 'do clima' : 'da elevação'} atingido. Tente em ${n}${unit}.`,
+  ],
+  [/^Climbs \((\d+)\)$/, (n) => `Subidas (${n})`],
   [/^Roundabout, exit (\d+)$/, (n) => `Rotatória, ${n}ª saída`],
   [
     /^Weather sampled at (\d+) of (\d+) stops\.$/,
