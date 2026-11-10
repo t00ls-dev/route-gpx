@@ -67,7 +67,13 @@ import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
-import { setupRouteOverlays } from './route-overlays';
+import { setupRouteOverlays, sliceByRanges } from './route-overlays';
+import {
+  offsetSlices,
+  repeatsFor,
+  setupRouteMarks,
+  splitByRepeat,
+} from './route-marks';
 import { routeDaylight } from './daylight';
 import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
@@ -194,7 +200,18 @@ const playback = setupPlayback(map, {
   state: () => state,
   speedKmh: () => speedKmh,
 });
-const overlays = setupRouteOverlays(map, { route: () => current });
+const overlays = setupRouteOverlays(map, {
+  route: () => current,
+  repeats: {
+    of: repeatsFor,
+    split: splitByRepeat,
+    offset: (slices) => offsetSlices(map, slices),
+  },
+});
+const marks = setupRouteMarks(map, {
+  route: () => current,
+  state: () => state,
+});
 const departureTime = () =>
   state.departure ? Date.parse(state.departure) : NaN;
 overlays.register({
@@ -616,26 +633,47 @@ function drawRoute(route: Route) {
   line.clearLayers();
   const anchors =
     route.snapped ?? state.points.flatMap((p) => (p.coord ? [p.coord] : []));
-  route.segments.forEach((segment) => {
+  const repeated = repeatsFor(route);
+  // Stretches travelled twice in opposite directions become two parallel
+  // lines, each offset to the right of its own direction (visual only).
+  const pieces = repeated.length
+    ? (() => {
+        const total = route.segments.reduce(
+          (sum, s) =>
+            sum + s.slice(1).reduce((n, c, i) => n + meters(s[i], c), 0),
+          0,
+        );
+        const slices = sliceByRanges(
+          route.segments,
+          splitByRepeat([{ from: 0, to: total, kind: 'route' }], repeated),
+        );
+        const coords = offsetSlices(map, slices);
+        return slices.map((s, i) => ({
+          repeated: s.repeated,
+          coords: coords[i],
+        }));
+      })()
+    : route.segments.map((coords) => ({ repeated: false, coords }));
+  pieces.forEach(({ repeated: pass, coords }) => {
     const visual = simplifyTrack(
-      segment,
+      coords,
       (coord) => map.project(coord),
       0.75,
       anchors,
     );
     L.polyline(visual, {
       color: '#fff',
-      weight: 8,
+      weight: pass ? 6 : 8,
       opacity: 0.95,
       smoothFactor: 0,
       className: 'route-casing',
     }).addTo(line);
     L.polyline(visual, {
       color: '#12796e',
-      weight: 4,
+      weight: pass ? 3 : 4,
       opacity: 1,
       smoothFactor: 0,
-      className: 'route-line',
+      className: pass ? 'route-line route-line-pass' : 'route-line',
     }).addTo(line);
   });
 }
@@ -649,6 +687,7 @@ function clearSummary() {
   renderDaylight(state, null, speedKmh);
   playback.setRoute(null);
   overlays.refresh();
+  marks.refresh();
 }
 /** Route summary card; departure, units, speed and language changes only re-render this. */
 function renderSummary(route: Route) {
@@ -711,6 +750,7 @@ function renderSummary(route: Route) {
   renderDaylight(state, route, speedKmh);
   playback.setRoute(route);
   overlays.refresh();
+  marks.refresh();
   const chips = document.createElement('div');
   chips.className = 'chips';
   const refs = highways(route.steps);

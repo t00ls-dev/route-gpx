@@ -30,6 +30,7 @@ const paths = {
     '<circle class="weather-precipitation" cx="5" cy="19" r=".65" fill="currentColor"/><circle class="weather-precipitation" cx="20" cy="21" r=".65" fill="currentColor"/>',
   alert: '<path d="m12 3 10 18H2Z M12 9v5m0 3v.1"/>',
   play: '<path d="m8 5 11 7-11 7Z"/>',
+  chevron: '<path d="m6 15 6-6 6 6"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
   external:
     '<path d="M14 3h7v7m0-7L10 14M10 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6"/>',

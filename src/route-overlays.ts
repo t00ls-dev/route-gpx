@@ -14,6 +14,8 @@ export interface Range {
   from: number;
   to: number;
   kind: string;
+  /** On a stretch travelled twice in opposite directions (drawn offset). */
+  repeated?: boolean;
 }
 export interface Coloring {
   id: string;
@@ -39,12 +41,17 @@ const between = (a: Coord, b: Coord, f: number): Coord => [
 export function sliceByRanges(
   segments: Coord[][],
   ranges: Range[],
-): { kind: string; coords: Coord[] }[] {
-  const out: { kind: string; coords: Coord[] }[] = [];
+): { kind: string; repeated: boolean; coords: Coord[] }[] {
+  const out: { kind: string; repeated: boolean; coords: Coord[] }[] = [];
   if (!ranges.length) return out;
   let total = 0;
   for (const segment of segments) {
-    let current: { kind: string; coords: Coord[]; to: number } | null = null;
+    let current: {
+      kind: string;
+      repeated: boolean;
+      coords: Coord[];
+      to: number;
+    } | null = null;
     for (let i = 1; i < segment.length; i++) {
       const a = segment[i - 1],
         b = segment[i],
@@ -66,12 +73,14 @@ export function sliceByRanges(
         const stop = Math.min(end, range.to);
         const p1 = between(a, b, (position - start) / length),
           p2 = between(a, b, (stop - start) / length);
+        const repeated = !!range.repeated;
         if (
           !current ||
           current.kind !== range.kind ||
+          current.repeated !== repeated ||
           current.to !== position
         ) {
-          current = { kind: range.kind, coords: [p1], to: position };
+          current = { kind: range.kind, repeated, coords: [p1], to: position };
           out.push(current);
         }
         current.coords.push(p2);
@@ -80,14 +89,22 @@ export function sliceByRanges(
       }
     }
   }
-  return out.map(({ kind, coords }) => ({ kind, coords }));
+  return out.map(({ kind, repeated, coords }) => ({ kind, repeated, coords }));
 }
 
 const STORAGE_KEY = 'route-coloring';
 
 export function setupRouteOverlays(
   map: L.Map,
-  deps: { route: () => Route | null },
+  deps: {
+    route: () => Route | null;
+    /** Optional out-and-back handling from route-marks, kept as a dependency. */
+    repeats?: {
+      of: (route: Route) => Range[];
+      split: (ranges: Range[], repeated: Range[]) => Range[];
+      offset: (slices: { repeated: boolean; coords: Coord[] }[]) => Coord[][];
+    };
+  },
 ) {
   map.createPane('route-overlay').style.zIndex = '450';
   const layer = L.layerGroup().addTo(map);
@@ -147,19 +164,24 @@ export function setupRouteOverlays(
     const route = deps.route();
     const coloring = colorings.find((c) => c.id === active);
     if (!route || !coloring || coloring.unavailable()) return;
-    for (const { kind, coords } of sliceByRanges(
+    const slices = sliceByRanges(
       route.segments,
-      coloring.ranges(route),
-    )) {
-      const visual = simplifyTrack(coords, (c) => map.project(c), 0.75, []);
+      deps.repeats
+        ? deps.repeats.split(coloring.ranges(route), deps.repeats.of(route))
+        : coloring.ranges(route),
+    );
+    const paths = deps.repeats?.offset(slices) ?? slices.map((s) => s.coords);
+    slices.forEach(({ kind, repeated }, i) => {
+      const visual = simplifyTrack(paths[i], (c) => map.project(c), 0.75, []);
       L.polyline(visual, {
         pane: 'route-overlay',
         className: `route-coloring route-coloring-${kind}`,
         interactive: false,
-        weight: 4,
+        // Out-and-back stretches follow the thinner parallel pass lines.
+        weight: repeated ? 3 : 4,
         smoothFactor: 0,
       }).addTo(layer);
-    }
+    });
     legendBox.replaceChildren(
       ...coloring.legend.map(({ kind, label }) => {
         const item = document.createElement('span');

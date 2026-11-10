@@ -2069,3 +2069,45 @@ input[type='range'].range-input:disabled {
     visibility: hidden;
   }
 }
+
+/* Route marks (route-marks.ts): direction arrows and the halfway point. */
+.marks-group {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.route-arrow {
+  background: transparent;
+  border: 0;
+}
+.route-arrow > span {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+}
+.route-arrow .button-icon {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 1px #0b2f27) drop-shadow(0 0 1px #0b2f27);
+}
+.route-halfway {
+  background: transparent;
+  border: 0;
+}
+.route-halfway > span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #145e49;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px #0006;
+}

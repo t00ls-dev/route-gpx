@@ -67,7 +67,7 @@ for (const mobile of [false, true]) {
       await expect(page.locator('#location-0')).toBeVisible();
       await expect(page.locator('#location-1')).toBeVisible();
       await fillPair(page);
-      await expect(page.locator('.leaflet-marker-icon')).toHaveCount(2);
+      await expect(page.locator('.route-marker')).toHaveCount(2);
       await expect(page.locator('#summary')).toContainText('42 km');
       await expect(page.locator('#summary dt')).toHaveText([
         'Distance',
@@ -90,7 +90,7 @@ for (const mobile of [false, true]) {
       await expect(page.locator('#location-1')).toHaveValue('');
       await expect(page.locator('#location-0')).toHaveValue(start);
       await expect(page.locator('#download')).toBeDisabled();
-      await expect(page.locator('.leaflet-marker-icon')).toHaveCount(1);
+      await expect(page.locator('.route-marker')).toHaveCount(1);
     });
     test('map gestures fill start and destination', async ({ page }) => {
       await setup(page);
@@ -111,7 +111,7 @@ for (const mobile of [false, true]) {
           .click();
       } else await page.locator('#map').click({ position: { x: 210, y: 140 } });
       await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
-      await expect(page.locator('.leaflet-marker-icon')).toHaveCount(2);
+      await expect(page.locator('.route-marker')).toHaveCount(2);
     });
     test('travel the route: a cursor follows the track, plays at a chosen speed and needs no requests', async ({
       page,
@@ -249,6 +249,51 @@ for (const mobile of [false, true]) {
     });
   });
 }
+test('route marks: arrows by default, parallel lines on a round trip, halfway point, persisted and translated', async ({
+  page,
+}) => {
+  let routes = 0;
+  page.on('request', (request) => {
+    if (request.url().includes('/route/v1/driving/')) routes++;
+  });
+  await setup(page);
+  await fillPair(page);
+  await expect(page.locator('.route-arrow').first()).toBeAttached();
+  await expect(page.locator('.route-halfway')).toHaveCount(0);
+  await expect(page.locator('path.route-line-pass')).toHaveCount(0);
+  // Round trip: the mocked router returns the same straight road back.
+  await page.locator('#roundtrip').click();
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('path.route-line-pass')).toHaveCount(2);
+  const before = routes;
+  await page.locator('#layers-toggle').click();
+  await expect(page.locator('#marks-heading')).toHaveText('Route marks');
+  await expect(page.locator('#marks-arrows')).toBeChecked();
+  await expect(page.locator('#marks-halfway')).not.toBeChecked();
+  await page.locator('#marks-halfway').check();
+  await expect(page.locator('.route-halfway')).toHaveCount(1);
+  await page.locator('#marks-arrows').uncheck();
+  await expect(page.locator('.route-arrow')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  const half = (await page.locator('.route-halfway').boundingBox())!;
+  await page.mouse.move(half.x + half.width / 2, half.y + half.height / 2);
+  await expect(page.locator('.leaflet-tooltip')).toContainText('Halfway · ');
+  // Device preferences: kept across reloads, never in the link.
+  expect(new URL(page.url()).hash).not.toMatch(/arrows|halfway/);
+  expect(routes).toBe(before);
+  await page.reload();
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('.route-halfway')).toHaveCount(1);
+  await expect(page.locator('.route-arrow')).toHaveCount(0);
+  await page.locator('#language').selectOption('pt');
+  await page.locator('#layers-toggle').click();
+  await expect(page.locator('#marks-heading')).toHaveText('Marcas da rota');
+  await expect(page.locator('label:has(#marks-arrows)')).toHaveText(
+    'Setas de direção',
+  );
+  await page.locator('#marks-arrows').check();
+  await expect(page.locator('.route-arrow').first()).toBeAttached();
+});
 test('address searches belong to their own point and do not fire while typing', async ({
   page,
 }) => {
@@ -288,7 +333,7 @@ test('undo restores a moved marker and a removed stop', async ({ page }) => {
   await setup(page);
   await fillPair(page);
   const original = await page.locator('#location-0').inputValue();
-  const marker = page.locator('.leaflet-marker-icon').first();
+  const marker = page.locator('.route-marker').first();
   await marker.scrollIntoViewIfNeeded();
   const box = await marker.boundingBox();
   await page.mouse.move(box!.x + 15, box!.y + 15);
