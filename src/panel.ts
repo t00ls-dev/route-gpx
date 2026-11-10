@@ -76,10 +76,17 @@ export function setupPanel(map: L.Map): void {
     );
   }).observe(sheet);
 
-  // Dragging the handle resizes the sheet; a press without movement is a click.
+  const toggle = () => {
+    open = !open;
+    remember();
+    layout();
+  };
+  // Dragging the handle resizes the sheet; a press without movement toggles
+  // it on release. Browsers may drop the click of a tap that follows a drag
+  // (tap suppression after a fling), so taps do not rely on `click`.
   let drag: { id: number; y: number; height: number; moved: boolean } | null =
     null;
-  let dragged = false;
+  let pointerToggle = -Infinity;
   handle.addEventListener('pointerdown', (event) => {
     if (!compactLayout() || event.button > 0) return;
     drag = {
@@ -110,26 +117,43 @@ export function setupPanel(map: L.Map): void {
     if (!drag || event.pointerId !== drag.id) return;
     const moved = drag.moved;
     drag = null;
-    if (!moved) return;
+    // Any click that follows this press belongs to it.
+    pointerToggle = event.timeStamp;
+    if (!moved) {
+      if (event.type === 'pointerup') toggle();
+      return;
+    }
     const height = sheet.getBoundingClientRect().height;
     const { half, full } = sheetHeights();
     sheet.style.height = '';
     document.body.classList.remove('sheet-dragging');
     open = height > half / 2;
     if (open) size = height > (half + full) / 2 ? 'full' : 'half';
-    dragged = true;
-    setTimeout(() => (dragged = false), 0);
     remember();
     layout();
   };
   handle.addEventListener('pointerup', release);
   handle.addEventListener('pointercancel', release);
   handle.addEventListener('click', (event) => {
-    if (dragged) {
-      event.preventDefault();
-      return;
-    }
-    open = !open;
+    // Keyboard and programmatic clicks have no pointer press before them.
+    if (event.detail > 0 && event.timeStamp - pointerToggle < 1000) return;
+    toggle();
+  });
+  // Arrow keys move the sheet between closed, half and full height.
+  handle.addEventListener('keydown', (event) => {
+    if (!compactLayout()) return;
+    const steps = ['closed', 'half', 'full'] as const;
+    const at = steps.indexOf(open ? size : 'closed');
+    const next =
+      event.key === 'ArrowUp'
+        ? Math.min(2, at + 1)
+        : event.key === 'ArrowDown'
+          ? Math.max(0, at - 1)
+          : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    open = next > 0;
+    if (open) size = steps[next] as SheetSize;
     remember();
     layout();
   });

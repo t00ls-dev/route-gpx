@@ -127,9 +127,32 @@ test.describe('bottom sheet', () => {
       'aria-expanded',
       'false',
     );
-    // A tap still toggles, and reopens at the last open height.
-    await page.locator('#panel-toggle').click();
+    // The first tap after a drag still toggles, and reopens at the last open
+    // height; browsers may drop the click of that tap.
+    await page.locator('#panel-toggle').tap();
     await expect(page.locator('#route-panel')).toBeVisible();
     await expect.poll(() => sheetHeight(page)).toBe(half);
+    await drag(70);
+    await expect.poll(() => sheetHeight(page)).toBe(784);
+    await page.locator('#panel-toggle').tap();
+    await expect(page.locator('#route-panel')).toBeHidden();
+  });
+
+  test('arrow keys on the handle change the sheet height', async ({ page }) => {
+    await page.goto(base);
+    const handle = page.locator('#panel-toggle');
+    await handle.focus();
+    await page.keyboard.press('ArrowUp');
+    await expect(page.locator('body')).toHaveClass(/sheet-full/);
+    await page.keyboard.press('ArrowUp');
+    await expect(page.locator('body')).toHaveClass(/sheet-full/);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('#route-panel')).toBeHidden();
+    await expect(handle).toHaveAttribute('aria-expanded', 'false');
+    // Enter toggles back to the last open height.
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#route-panel')).toBeVisible();
+    await expect(page.locator('body')).not.toHaveClass(/sheet-full/);
   });
 });
