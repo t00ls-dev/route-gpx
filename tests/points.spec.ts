@@ -113,6 +113,65 @@ for (const mobile of [false, true]) {
       await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
       await expect(page.locator('.leaflet-marker-icon')).toHaveCount(2);
     });
+    test('travel the route: a cursor follows the track, plays at a chosen speed and needs no requests', async ({
+      page,
+    }) => {
+      let routeRequests = 0;
+      page.on('request', (request) => {
+        if (request.url().includes('/route/v1/driving/')) routeRequests++;
+      });
+      await setup(page);
+      await fillPair(page);
+      const requestsBefore = routeRequests;
+      await expect(page.locator('.playback-cursor')).toHaveCount(0);
+      await page.locator('#playback > summary').click();
+      await expect(page.locator('.playback-cursor')).toHaveCount(1);
+      // Distances come from the track geometry (the mocked line is 33.2 km).
+      await expect(page.locator('#playback-readout')).toContainText(
+        '0 km · 33.2 km left',
+      );
+      await page.locator('#playback-position').fill('500');
+      await expect(page.locator('#playback-readout')).toContainText(
+        '16.6 km · 16.6 km left',
+      );
+      // Road from the router steps of a route routed end to end.
+      await expect(page.locator('#playback-readout')).toContainText(
+        'BR-101 Main road',
+      );
+      await expect(page.locator('#playback-position')).toHaveAttribute(
+        'aria-valuetext',
+        '16.6 km of 33.2 km',
+      );
+      await page.locator('#playback-rate').selectOption('10');
+      await page.locator('#playback-toggle').click();
+      await expect(page.locator('#playback-toggle')).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await expect
+        .poll(async () =>
+          Number(await page.locator('#playback-position').inputValue()),
+        )
+        .toBeGreaterThan(600);
+      await page.locator('#playback-toggle').click();
+      await expect(page.locator('#playback-toggle')).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+      const paused = await page.locator('#playback-position').inputValue();
+      await page.waitForTimeout(400);
+      await expect(page.locator('#playback-position')).toHaveValue(paused);
+      await page.locator('#language').selectOption('pt');
+      await expect(page.locator('#playback-readout')).toContainText('faltam');
+      await expect(page.locator('#playback-toggle')).toHaveAttribute(
+        'aria-label',
+        'Reproduzir',
+      );
+      await page.locator('#language').selectOption('en');
+      await page.locator('#playback > summary').click();
+      await expect(page.locator('.playback-cursor')).toHaveCount(0);
+      expect(routeRequests).toBe(requestsBefore);
+    });
     test('the edit lock blocks route edits while viewing and download keep working', async ({
       page,
     }) => {

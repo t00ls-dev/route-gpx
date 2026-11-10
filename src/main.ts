@@ -66,6 +66,7 @@ import {
 import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
+import { setupPlayback } from './route-playback';
 import { addressAutocomplete } from './autocomplete';
 import { setupMapView } from './map-view';
 import { defaultView } from './default-view';
@@ -187,6 +188,10 @@ const weather = setupWeather(
   syncUrl,
   () => speedKmh,
 );
+const playback = setupPlayback(map, {
+  state: () => state,
+  speedKmh: () => speedKmh,
+});
 // Registered after the weather handler, which stores the new departure first.
 $('departure').addEventListener('change', () => {
   if (current) renderSummary(current);
@@ -625,6 +630,7 @@ function clearSummary() {
   for (const id of ['summary-content', 'summary-notes', 'itinerary'])
     $(id).replaceChildren();
   renderDaylight(state, null, speedKmh);
+  playback.setRoute(null);
 }
 /** Route summary card; departure, units, speed and language changes only re-render this. */
 function renderSummary(route: Route) {
@@ -685,6 +691,7 @@ function renderSummary(route: Route) {
   daylight.id = 'daylight-summary';
   summary.append(stats, text('p', basis, 'hint stats-basis'), daylight);
   renderDaylight(state, route, speedKmh);
+  playback.setRoute(route);
   const chips = document.createElement('div');
   chips.className = 'chips';
   const refs = highways(route.steps);

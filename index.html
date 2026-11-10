@@ -157,11 +157,35 @@
             <summary>Daylight</summary>
             <ul id="daylight-list"></ul>
           </details>
+          <details id="playback" class="playback">
+            <summary>Travel the route</summary>
+            <div class="playback-controls">
+              <button id="playback-toggle" type="button"></button>
+              <input
+                id="playback-position"
+                class="range-input"
+                type="range"
+                min="0"
+                max="1000"
+                step="1"
+                value="0"
+                aria-label="Position along the route"
+              />
+              <select id="playback-rate" aria-label="Playback speed">
+                <option value="1">1×</option>
+                <option value="2">2×</option>
+                <option value="5">5×</option>
+                <option value="10">10×</option>
+              </select>
+            </div>
+            <div id="playback-readout" class="hint" aria-live="polite"></div>
+          </details>
           <details class="speed-options">
             <summary>Average speed</summary>
             <div class="speed-field">
               <input
                 id="average-speed"
+                class="range-input"
                 type="range"
                 min="0"
                 max="200"
