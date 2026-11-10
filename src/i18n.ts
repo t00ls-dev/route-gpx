@@ -251,14 +251,15 @@ const pt: Record<string, string> = {
   'Route imported. Edits recalculate only the changed sections.':
     'Rota importada. Alterações recalculam só os trechos alterados.',
   'Settings applied.': 'Configurações aplicadas.',
+  'Finding directions…': 'Buscando direções…',
+  'Directions not added: the road has changed. Calculate route to update it.':
+    'Direções não adicionadas: a via mudou. Calcular rota a atualiza.',
+  'Directions unavailable for this track.':
+    'Direções indisponíveis para este trajeto.',
+  'Directions unavailable. Try again later.':
+    'Direções indisponíveis. Tente mais tarde.',
   'Highlighted roads are local sections to review.':
     'As vias destacadas são trechos locais para conferir.',
-  'The itinerary covers only recalculated sections. Calculate route gives it for the whole route, replacing the imported track.':
-    'O itinerário cobre só os trechos recalculados. Calcular rota o gera para a rota inteira, substituindo o trajeto importado.',
-  'This route was saved before turn directions existed. Calculate route adds them.':
-    'Esta rota foi salva antes das direções de manobra existirem. Calcular rota as adiciona.',
-  'Imported tracks have no turn-by-turn itinerary. Calculate route gives it from the road network, replacing the imported track.':
-    'Trajetos importados não têm itinerário com manobras. Calcular rota o gera pela malha viária, substituindo o trajeto importado.',
   'Import GPX, FIT or TCX': 'Importar GPX, FIT ou TCX',
   'Route points': 'Pontos da rota',
   '↶ Round trip': '↶ Ida e volta',
@@ -495,6 +496,10 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (up, down) => `Ganho de elevação ${up} · Perda de elevação ${down}`,
   ],
   [/^Stop (\d+)$/, (n) => `Parada ${n}`],
+  [
+    /^Finding directions… (\d+)\/(\d+)$/,
+    (a, b) => `Buscando direções… ${a}/${b}`,
+  ],
   [
     /^(Weather|Elevation) usage limit reached\. Try again in (\d+)(s| min| h)\.$/,
     (kind, n, unit) =>

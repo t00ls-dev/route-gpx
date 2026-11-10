@@ -21,7 +21,7 @@ import {
 } from './services';
 import {
   indexTrack,
-  locateOnTrack,
+  legDistances,
   pointAtDistance,
   trackSlice,
 } from './track-position';
@@ -80,17 +80,10 @@ export function setupElevation(
    * point and an edit changes only the samples of the legs next to it.
    */
   function legBounds(target: Route): number[] {
-    const index = indexTrack(target.segments);
     const points = (
       target.snapped ?? deps.state().points.map((p) => p.coord)
     ).filter((c): c is Coord => !!c);
-    let progress = 0;
-    return points.flatMap((coord) => {
-      const position = locateOnTrack(index, coord, { progress, backtrack: 0 });
-      if (!position || position.offTrack > 200) return [];
-      progress = position.distance;
-      return [position.distance];
-    });
+    return legDistances(target.segments, points);
   }
 
   function message(text: string, error = false) {

@@ -6,6 +6,11 @@ export interface SavedRoute {
   route: Route;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Set when adding turn directions was tried and the road had changed, so
+   * reopening does not ask the router again. Optional; older entries lack it.
+   */
+  directionsChecked?: boolean;
 }
 let connection: Promise<IDBDatabase> | undefined;
 function database(): Promise<IDBDatabase> {
@@ -75,6 +80,43 @@ export async function saveNamedRoute(
   await operation('readwrite', (s) => s.put(record));
   return record;
 }
+/**
+ * The saved record with `route`'s steps, or null when the stored geometry is
+ * not exactly the same. Name, state and dates are kept.
+ */
+export function withUpdatedSteps(
+  record: SavedRoute,
+  route: Route,
+): SavedRoute | null {
+  if (JSON.stringify(record.route.segments) !== JSON.stringify(route.segments))
+    return null;
+  const updated = { ...record.route, steps: structuredClone(route.steps) };
+  return validRoute(updated) ? { ...record, route: updated } : null;
+}
+
+/** Stores directions added to a saved route, changing nothing else. */
+export async function updateSavedSteps(
+  id: string,
+  route: Route,
+): Promise<void> {
+  const record = await operation<SavedRoute | undefined>('readonly', (s) =>
+    s.get(id),
+  );
+  const updated = record && withUpdatedSteps(record, route);
+  if (updated) await operation('readwrite', (s) => s.put(updated));
+}
+
+/** Remembers that directions could not be added, changing nothing else. */
+export async function markDirectionsChecked(id: string): Promise<void> {
+  const record = await operation<SavedRoute | undefined>('readonly', (s) =>
+    s.get(id),
+  );
+  if (record)
+    await operation('readwrite', (s) =>
+      s.put({ ...record, directionsChecked: true }),
+    );
+}
+
 export async function deleteSavedRoute(id: string): Promise<void> {
   await operation('readwrite', (s) => s.delete(id));
 }
