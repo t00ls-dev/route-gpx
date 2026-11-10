@@ -474,6 +474,22 @@ label[for] {
   gap: 7px;
   margin-top: 8px;
 }
+/* Text-style action inside a message, such as Choose departure. */
+.planner .link-button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #145e49;
+  font: inherit;
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.departure-automatic {
+  margin: 2px 0 6px;
+}
 #summary > #itinerary {
   margin: 0;
   border-top: 1px solid #e2e7eb;

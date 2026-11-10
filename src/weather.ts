@@ -50,6 +50,18 @@ export function departureError(value: string, now = Date.now()): string | null {
     return 'Departure and arrival, including the weather margin, must fit within the 16-day forecast.';
   return null;
 }
+/**
+ * Suggested departure: the next :00 or :30 at or after `now`, in the device's
+ * local time (10:07 → 10:30, 10:40 → 11:00, 10:30:00 stays).
+ */
+export function nextDepartureSlot(now = Date.now()): number {
+  const date = new Date(now);
+  if (date.getMinutes() % 30 || date.getSeconds() || date.getMilliseconds()) {
+    date.setSeconds(0, 0);
+    date.setMinutes(date.getMinutes() < 30 ? 30 : 60);
+  }
+  return date.getTime();
+}
 export function localDateTime(value: string): string {
   const d = new Date(value);
   if (!Number.isFinite(d.getTime())) return '';

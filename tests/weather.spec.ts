@@ -10,8 +10,14 @@ async function setup(
   routed = false,
   speed: number | null = 60,
   longNames = false,
+  automatic = false,
 ) {
   await page.clock.setFixedTime(new Date('2026-11-07T10:00:00Z'));
+  // Most tests check a departure the user chooses; the automatic one has its own.
+  if (!automatic)
+    await page.addInitScript(() =>
+      localStorage.setItem('auto-departure', 'off'),
+    );
   await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
   await page.route('**/v1/forecast?**', (r) =>
     r.fulfill({ json: weatherResponse(new URL(r.request().url())) }),
@@ -313,6 +319,162 @@ test('elevation is requested only when opened, shows stats and the map cursor, a
     'Altitude estimada pelo relevo. Veja a ajuda.',
   );
   expect(requests).toHaveLength(count);
+});
+test('the automatic departure follows the next half hour until the user chooses one', async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date('2026-11-07T10:07:00Z') });
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  const forecasts: URL[] = [];
+  await page.route('**/v1/forecast?**', (r) => {
+    forecasts.push(new URL(r.request().url()));
+    return r.fulfill({ json: weatherResponse(new URL(r.request().url())) });
+  });
+  await page.route('**/route/v1/driving/**', (r) =>
+    r.fulfill({
+      json: {
+        code: 'Ok',
+        waypoints: [
+          { location: [0, 0], distance: 0 },
+          { location: [1, 0], distance: 0 },
+        ],
+        routes: [
+          {
+            distance: 111195,
+            duration: 7200,
+            geometry: {
+              coordinates: [
+                [0, 0],
+                [1, 0],
+              ],
+            },
+            legs: [],
+          },
+        ],
+      },
+    }),
+  );
+  const state = { ...defaults(), language: 'en' as const };
+  state.points = [
+    { name: 'Start', coord: [0, 0] },
+    { name: 'Destination', coord: [0, 1] },
+  ];
+  await page.goto(base + encodeState(state));
+  await expect(page.locator('#download')).toBeEnabled();
+  // 10:07 UTC (the test browser's time zone) leaves at 10:30, automatically.
+  await expect(page.locator('#departure')).toHaveValue('2026-11-07T10:30');
+  await expect(page.locator('#auto-departure')).toBeChecked();
+  await expect(page.locator('#summary dt')).toHaveText([
+    'Distance',
+    'Time',
+    'Arrival',
+  ]);
+  await page.locator('#weather-section > summary').click();
+  await expect(page.locator('#weather-result')).toBeVisible();
+  expect(forecasts).toHaveLength(1);
+  // Never written to the link.
+  expect(decodeState(new URL(page.url()).hash).departure).toBeUndefined();
+
+  // Half an hour later it moves to 11:00 and refreshes the weather.
+  await page.clock.fastForward(30 * 60_000);
+  await expect(page.locator('#departure')).toHaveValue('2026-11-07T11:00');
+  await expect(page.locator('#weather-result')).toBeVisible();
+  expect(forecasts).toHaveLength(2);
+
+  // Choosing the same time fixes it: it no longer moves.
+  await page.locator('#departure').fill('2026-11-07T11:00');
+  await page.locator('#departure').press('Tab');
+  await expect(page.locator('#auto-departure')).not.toBeChecked();
+  expect(decodeState(new URL(page.url()).hash).departure).toBe(
+    '2026-11-07T11:00:00.000Z',
+  );
+  await page.clock.fastForward(30 * 60_000);
+  await expect(page.locator('#departure')).toHaveValue('2026-11-07T11:00');
+
+  // Checking Automatic departure again returns to the next half hour.
+  await page.locator('#auto-departure').check();
+  await expect(page.locator('#departure')).toHaveValue('2026-11-07T11:30');
+  expect(decodeState(new URL(page.url()).hash).departure).toBeUndefined();
+
+  // Clearing turns it off: no new time and no request until reload.
+  const before = forecasts.length;
+  await page.locator('#departure').fill('');
+  await page.locator('#departure').press('Tab');
+  await expect(page.locator('#auto-departure')).not.toBeChecked();
+  // Weather explains why it is empty.
+  await expect(page.locator('#weather-status')).toHaveText(
+    'Choose a departure to see the weather along the route. Choose departure',
+  );
+  // The link takes the user to the departure field.
+  await page
+    .locator('#weather-status')
+    .getByRole('button', { name: 'Choose departure' })
+    .click();
+  await expect(page.locator('#departure')).toBeFocused();
+  await page.locator('#departure').blur();
+  await page.clock.fastForward(30 * 60_000);
+  await expect(page.locator('#departure')).toHaveValue('');
+  expect(forecasts).toHaveLength(before);
+
+  // A link with its own departure keeps it; Portuguese labels.
+  await page.goto(
+    base +
+      encodeState({
+        ...state,
+        language: 'pt',
+        departure: '2026-11-08T15:00:00.000Z',
+      }),
+  );
+  await expect(page.locator('#download')).toBeEnabled();
+  await expect(page.locator('#departure')).toHaveValue('2026-11-08T15:00');
+  await expect(page.locator('#auto-departure')).not.toBeChecked();
+  await expect(page.locator('label.departure-automatic')).toHaveText(
+    'Saída automática (próxima meia hora)',
+  );
+});
+test('departure changes keep the field in place without scroll anchoring', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await setup(page, true, 60, false, true);
+  await fetchWeather(page);
+  // Like Safari, which does not compensate for content resized above.
+  await page.addStyleTag({
+    content: '* { overflow-anchor: none !important; }',
+  });
+  const box = page.locator('#auto-departure');
+  await box.scrollIntoViewIfNeeded();
+  const top = (locator = box) =>
+    locator.evaluate((e) => Math.round(e.getBoundingClientRect().top));
+  const before = await top();
+  await box.uncheck();
+  await expect(page.locator('#weather-result')).toBeHidden();
+  await expect.poll(() => top()).toBe(before);
+  await box.check();
+  await expect.poll(() => top()).toBe(before);
+  const field = page.locator('#departure');
+  const fieldTop = await top(field);
+  await field.fill('');
+  await field.press('Tab');
+  await expect.poll(() => top(field)).toBe(fieldTop);
+});
+test('the automatic departure can be turned off on the device', async ({
+  page,
+}) => {
+  await setup(page, true, 60, false, true);
+  // setup opened Weather; the automatic departure already requested it.
+  await expect(page.locator('#departure')).toHaveValue('2026-11-07T10:00');
+  await expect(page.locator('#weather-result')).toBeVisible();
+  await page.locator('#auto-departure').uncheck();
+  await expect(page.locator('#departure')).toHaveValue('');
+  await expect(page.locator('#weather-result')).toBeHidden();
+  await expect(page.locator('#weather-status')).toHaveText(
+    'Choose a departure to see the weather along the route. Choose departure',
+  );
+  await page.reload();
+  await expect(page.locator('#download')).toBeEnabled();
+  await expect(page.locator('#departure')).toHaveValue('');
+  await expect(page.locator('#auto-departure')).not.toBeChecked();
 });
 test('routes with more than 20 stops still get weather', async ({ page }) => {
   await setup(page);

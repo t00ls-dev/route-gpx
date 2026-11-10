@@ -1,3 +1,4 @@
+import { departureOf } from './departure';
 import type { Route, State } from './core';
 import { byId as $ } from './dom';
 import { icon } from './icons';
@@ -47,7 +48,8 @@ export function renderDaylight(
     });
   const distance = (meters: number) =>
     distanceLabel(meters, state.units, locale);
-  const departure = state.departure ? Date.parse(state.departure) : NaN;
+  const leaving = departureOf(state);
+  const departure = leaving ? Date.parse(leaving) : NaN;
   const planned = Number.isFinite(departure);
   // Sun times for the local calendar day of the departure, or of today.
   const day = new Date(planned ? departure : now);

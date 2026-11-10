@@ -7,6 +7,13 @@ import { distanceLabel } from './units';
 import { classifyWeather, uvCategory } from './weather-risk';
 import { windRelation, windStrength, windFlowDirection } from './weather-wind';
 import { icon, centerIcon } from './icons';
+import {
+  declineAutomaticDeparture,
+  departureOf,
+  isAutomaticDeparture,
+  setAutomaticDeparture,
+  untilNextSlot,
+} from './departure';
 import { weatherForecast } from './services';
 import {
   DEFAULT_WEATHER_URL,
@@ -22,6 +29,33 @@ import {
   type WeatherForecast,
   type WeatherPoint,
 } from './weather';
+const AUTOMATIC = 'automatic-departure';
+/**
+ * Runs a change that resizes content above `element` (weather cards, arrival)
+ * and scrolls back so the element stays where the user touched it. Browsers
+ * without scroll anchoring, such as Safari, would otherwise jump.
+ */
+function keepInPlace(element: HTMLElement, change: () => void) {
+  const before = element.getBoundingClientRect().top;
+  change();
+  // Measured before the next paint, after every change listener has run
+  // (the route summary re-renders in its own listener).
+  requestAnimationFrame(() => restorePosition(element, before));
+}
+function restorePosition(element: HTMLElement, before: number) {
+  const delta = element.getBoundingClientRect().top - before;
+  if (Math.abs(delta) < 1) return;
+  let scroller: HTMLElement | null = element.parentElement;
+  while (
+    scroller &&
+    !(
+      scroller.scrollHeight > scroller.clientHeight &&
+      /auto|scroll/.test(getComputedStyle(scroller).overflowY)
+    )
+  )
+    scroller = scroller.parentElement;
+  (scroller ?? document.scrollingElement)?.scrollBy(0, delta);
+}
 export function setupWeather(
   map: L.Map,
   getState: () => State,
@@ -61,6 +95,31 @@ export function setupWeather(
     $('weather-status').replaceChildren(document.createTextNode(value));
     $('weather-status').classList.toggle('error', error);
   };
+  /** No departure: say so, with a link to the departure field. */
+  function askForDeparture() {
+    const choose = document.createElement('button');
+    choose.type = 'button';
+    choose.className = 'link-button';
+    choose.textContent = 'Choose departure';
+    choose.onclick = () => {
+      departure.scrollIntoView({ block: 'center' });
+      departure.focus({ preventScroll: true });
+      // Opens the date picker where the browser allows it.
+      try {
+        departure.showPicker();
+      } catch {
+        /* Focus is enough without picker support. */
+      }
+    };
+    $('weather-status').classList.remove('error');
+    $('weather-status').replaceChildren(
+      document.createTextNode(
+        'Choose a departure to see the weather along the route.',
+      ),
+      document.createTextNode(' '),
+      choose,
+    );
+  }
   function invalidate() {
     requestVersion++;
     controller?.abort();
@@ -78,12 +137,10 @@ export function setupWeather(
     $('weather-result').hidden = true;
   }
   function times(samples: WeatherPoint[]) {
-    const state = getState();
-    const error = departureError(state.departure ?? '');
+    const date = departureOf(getState()) ?? '';
+    const error = departureError(date);
     if (error) throw new Error(error);
-    return samples.map((p) =>
-      passageTime(p, Date.parse(state.departure!), getSpeed()),
-    );
+    return samples.map((p) => passageTime(p, Date.parse(date), getSpeed()));
   }
   async function revealCard(card: HTMLElement) {
     if (document.fullscreenElement) {
@@ -111,9 +168,12 @@ export function setupWeather(
   }
   function render() {
     markers.clearLayers();
-    if (!getState().departure) {
+    showDeparture();
+    if (!departureOf(getState())) {
       $('weather-result').hidden = true;
-      message('');
+      // Weather is sampled at the passage times, which need a departure.
+      if (getRoute()) askForDeparture();
+      else message('');
       return;
     }
     if (!forecast) {
@@ -124,7 +184,7 @@ export function setupWeather(
     if (
       stale ||
       getRoute() !== sourceRoute ||
-      state.departure !== sourceDeparture ||
+      departureOf(state) !== sourceDeparture ||
       endpoint !== sourceEndpoint
     ) {
       $('weather-result').hidden = true;
@@ -349,49 +409,130 @@ export function setupWeather(
     if (value) departure.setAttribute('aria-invalid', 'true');
     else departure.removeAttribute('aria-invalid');
   };
-  departure.onchange = () => {
+  departure.onchange = (event) => {
+    if (!(event instanceof CustomEvent))
+      return keepInPlace(departure, () => applyDeparture(event));
+    applyDeparture(event);
+  };
+  function applyDeparture(event: Event) {
     invalidate();
+    // The automatic departure moving: nothing to store.
+    if (event instanceof CustomEvent && event.detail === AUTOMATIC) {
+      dateError('');
+      render();
+      return;
+    }
     const value = departure.value;
     if (!value) {
+      declineAutomaticDeparture();
       delete getState().departure;
       dateError('');
-      message('');
+      showDeparture();
       syncState();
+      render();
       return;
     }
     const date = new Date(value);
     const iso = Number.isFinite(date.getTime()) ? date.toISOString() : '';
     const error = departureError(iso);
     if (error) {
+      declineAutomaticDeparture();
       delete getState().departure;
       dateError(error);
+      automaticBox.checked = false;
       message('');
       syncState();
       return;
     }
     dateError('');
+    // Any edit by the user fixes the departure, even the suggested time.
     getState().departure = iso;
+    showDeparture();
     syncState();
     schedule();
-  };
+  }
+  /** Change event for the automatic departure, told apart from user edits. */
+  const automaticChange = () =>
+    new CustomEvent('change', { detail: AUTOMATIC });
+  const automaticBox = $<HTMLInputElement>('auto-departure');
+  /** Last automatic departure shown, to notice when it moves to a new slot. */
+  let shownAutomatic = departureOf(getState());
+  /** Field and checkbox for the automatic or chosen departure. */
+  function showDeparture() {
+    const state = getState(),
+      automatic = isAutomaticDeparture(state);
+    if (document.activeElement !== departure) {
+      const value = departureOf(state);
+      departure.value = value ? localDateTime(value) : '';
+    }
+    if (automatic) shownAutomatic = departureOf(state);
+    automaticBox.checked = automatic;
+  }
+  // Checked: follow the next half hour again. Unchecked by hand: no automatic
+  // departure on this device. Editing or clearing the field only unchecks it.
+  automaticBox.onchange = () =>
+    keepInPlace(automaticBox, () => {
+      setAutomaticDeparture(automaticBox.checked);
+      if (automaticBox.checked) {
+        delete getState().departure;
+        dateError('');
+        syncState();
+      }
+      departure.dispatchEvent(automaticChange());
+    });
+  // The automatic departure moves at each slot while the page is visible;
+  // a hidden tab catches up when it becomes visible again.
+  let slotTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Announces the automatic departure when it has moved to a new slot. */
+  function moveAutomatic() {
+    const state = getState(),
+      value = departureOf(state);
+    if (!isAutomaticDeparture(state) || value === shownAutomatic) return;
+    shownAutomatic = value;
+    if (getRoute()) departure.dispatchEvent(automaticChange());
+    else showDeparture();
+  }
+  function nextSlot() {
+    clearTimeout(slotTimer);
+    // At least a second apart, so an exact slot boundary cannot spin.
+    slotTimer = setTimeout(
+      () => {
+        if (document.hidden) return;
+        if (document.activeElement === departure) {
+          slotTimer = setTimeout(nextSlot, 30_000);
+          return;
+        }
+        moveAutomatic();
+        nextSlot();
+      },
+      Math.max(1000, untilNextSlot()),
+    );
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    moveAutomatic();
+    nextSlot();
+  });
+  nextSlot();
   function schedule() {
     const state = getState(),
-      route = getRoute();
-    if (!route || !state.departure) return;
-    const error = departureError(state.departure);
+      route = getRoute(),
+      date = departureOf(state);
+    if (!route || !date) return;
+    const error = departureError(date);
     if (error) {
       message(error, true);
       return;
     }
     if (
       attemptedRoute === route &&
-      attemptedDeparture === state.departure &&
+      attemptedDeparture === date &&
       attemptedEndpoint === endpoint &&
       attemptedSpeed === getSpeed()
     )
       return;
     attemptedRoute = route;
-    attemptedDeparture = state.departure;
+    attemptedDeparture = date;
     attemptedEndpoint = endpoint;
     attemptedSpeed = getSpeed();
     clearTimeout(automaticTimer);
@@ -422,12 +563,12 @@ export function setupWeather(
     invalidate();
     const version = requestVersion,
       route = getRoute(),
-      date = getState().departure,
+      date = departureOf(getState()),
       base = endpoint;
     const valid = () =>
       version === requestVersion &&
       route === getRoute() &&
-      date === getState().departure &&
+      date === departureOf(getState()) &&
       base === endpoint;
     attemptedRoute = route;
     attemptedDeparture = date;
@@ -478,11 +619,7 @@ export function setupWeather(
   return {
     invalidate,
     render,
-    syncInputs() {
-      departure.value = getState().departure
-        ? localDateTime(getState().departure!)
-        : '';
-    },
+    syncInputs: showDeparture,
     /** The Open-Meteo base URL (device preference), also used for elevation. */
     endpoint: () => endpoint,
     applyServer() {
