@@ -55,12 +55,11 @@ for (const [width, height] of [
         Math.abs(button.x + button.width / 2 - zoom.x - zoom.width / 2),
       ).toBeLessThanOrEqual(1);
       expect(button.y).toBeGreaterThanOrEqual(zoom.y + zoom.height);
-      expect(map.x + map.width - button.x - button.width).toBe(
-        width < 760 ? 10 : 12,
-      );
+      expect(map.x + map.width - button.x - button.width).toBe(10);
+      // Phones keep the credits above the closed bottom sheet.
       expect(map.y + map.height - button.y - button.height).toBe(
         width < 760
-          ? (await page.locator('#panel-toggle').boundingBox())!.height + 10
+          ? (await page.locator('#sheet').boundingBox())!.height + 10
           : 10,
       );
       if (width < 760)

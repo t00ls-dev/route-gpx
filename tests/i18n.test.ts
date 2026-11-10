@@ -17,10 +17,10 @@ afterEach(() => {
 });
 it('translates native UI labels and dynamic messages in both directions', () => {
   setLanguage('pt');
-  expect(t('↓ Download GPX')).toBe('↓ Baixar GPX');
+  expect(t('Download GPX')).toBe('Baixar GPX');
   expect(t('7 points')).toBe('7 pontos');
   setLanguage('en');
-  expect(t('↓ Download GPX')).toBe('↓ Download GPX');
+  expect(t('Download GPX')).toBe('Download GPX');
 });
 it('switches existing content and placeholders without overwriting typed place names', () => {
   document.body.innerHTML =

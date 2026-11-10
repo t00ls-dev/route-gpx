@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { LongPress } from './long-press';
 import { t } from './i18n';
 import type { Coord } from './core';
+import { compactLayout } from './panel';
 export function setupPointMenu(
   map: L.Map,
   choose: (kind: 'start' | 'stop' | 'destination', coord: Coord) => void,
@@ -64,13 +65,11 @@ export function setupPointMenu(
     coord = [position.lat, position.lng];
     menu.hidden = false;
     const bounds = container.getBoundingClientRect();
-    const panel = document.getElementById('route-panel')!;
-    const bottom =
-      !panel.hidden && matchMedia('(max-width: 759px)').matches
-        ? panel.getBoundingClientRect().top -
-          bounds.top -
-          document.getElementById('panel-toggle')!.offsetHeight
-        : bounds.height;
+    // On phones the bottom sheet covers the lower part of the map.
+    const bottom = compactLayout()
+      ? document.getElementById('sheet')!.getBoundingClientRect().top -
+        bounds.top
+      : bounds.height;
     menu.style.left = `${Math.max(8, Math.min(point.x, bounds.width - menu.offsetWidth - 8))}px`;
     menu.style.top = `${Math.max(8, Math.min(point.y, bottom - menu.offsetHeight - 8))}px`;
     if (focus) (menu.firstElementChild as HTMLElement).focus();

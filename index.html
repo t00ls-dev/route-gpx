@@ -83,263 +83,270 @@
         <a href="./help.html" target="_blank" rel="noopener noreferrer">Help</a>
       </p></noscript
     >
-    <header>
-      <a aria-label="route-gpx" class="brand" href="#"
-        ><img
-          class="brand-icon"
-          src="/icons/icon.svg"
-          width="28"
-          height="28"
-          alt=""
-          aria-hidden="true"
-        />route<span>-gpx</span></a
-      ><label class="language-control"
-        ><span class="sr-only">Language / Idioma</span
-        ><select id="language" aria-label="Language / Idioma">
-          <option value="en">EN</option>
-          <option value="pt">PT</option>
-        </select></label
-      ><a id="help" href="./help.html" target="_blank" rel="noopener noreferrer"
-        >Help</a
-      >
-    </header>
     <main>
-      <button
-        id="panel-toggle"
-        type="button"
-        aria-controls="route-panel"
-        aria-expanded="true"
-      >
-        <span class="sheet-handle" aria-hidden="true"></span
-        ><span>Route panel</span>
-      </button>
-      <aside id="route-panel" aria-label="Plan your route">
-        <div class="section-line page-heading">
-          <h1>Plan your route</h1>
-        </div>
-        <div id="lock-notice" class="warning lock-notice" hidden>
-          <p>Route locked. Map, export and sharing still work.</p>
-          <button id="unlock" type="button">Unlock editing</button>
-        </div>
-        <section aria-label="Route points">
-          <div class="section-line">
-            <h2>Points</h2>
-            <span id="point-count"></span>
+      <div id="sheet" class="sheet">
+        <header>
+          <a aria-label="route-gpx" class="brand" href="#"
+            ><img
+              class="brand-icon"
+              src="/icons/icon.svg"
+              width="28"
+              height="28"
+              alt=""
+              aria-hidden="true"
+            /><span class="brand-name">route<span>-gpx</span></span></a
+          ><label class="language-control"
+            ><span class="sr-only">Language / Idioma</span
+            ><select id="language" aria-label="Language / Idioma">
+              <option value="en">EN</option>
+              <option value="pt">PT</option>
+            </select></label
+          ><a
+            id="help"
+            href="./help.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Help</a
+          ><button
+            id="open-settings"
+            type="button"
+            aria-haspopup="dialog"
+            aria-controls="settings-dialog"
+          >
+            Settings
+          </button>
+        </header>
+        <button
+          id="panel-toggle"
+          type="button"
+          aria-controls="route-panel"
+          aria-expanded="true"
+        >
+          <span class="sheet-handle" aria-hidden="true"></span
+          ><span class="toggle-label">Route panel</span
+          ><span class="peek" aria-hidden="true"
+            ><strong id="peek-main"></strong><span id="peek-status"></span
+          ></span>
+        </button>
+        <aside id="route-panel" aria-label="Plan your route">
+          <h1 class="sr-only">Plan your route</h1>
+          <div id="lock-notice" class="notice warning lock-notice" hidden>
+            <p>Route locked. Map, export and sharing still work.</p>
+            <button id="unlock" type="button">Unlock editing</button>
           </div>
-          <ol id="points"></ol>
-          <div class="inline-actions">
-            <button id="add" type="button">＋ Stop</button
-            ><button id="reverse" type="button">⇅ Reverse</button
-            ><button id="roundtrip" type="button">↶ Round trip</button>
+          <section class="points-section" aria-label="Route points">
+            <div class="section-line">
+              <h2>Points</h2>
+              <span id="point-count"></span>
+            </div>
+            <ol id="points"></ol>
+            <div class="inline-actions">
+              <button id="add" class="ghost" type="button">Add stop</button
+              ><button id="reverse" class="ghost" type="button">Reverse</button
+              ><button id="roundtrip" class="ghost" type="button">
+                Round trip
+              </button>
+            </div>
+          </section>
+          <div class="status-row">
+            <p id="status" role="status" aria-live="polite">
+              Set your start and destination.
+            </p>
+            <button id="calculate" class="ghost" type="button" disabled>
+              Calculate route
+            </button>
           </div>
-        </section>
-        <div class="route-action">
-          <button id="calculate" class="primary" type="button" disabled>
-            Calculate route</button
-          ><button id="undo" type="button" disabled>↶ Undo</button>
-        </div>
-        <p id="status" role="status" aria-live="polite">
-          Set your start and destination.
-        </p>
-        <div id="server-notice" class="warning" role="status" hidden>
-          <p id="server-notice-text"></p>
-          <div class="notice-actions">
-            <button id="use-link-servers" type="button">Use link servers</button
-            ><button id="keep-default-servers" type="button">
-              Keep default servers
+          <div id="server-notice" class="notice warning" role="status" hidden>
+            <p id="server-notice-text"></p>
+            <div class="notice-actions">
+              <button id="use-link-servers" type="button">
+                Use link servers</button
+              ><button id="keep-default-servers" type="button">
+                Keep default servers
+              </button>
+            </div>
+          </div>
+          <section id="summary" aria-label="Route summary" hidden>
+            <div id="summary-content"></div>
+            <div id="summary-notes"></div>
+          </section>
+          <details id="trip-options" class="trip-options" open>
+            <summary>Trip options</summary>
+            <div class="departure-field">
+              <label for="departure">Departure</label>
+              <input
+                id="departure"
+                type="datetime-local"
+                aria-describedby="departure-error"
+              />
+            </div>
+            <p id="departure-error" class="hint error" role="status"></p>
+            <label class="check departure-automatic"
+              ><input id="auto-departure" type="checkbox" checked /><span
+                >Automatic departure (next half hour)</span
+              ></label
+            >
+            <div class="speed-options">
+              <label for="average-speed">Average speed</label>
+              <div class="speed-field">
+                <input
+                  id="average-speed"
+                  class="range-input"
+                  type="range"
+                  min="0"
+                  max="200"
+                  step="5"
+                  value="60"
+                  aria-label="Average speed"
+                  aria-describedby="speed-range"
+                /><output id="average-speed-value" for="average-speed"
+                  >60</output
+                ><span id="speed-unit">km/h</span>
+              </div>
+              <p id="speed-range" class="hint">1–200 km/h</p>
+            </div>
+            <div class="route-options">
+              <label class="unit-control"
+                ><span>Distance units</span
+                ><select id="units">
+                  <option value="metric">km</option>
+                  <option value="imperial">mi</option>
+                </select></label
+              >
+              <label class="check"
+                ><input id="prefer" type="checkbox" checked /><span
+                  >Prefer main roads</span
+                ></label
+              >
+            </div>
+          </details>
+          <section id="route-details" aria-label="Route details" hidden>
+            <div id="itinerary"></div>
+            <details id="weather-section">
+              <summary>Weather</summary>
+              <button id="weather-retry" type="button" hidden>Try again</button>
+              <p
+                id="weather-status"
+                class="hint"
+                role="status"
+                aria-live="polite"
+              ></p>
+              <div id="weather-result" hidden>
+                <ol
+                  id="weather-details"
+                  aria-label="Weather along the route"
+                ></ol>
+              </div>
+            </details>
+            <details id="elevation" class="elevation">
+              <summary>Elevation</summary>
+              <p id="elevation-status" class="hint" role="status"></p>
+              <button id="elevation-retry" type="button" hidden>
+                Try again
+              </button>
+              <div id="elevation-chart"></div>
+              <div id="elevation-stats" class="elevation-stats"></div>
+            </details>
+            <details id="daylight-details" class="daylight-details" hidden>
+              <summary>Daylight</summary>
+              <ul id="daylight-list"></ul>
+            </details>
+            <details id="playback" class="playback">
+              <summary>Travel the route</summary>
+              <div class="playback-controls">
+                <button id="playback-toggle" type="button"></button>
+                <input
+                  id="playback-position"
+                  class="range-input"
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  value="0"
+                  aria-label="Position along the route"
+                />
+                <select id="playback-rate" aria-label="Playback speed">
+                  <option value="1">1×</option>
+                  <option value="2">2×</option>
+                  <option value="5">5×</option>
+                  <option value="10">10×</option>
+                </select>
+              </div>
+              <div id="playback-readout" class="hint" aria-live="polite"></div>
+            </details>
+          </section>
+          <details class="saved-routes">
+            <summary>Saved routes <span id="saved-count">(0)</span></summary>
+            <p id="library-status" class="hint" role="status"></p>
+            <div id="saved-list"></div>
+            <div class="library-actions">
+              <button id="backup-routes" type="button" disabled>
+                Export backup</button
+              ><label class="file-button"
+                >Import backup<input
+                  id="restore-routes"
+                  type="file"
+                  accept=".json,application/json"
+              /></label>
+            </div>
+          </details>
+          <footer>
+            <span>Public, shared servers.</span>
+            <a
+              id="github"
+              class="external-link"
+              href="https://github.com/t00ls-dev/route-gpx"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+          </footer>
+        </aside>
+        <div id="action-bar" class="action-bar">
+          <div id="more-panel" class="more-panel">
+            <div class="gpx-name">
+              <label for="route-name">GPX name</label>
+              <div class="save-name">
+                <input
+                  id="route-name"
+                  maxlength="160"
+                  placeholder="My road trip"
+                /><button id="save-route" type="button" disabled>
+                  Save route
+                </button>
+              </div>
+            </div>
+            <div class="secondary-actions">
+              <label class="file-button"
+                ><span class="label-short">Import</span
+                ><span class="label-long">Import GPX, FIT or TCX</span
+                ><input
+                  id="import"
+                  type="file"
+                  aria-label="Import GPX, FIT or TCX"
+                  title="Import GPX, FIT or TCX"
+              /></label>
+              <button id="share-gpx" type="button" hidden disabled>
+                Share GPX
+              </button>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button id="download" class="primary" disabled type="button">
+              Download GPX</button
+            ><button id="share" type="button" title="Copy route link">
+              Copy link</button
+            ><button
+              id="more-actions"
+              type="button"
+              aria-expanded="false"
+              aria-controls="more-panel"
+            >
+              More actions
             </button>
           </div>
         </div>
-        <section id="summary" aria-label="Route summary" hidden>
-          <div id="summary-content"></div>
-          <div id="summary-notes"></div>
-          <details id="daylight-details" class="daylight-details" hidden>
-            <summary>Daylight</summary>
-            <ul id="daylight-list"></ul>
-          </details>
-          <details id="weather-section">
-            <summary>Weather</summary>
-            <button id="weather-retry" type="button" hidden>Try again</button>
-            <p
-              id="weather-status"
-              class="hint"
-              role="status"
-              aria-live="polite"
-            ></p>
-            <div id="weather-result" hidden>
-              <ol
-                id="weather-details"
-                aria-label="Weather along the route"
-              ></ol>
-            </div>
-          </details>
-          <details id="elevation" class="elevation">
-            <summary>Elevation</summary>
-            <p id="elevation-status" class="hint" role="status"></p>
-            <button id="elevation-retry" type="button" hidden>Try again</button>
-            <div id="elevation-chart"></div>
-            <div id="elevation-stats" class="elevation-stats"></div>
-          </details>
-          <details class="speed-options">
-            <summary>Average speed</summary>
-            <div class="speed-field">
-              <input
-                id="average-speed"
-                class="range-input"
-                type="range"
-                min="0"
-                max="200"
-                step="5"
-                value="60"
-                aria-label="Average speed"
-                aria-describedby="speed-range"
-              /><output id="average-speed-value" for="average-speed">60</output
-              ><span id="speed-unit">km/h</span>
-            </div>
-            <p id="speed-range" class="hint">1–200 km/h</p>
-          </details>
-          <details id="playback" class="playback">
-            <summary>Travel the route</summary>
-            <div class="playback-controls">
-              <button id="playback-toggle" type="button"></button>
-              <input
-                id="playback-position"
-                class="range-input"
-                type="range"
-                min="0"
-                max="1000"
-                step="1"
-                value="0"
-                aria-label="Position along the route"
-              />
-              <select id="playback-rate" aria-label="Playback speed">
-                <option value="1">1×</option>
-                <option value="2">2×</option>
-                <option value="5">5×</option>
-                <option value="10">10×</option>
-              </select>
-            </div>
-            <div id="playback-readout" class="hint" aria-live="polite"></div>
-          </details>
-          <div id="itinerary"></div>
-          <div class="route-options">
-            <label class="check"
-              ><input id="prefer" type="checkbox" checked /><span
-                >Prefer main roads</span
-              ></label
-            >
-            <label class="unit-control"
-              ><span class="sr-only">Distance units</span
-              ><select id="units" aria-label="Distance units">
-                <option value="metric">km</option>
-                <option value="imperial">mi</option>
-              </select></label
-            >
-          </div>
-          <div class="departure-field">
-            <label for="departure">Departure</label>
-            <input
-              id="departure"
-              type="datetime-local"
-              aria-describedby="departure-error"
-            />
-          </div>
-          <p id="departure-error" class="hint error" role="status"></p>
-          <label class="check departure-automatic"
-            ><input id="auto-departure" type="checkbox" checked /><span
-              >Automatic departure (next half hour)</span
-            ></label
-          >
-        </section>
-        <details class="saved-routes">
-          <summary>Saved routes <span id="saved-count">(0)</span></summary>
-          <p id="library-status" class="hint" role="status"></p>
-          <div id="saved-list"></div>
-          <div class="library-actions">
-            <button id="backup-routes" type="button" disabled>
-              Export backup</button
-            ><label class="file-button"
-              >Import backup<input
-                id="restore-routes"
-                type="file"
-                accept=".json,application/json"
-            /></label>
-          </div>
-        </details>
-        <div class="gpx-name">
-          <label for="route-name">GPX name</label>
-          <div class="save-name">
-            <input
-              id="route-name"
-              maxlength="160"
-              placeholder="My road trip"
-            /><button id="save-route" type="button" disabled>Save route</button>
-          </div>
-        </div>
-        <div class="export-actions">
-          <button id="download" class="primary" disabled type="button">
-            ↓ Download GPX</button
-          ><button id="share-gpx" type="button" hidden disabled>
-            Share GPX</button
-          ><button id="share" type="button" title="Copy route link">
-            Copy link
-          </button>
-        </div>
-        <div class="secondary-actions">
-          <label class="file-button"
-            >Import GPX, FIT or TCX<input id="import" type="file"
-          /></label>
-          <details class="settings">
-            <summary>Settings</summary>
-            <label for="osrm">OSRM server</label
-            ><input id="osrm" type="url" /><label for="valhalla"
-              >Valhalla fallback</label
-            ><input id="valhalla" type="url" /><label for="nominatim"
-              >Nominatim server</label
-            ><input id="nominatim" type="url" />
-            <label class="check"
-              ><input id="detect-region" type="checkbox" checked /><span
-                >Detect region by IP</span
-              ></label
-            >
-            <label for="satellite-vintage">Satellite imagery</label
-            ><select id="satellite-vintage" aria-label="Satellite imagery">
-              <option value="2025">EOX 2025 · CC BY-NC-SA 4.0</option>
-              <option value="2016">EOX 2016 · CC BY 4.0</option>
-            </select>
-            <label for="weather-server">Open-Meteo server</label
-            ><input id="weather-server" type="url" />
-            <label for="photon">Photon server</label
-            ><input id="photon" type="url" /><label for="region-url"
-              >IP region service</label
-            ><input id="region-url" type="url" />
-            <p class="hint">
-              The region service receives your IP address. Only an approximate
-              city view is used.
-            </p>
-            <button id="save-settings" type="button">Apply settings</button>
-            <details class="json-settings">
-              <summary>Advanced: JSON</summary>
-              <label for="state-json" class="sr-only"
-                >Points and settings (latitude, longitude)</label
-              ><textarea id="state-json" rows="8" spellcheck="false"></textarea
-              ><button id="export-json" type="button">Load current state</button
-              ><button id="apply-json" type="button">Apply JSON</button>
-            </details>
-          </details>
-        </div>
-        <footer>
-          <span>Public, shared servers.</span>
-          <a
-            id="github"
-            class="external-link"
-            href="https://github.com/t00ls-dev/route-gpx"
-            target="_blank"
-            rel="noreferrer"
-            >GitHub</a
-          >
-        </footer>
-      </aside>
+      </div>
       <section class="map-container" aria-label="Interactive map">
         <div id="map"></div>
         <div class="map-note" id="map-note">Place your start on the map</div>
@@ -403,10 +410,9 @@
           </div>
         </div>
         <div class="map-tools">
-          <button id="locate" type="button">
-            <span aria-hidden="true">⌖</span><span>Use my location</span>
-          </button>
+          <button id="locate" type="button">Use my location</button>
           <button id="fullscreen" type="button">Full screen</button>
+          <button id="undo" type="button" disabled>Undo</button>
           <button id="lock" type="button" aria-pressed="false">
             Lock editing
           </button>
@@ -424,7 +430,7 @@
               type="button"
               aria-label="Close location"
             >
-              ×
+              Close
             </button>
           </div>
           <p id="location-status" role="status"></p>
@@ -439,9 +445,62 @@
             </div>
           </div>
         </section>
-        <button id="fit" class="fit-button" type="button">◎ Fit route</button>
+        <button id="fit" class="fit-button" type="button">Fit route</button>
       </section>
     </main>
+    <dialog
+      id="settings-dialog"
+      class="settings"
+      aria-labelledby="settings-title"
+    >
+      <div class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <button id="close-settings" type="button">Close</button>
+      </div>
+      <div class="dialog-body">
+        <label for="osrm">OSRM server</label><input id="osrm" type="url" />
+        <label for="valhalla">Valhalla fallback</label
+        ><input id="valhalla" type="url" />
+        <label for="nominatim">Nominatim server</label
+        ><input id="nominatim" type="url" />
+        <label for="photon">Photon server</label
+        ><input id="photon" type="url" />
+        <label for="weather-server">Open-Meteo server</label
+        ><input id="weather-server" type="url" />
+        <label for="satellite-vintage">Satellite imagery</label
+        ><select id="satellite-vintage" aria-label="Satellite imagery">
+          <option value="2025">EOX 2025 · CC BY-NC-SA 4.0</option>
+          <option value="2016">EOX 2016 · CC BY 4.0</option>
+        </select>
+        <label class="check"
+          ><input id="detect-region" type="checkbox" checked /><span
+            >Detect region by IP</span
+          ></label
+        >
+        <label for="region-url">IP region service</label
+        ><input id="region-url" type="url" />
+        <p class="hint">
+          The region service receives your IP address. Only an approximate city
+          view is used.
+        </p>
+        <details class="json-settings">
+          <summary>Advanced: JSON</summary>
+          <label for="state-json" class="sr-only"
+            >Points and settings (latitude, longitude)</label
+          ><textarea id="state-json" rows="8" spellcheck="false"></textarea>
+          <div class="notice-actions">
+            <button id="export-json" type="button">Load current state</button
+            ><button id="apply-json" type="button">Apply JSON</button>
+          </div>
+        </details>
+      </div>
+      <div class="dialog-footer">
+        <p id="settings-status" class="hint error" role="status"></p>
+        <button id="save-settings" class="primary" type="button">
+          Apply settings
+        </button>
+      </div>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
