@@ -95,16 +95,32 @@ const MAX_OFF_TRACK = 50;
  * also works on imported tracks with rerouted sections, whose steps cover only
  * part of the route.
  */
-export function maneuverPositions(route: Route): (number | null)[] {
+export function maneuverPositions(
+  route: Route,
+  /**
+   * Whole routed route (not an imported track): steps without a location,
+   * saved before locations existed, are placed by adding up the lengths of
+   * the steps before them.
+   */
+  routed = false,
+): (number | null)[] {
   const index = indexTrack(route.segments);
-  let progress = 0;
+  let progress = 0,
+    sum = 0;
   return route.steps.map((step) => {
-    if (!step.at) return null;
+    const before = sum;
+    sum += step.distance;
+    if (!step.at) {
+      if (!routed) return null;
+      progress = Math.max(progress, before);
+      return before;
+    }
     const position = locateOnTrack(index, step.at, {
       progress,
       backtrack: 0,
     });
-    if (!position || position.offTrack > MAX_OFF_TRACK) return null;
+    if (!position || position.offTrack > MAX_OFF_TRACK)
+      return routed ? before : null;
     progress = position.distance;
     return position.distance;
   });

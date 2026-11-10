@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Coord } from '../src/core';
-import { importGpx } from '../src/core';
+import { importGpx, meters } from '../src/core';
 import {
   cumulativeClimb,
   elevationStats,
@@ -8,10 +8,26 @@ import {
   samplePlan,
   smoothProfile,
 } from '../src/elevation';
-import { elevationUrl, fetchElevations, parseElevation } from '../src/services';
+import {
+  elevationUrl,
+  fetchElevations,
+  parseElevation,
+  retryIn,
+  countdown,
+} from '../src/services';
 
 const east = (n: number, offset = 0): Coord[] =>
   Array.from({ length: n + 1 }, (_, i) => [0, offset + i * 0.01]);
+
+/** Along-track distances of points that are track vertices. */
+const legsOf = (track: Coord[], points: Coord[]) => {
+  const along = [0];
+  for (let i = 1; i < track.length; i++)
+    along.push(along[i - 1] + meters(track[i - 1], track[i]));
+  return points.map(
+    (p) => along[track.findIndex((t) => t[0] === p[0] && t[1] === p[1])],
+  );
+};
 
 describe('sample plan', () => {
   it('samples every 100 m on short routes and caps long ones at about 300', () => {
@@ -20,7 +36,43 @@ describe('sample plan', () => {
     expect(short.length).toBeLessThanOrEqual(13);
     expect(short[1].at - short[0].at).toBeCloseTo(100, 6);
     const long = samplePlan([east(100)]); // about 111 km
-    expect(long.length).toBeLessThanOrEqual(302);
+    expect(long.length).toBeLessThanOrEqual(301);
+    expect(long.length).toBeGreaterThan(270);
+    // The spacing comes from a fixed ladder: 100 m × 2^(k/8).
+    const spacing = long[1].at - long[0].at;
+    expect(Math.log2(spacing / 100) * 8).toBeCloseTo(
+      Math.round(Math.log2(spacing / 100) * 8),
+      6,
+    );
+  });
+
+  it('keeps the samples of other legs identical after a point edit', () => {
+    // Three legs; the edit moves only the middle route point.
+    const leg = (from: Coord, to: Coord, n = 40): Coord[] =>
+      Array.from({ length: n + 1 }, (_, i) => [
+        from[0] + ((to[0] - from[0]) * i) / n,
+        from[1] + ((to[1] - from[1]) * i) / n,
+      ]);
+    const a: Coord = [-22.9, -43.2],
+      b: Coord = [-22.88, -43.15],
+      c: Coord = [-22.86, -43.12],
+      d: Coord = [-22.84, -43.05],
+      moved: Coord = [-22.875, -43.16];
+    const join = (...legs: Coord[][]) =>
+      legs.flatMap((l, i) => (i ? l.slice(1) : l));
+    const before = join(leg(a, b), leg(b, c), leg(c, d));
+    const after = join(leg(a, moved), leg(moved, c), leg(c, d));
+    const key = (p: { coord: Coord }) =>
+      `${p.coord[0].toFixed(4)},${p.coord[1].toFixed(4)}`;
+    const planBefore = samplePlan([before], legsOf(before, [a, b, c, d]));
+    const planAfter = samplePlan([after], legsOf(after, [a, moved, c, d]));
+    const old = new Set(planBefore.map(key));
+    // First leg (a → …) changed shape too, so compare the untouched ones:
+    // the last leg (c → d) keeps every sample.
+    const cAt = planAfter.find((p) => key(p) === key({ coord: c }))!.at;
+    const lastLeg = planAfter.filter((p) => p.at >= cAt);
+    expect(lastLeg.length).toBeGreaterThan(20);
+    expect(lastLeg.every((p) => old.has(key(p)))).toBe(true);
   });
 
   it('keeps both ends of every GPX segment and flags the gap', () => {
@@ -222,5 +274,78 @@ describe('elevation service', () => {
       () => true,
     );
     expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('says how long to wait when the shared budget or the server limits use', async () => {
+    expect(retryIn(1)).toBe('Try again in 1s.');
+    expect(retryIn(40_000)).toBe('Try again in 40s.');
+    expect(retryIn(90_000)).toBe('Try again in 90s.');
+    expect(retryIn(150_000)).toBe('Try again in 3 min.');
+    expect(retryIn(2 * 3_600_000)).toBe('Try again in 2 h.');
+    // The server refuses with Retry-After.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('', { status: 429, headers: { 'Retry-After': '30' } }),
+      ),
+    );
+    await expect(
+      fetchElevations(
+        'https://api.open-meteo.com',
+        [[10, 10]],
+        new AbortController().signal,
+        () => true,
+      ),
+    ).rejects.toMatchObject({ service: 'Elevation', wait: 30_000 });
+    // The shared budget (599 coordinates a minute, 150 + 1 used above).
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const count = new URL(url).searchParams
+          .get('latitude')!
+          .split(',').length;
+        return new Response(
+          JSON.stringify({ elevation: Array(count).fill(1) }),
+        );
+      }),
+    );
+    const many: Coord[] = Array.from({ length: 500 }, (_, i) => [
+      10 + i * 0.001,
+      20,
+    ]);
+    await expect(
+      fetchElevations(
+        'https://api.open-meteo.com',
+        many,
+        new AbortController().signal,
+        () => true,
+      ),
+    ).rejects.toThrow(
+      /^Elevation usage limit reached\. Try again in [1-6]?\ds\.$/,
+    );
+  }, 15000);
+
+  it('counts down a second at a time, then finishes', () => {
+    vi.useFakeTimers();
+    const ticks: number[] = [];
+    let done = false;
+    countdown(
+      3000,
+      (n) => ticks.push(n),
+      () => (done = true),
+    );
+    vi.advanceTimersByTime(3000);
+    expect(ticks).toEqual([3, 2, 1]);
+    expect(done).toBe(true);
+    const cancel = countdown(
+      5000,
+      (n) => ticks.push(n),
+      () => (done = false),
+    );
+    cancel();
+    vi.advanceTimersByTime(6000);
+    expect(done).toBe(true);
+    vi.useRealTimers();
   });
 });

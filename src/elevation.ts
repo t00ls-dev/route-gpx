@@ -25,8 +25,7 @@ export interface ElevationStats {
 /** Terrain model samples or recorded GPS elevations: they need different filtering. */
 export type ElevationSource = 'terrain' | 'recorded';
 
-const MIN_SPACING = 100,
-  MAX_SAMPLES = 300,
+const MAX_SAMPLES = 300,
   /**
    * Median window for terrain samples, in meters. The 90 m surface model adds
    * trees, buildings and cell steps that look like short climbs; this window
@@ -41,13 +40,24 @@ const THRESHOLD: Record<ElevationSource, number> = {
   recorded: 0.3,
 };
 
-/** Points to query: every max(100 m, total/300), plus each segment's ends. */
+/** Smallest sample spacing, meters; larger ones grow by 2^(1/8) (about 9%). */
+const MIN_SPACING = 100;
+
+/**
+ * Points to query: evenly spaced within each leg between route points, plus
+ * leg and segment ends, at most about 300. The spacing comes from a fixed
+ * ladder (100 m × 2^(k/8)), so a small edit keeps it; spacing restarts at each
+ * route point, so editing one point leaves the samples of the other legs
+ * identical and they come from the cache.
+ *
+ * `legs` are along-track distances of the route points (leg boundaries).
+ */
 export function samplePlan(
   segments: Coord[][],
+  legs: number[] = [],
 ): { at: number; coord: Coord; gap: boolean }[] {
   const index = indexTrack(segments);
   if (!index.edges.length) return [];
-  const spacing = Math.max(MIN_SPACING, index.total / MAX_SAMPLES);
   // Segment boundaries in along-track distance.
   const starts: number[] = [];
   let total = 0;
@@ -58,9 +68,25 @@ export function samplePlan(
     if (length > 0) starts.push(total);
     total += length;
   }
-  const marks = new Set<number>([...starts, index.total]);
-  for (let at = 0; at < index.total; at += spacing) marks.add(at);
-  for (const start of starts) marks.add(start);
+  const bounds = [
+    ...new Set(
+      [0, ...legs, ...starts, index.total]
+        .filter((d) => d >= 0 && d <= index.total)
+        .sort((a, b) => a - b),
+    ),
+  ];
+  let spacing = MIN_SPACING;
+  const count = (step: number) =>
+    bounds
+      .slice(1)
+      .reduce((n, end, i) => n + Math.ceil((end - bounds[i]) / step), 1);
+  for (let k = 1; count(spacing) > MAX_SAMPLES; k++)
+    spacing = MIN_SPACING * 2 ** (k / 8);
+  const marks = new Set<number>(bounds);
+  bounds.slice(1).forEach((end, i) => {
+    for (let at = bounds[i] + spacing; at < end - 1; at += spacing)
+      marks.add(at);
+  });
   // A segment's end equals the next segment's start in along-track distance;
   // sample just before it so the end of each segment is represented.
   for (const start of starts.slice(1)) marks.add(Math.max(0, start - 1e-6));

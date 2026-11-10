@@ -406,7 +406,7 @@ test('the itinerary shows turn directions in both languages', async ({
                       ],
                     },
                   },
-                  // No location: plain text, no position.
+                  // No location: plain text, positioned by step lengths.
                   step('Rua C', { type: 'roundabout', exit: 2 }),
                 ],
               },
@@ -439,9 +439,20 @@ test('the itinerary shows turn directions in both languages', async ({
   await expect(items).toHaveText([
     'km 0.0 Depart · R. A · 1 km',
     'km 16.6 Turn left · R. B · 1 km',
-    'Roundabout, exit 2 · R. C · 1 km',
+    // No location: placed by the step lengths, but not a map button.
+    'km 2.0 Roundabout, exit 2 · R. C · 1 km',
   ]);
   await expect(items.locator('button.maneuver-link')).toHaveCount(2);
+  // The grid lives inside the button (older Safari ignores grid on buttons),
+  // so every row starts at its left edge.
+  for (const item of await items.locator('.step-item').all()) {
+    const offset = await item.evaluate(
+      (e) =>
+        e.querySelector('.step-row')!.getBoundingClientRect().left -
+        e.getBoundingClientRect().left,
+    );
+    expect(offset).toBeLessThan(8);
+  }
   // The highway reference is in the chips, not on the line.
   await expect(page.locator('#itinerary .chips')).toHaveText('RJ-116');
   // Shortened names are display only; the accessible label keeps them whole.
@@ -533,6 +544,10 @@ test('imports FIT and TCX files by content and reports damaged files', async ({
   });
   await expect(page.locator('#itinerary')).toContainText('TCX importado ·');
   await expect(page.locator('#route-name')).toHaveValue('Costa');
+  // Imported files have no steps: the itinerary says why it is empty.
+  await expect(page.locator('#itinerary')).toContainText(
+    'Trajetos importados não têm itinerário com manobras.',
+  );
 
   const damaged = Buffer.from(bytes);
   damaged[30] ^= 0xff;
@@ -632,7 +647,7 @@ test('editing an imported track reroutes only the legs next to the edit', async 
   );
   await expect(page.locator('#itinerary')).toContainText('Imported GPX + OSRM');
   await expect(page.locator('#summary')).toContainText(
-    'Road summary covers only recalculated sections.',
+    'The itinerary covers only recalculated sections.',
   );
 
   // Undo returns to the renamed step with the exact imported track, no request.
@@ -990,6 +1005,78 @@ test('route backups restore deleted routes and skip existing names', async ({
   await expect(page.locator('#saved-list strong')).toHaveText('Backup test');
   await expect(page.locator('#library-status')).toContainText(
     'Existing names were kept.',
+  );
+});
+test('a route saved before turn directions shows positions and explains how to add them', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.goto(base);
+  const state = defaults();
+  state.name = 'Old route';
+  state.points = [
+    { name: 'Start', coord: [-22.9, -43.2] },
+    { name: 'End', coord: [-22.9, -43.1] },
+  ];
+  // Steps as saved before #23: a kind, but no turn direction or location.
+  const backup = {
+    format: 'route-gpx-library',
+    version: 1,
+    routes: [
+      {
+        name: 'Old route',
+        state,
+        route: {
+          segments: [
+            [
+              [-22.9, -43.2],
+              [-22.9, -43.15],
+              [-22.9, -43.1],
+            ],
+          ],
+          steps: [
+            {
+              name: 'Rua A',
+              ref: '',
+              distance: 5000,
+              duration: 300,
+              kind: 'depart',
+            },
+            {
+              name: 'Rua B',
+              ref: '',
+              distance: 5200,
+              duration: 300,
+              kind: 'turn',
+            },
+          ],
+          distance: 10200,
+          duration: 600,
+          provider: 'OSRM',
+        },
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+    ],
+  };
+  await page.locator('.saved-routes summary').click();
+  await page.locator('#restore-routes').setInputFiles({
+    name: 'backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup)),
+  });
+  await page
+    .getByRole('button', { name: 'Open saved route: Old route', exact: true })
+    .click();
+  await expect(page.locator('#download')).toBeEnabled();
+  await page.locator('#itinerary summary').click();
+  // Positions from the step lengths, so the km column is never empty.
+  await expect(page.locator('#itinerary li')).toHaveText([
+    'km 0.0 Depart · R. A · 5 km',
+    'km 5.0 R. B · 5.2 km',
+  ]);
+  await expect(page.locator('#itinerary')).toContainText(
+    'This route was saved before turn directions existed. Calculate route adds them.',
   );
 });
 test('download still works if persistent browser storage is unavailable', async ({

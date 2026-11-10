@@ -170,3 +170,29 @@ export function pointAtDistance(
     segment: edge.segment,
   };
 }
+
+/**
+ * Track between two along-track distances, split at GPX segment gaps, for
+ * highlighting a stretch (for example a climb) on the map.
+ */
+export function trackSlice(
+  index: TrackIndex,
+  from: number,
+  to: number,
+): Coord[][] {
+  const start = pointAtDistance(index, from),
+    end = pointAtDistance(index, to);
+  if (!start || !end || to <= from) return [];
+  const out: Coord[][] = [[start.coord]];
+  let segment = start.segment;
+  for (const edge of index.edges) {
+    if (edge.from + edge.length <= from || edge.from >= to) continue;
+    if (edge.segment !== segment) {
+      out.push([edge.a]);
+      segment = edge.segment;
+    }
+    if (edge.from + edge.length < to) out.at(-1)!.push(edge.b);
+  }
+  out.at(-1)!.push(end.coord);
+  return out.filter((part) => part.length >= 2);
+}

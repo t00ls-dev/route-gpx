@@ -233,6 +233,7 @@ const elevation = setupElevation(map, {
   state: () => state,
   endpoint: () => weather.endpoint(),
   recorded: (route) => recordedElevation.get(route),
+  speed: () => speedKmh,
 });
 const playback = setupPlayback(map, {
   state: () => state,
@@ -812,9 +813,34 @@ function renderSummary(route: Route) {
       'hint',
     ),
   );
+  // Imported files carry no turn-by-turn steps; only rerouted sections do.
   if (isMixedRoute(route) && route.steps.length)
     roads.append(
-      text('p', 'Road summary covers only recalculated sections.', 'hint'),
+      text(
+        'p',
+        'The itinerary covers only recalculated sections. Calculate route gives it for the whole route, replacing the imported track.',
+        'hint',
+      ),
+    );
+  else if (
+    !isImportedRoute(route) &&
+    route.steps.length > 1 &&
+    route.steps.every((s) => !s.modifier && !s.at)
+  )
+    roads.append(
+      text(
+        'p',
+        'This route was saved before turn directions existed. Calculate route adds them.',
+        'hint',
+      ),
+    );
+  else if (isImportedRoute(route) && !route.steps.length)
+    roads.append(
+      text(
+        'p',
+        'Imported tracks have no turn-by-turn itinerary. Calculate route gives it from the road network, replacing the imported track.',
+        'hint',
+      ),
     );
   if (local.length) {
     roads.append(
@@ -839,28 +865,38 @@ function renderSummary(route: Route) {
     notes.append(review);
   }
   const ul = document.createElement('ul');
-  const positions = maneuverPositions(route);
+  const positions = maneuverPositions(route, !isImportedRoute(route));
+  // Without any position (an imported track's rerouted parts saved before
+  // locations existed), the km column is left out rather than kept empty.
+  const withPositions = positions.some((at) => at !== null);
   maneuverLayer.clearLayers();
   route.steps.forEach((s, n) => {
     if (s.distance <= 0) return;
     const li = document.createElement('li');
     // A step with a maneuver location is a button that shows it on the map.
-    // Columns: position along the route, arrow, instruction and road.
-    const row: HTMLElement = document.createElement(s.at ? 'button' : 'div');
+    // The grid (position, arrow, instruction and road) is an inner element:
+    // older Safari does not lay out a <button> itself as a grid and falls
+    // back to the centered button layout.
+    const holder: HTMLElement = document.createElement(s.at ? 'button' : 'div');
+    holder.className = 'step-item';
+    const row = document.createElement('span');
     row.className = 'step-row';
+    holder.append(row);
     // Turn direction from the router; the instruction stays an English key
     // that the DOM translation handles.
     const arrow = maneuverIcon(s);
     const instruction = maneuverText(s);
     const at = positions[n];
-    row.append(
-      text(
-        'span',
-        // Trailing space keeps the text readable when copied or read aloud.
-        at === null ? '' : `${milepostLabel(at, state.units, locale)} `,
-        'milepost',
-      ),
-    );
+    if (withPositions)
+      row.append(
+        text(
+          'span',
+          // Trailing space keeps the text readable when copied or read aloud.
+          at === null ? '' : `${milepostLabel(at, state.units, locale)} `,
+          'milepost',
+        ),
+      );
+    else row.classList.add('no-position');
     if (arrow) {
       const svg = icon(arrow.name);
       svg.classList.add('maneuver-icon');
@@ -885,9 +921,9 @@ function renderSummary(route: Route) {
       );
     body.append(document.createTextNode(`${shortRoad} · ${length}`));
     row.append(body);
-    row.title = full;
+    holder.title = full;
     if (s.at) {
-      const button = row as HTMLButtonElement;
+      const button = holder as HTMLButtonElement;
       button.type = 'button';
       button.classList.add('maneuver-link');
       button.setAttribute('aria-controls', 'map');
@@ -898,7 +934,7 @@ function renderSummary(route: Route) {
       const coord = s.at;
       button.onclick = () => showManeuver(coord);
     }
-    li.append(row);
+    li.append(holder);
     if (local.includes(s)) li.className = 'local-road';
     ul.append(li);
   });

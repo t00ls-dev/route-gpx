@@ -194,6 +194,17 @@ describe('maneuver positions', () => {
     expect(stepDistanceLabel(1609.344, 'imperial', 'en')).toBe('1 mi');
   });
 
+  it('places steps saved without a location by their lengths on routed routes', () => {
+    const old = route(
+      [east(0, 10)],
+      [{ distance: 300 }, { distance: 500 }, { distance: 312, at: [0, 0.008] }],
+    );
+    expect(maneuverPositions(old, true)).toEqual([0, 300, expect.any(Number)]);
+    expect(maneuverPositions(old, true)[2]).toBeCloseTo(890, -1);
+    // Imported tracks have no such fallback: their steps cover only part.
+    expect(maneuverPositions(old).slice(0, 2)).toEqual([null, null]);
+  });
+
   it('formats positions like road markers', () => {
     expect(milepostLabel(12345, 'metric', 'en')).toBe('km 12.3');
     expect(milepostLabel(12345, 'metric', 'pt-BR')).toBe('km 12,3');

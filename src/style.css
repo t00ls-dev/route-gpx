@@ -527,16 +527,25 @@ label[for] {
 .road-list li {
   list-style: none;
 }
+.step-item {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  padding: 2px 4px;
+  text-align: left;
+}
 .step-row {
   display: grid;
   grid-template-columns: auto 16px minmax(0, 1fr);
   column-gap: 5px;
   align-items: center;
+  justify-content: start;
   width: 100%;
-  min-height: 32px;
-  padding: 2px 4px;
+  min-height: 28px;
   line-height: 1.5;
-  text-align: left;
+}
+.step-row.no-position {
+  grid-template-columns: 16px minmax(0, 1fr);
 }
 .step-text {
   overflow: hidden;
@@ -2258,6 +2267,86 @@ input[type='range'].range-input:disabled {
 .elevation-stats p {
   margin: 4px 0 0;
   font-size: 13px;
+}
+.elevation-climb {
+  fill: #be812b;
+  fill-opacity: 0.12;
+  pointer-events: none;
+}
+.elevation-climb.selected {
+  fill-opacity: 0.32;
+}
+.climbs-heading {
+  margin: 8px 0 2px;
+  font-weight: 600;
+}
+.climbs ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.planner .climb {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.climb-grid {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: 5px;
+  align-items: center;
+  justify-content: start;
+  width: 100%;
+}
+.planner .climb:hover,
+.planner .climb[aria-pressed='true'] {
+  background: #fff5e1;
+}
+.planner .climb:focus-visible {
+  outline: 2px solid #145e49;
+  outline-offset: 1px;
+}
+.climb-check {
+  color: #74420b;
+}
+.climb-mark {
+  width: 16px;
+  height: 16px;
+  color: #74420b;
+}
+.leaflet-pane .climb-line {
+  stroke: #be812b;
+  stroke-width: 7;
+  stroke-opacity: 0.85;
+  stroke-linecap: round;
+  fill: none;
+}
+.leaflet-pane .climb-start {
+  fill: #fff;
+  fill-opacity: 1;
+  stroke: #74420b;
+  stroke-width: 3;
+}
+.climb-summit {
+  display: grid;
+  place-items: center;
+  border: 2px solid #74420b;
+  border-radius: 50%;
+  background: #fff;
+  color: #74420b;
+}
+.climb-summit svg {
+  width: 16px;
+  height: 16px;
 }
 #elevation-status:empty {
   display: none;

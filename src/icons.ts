@@ -62,6 +62,7 @@ const paths = {
   'maneuver-uturn': '<path d="M16 21V9a4 4 0 0 0-8 0v9m-4-4 4 4 4-4"/>',
   'maneuver-roundabout':
     '<circle cx="12" cy="9" r="4"/><path d="M12 13v8m3-15 4-3m0 0h-4m4 0v4"/>',
+  summit: '<path d="m3 20 7-13 4 6 2-3 5 10Z"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .5-1.5 1-1.5 2M12 16v1"/>',
 } as const;
 export type IconName = keyof typeof paths;

@@ -14,7 +14,12 @@ import {
   setAutomaticDeparture,
   untilNextSlot,
 } from './departure';
-import { weatherForecast } from './services';
+import {
+  countdown,
+  retryIn,
+  UsageLimitError,
+  weatherForecast,
+} from './services';
 import {
   DEFAULT_WEATHER_URL,
   HOUR,
@@ -91,6 +96,9 @@ export function setupWeather(
     attemptedDeparture: string | undefined,
     attemptedEndpoint = '',
     attemptedSpeed = 0;
+  let cancelLimit = () => {},
+    /** The single automatic retry after a usage limit was already used. */
+    limitRetried = false;
   const message = (value: string, error = false) => {
     $('weather-status').replaceChildren(document.createTextNode(value));
     $('weather-status').classList.toggle('error', error);
@@ -121,6 +129,7 @@ export function setupWeather(
     );
   }
   function invalidate() {
+    cancelLimit();
     requestVersion++;
     controller?.abort();
     controller = undefined;
@@ -588,6 +597,7 @@ export function setupWeather(
     )
       .then((data) => {
         if (!valid()) return;
+        limitRetried = false;
         forecast = data;
         points = samples;
         stops = requestedStops;
@@ -598,15 +608,39 @@ export function setupWeather(
         render();
       })
       .catch((error) => {
-        if (valid()) {
-          message(
-            error instanceof Error
-              ? error.message
-              : 'Weather unavailable. Try again.',
-            true,
+        if (!valid()) return;
+        // Usage limit: a live countdown, then one automatic retry; refused
+        // again, the button appears only when the countdown ends.
+        if (error instanceof UsageLimitError) {
+          const again = !limitRetried;
+          limitRetried = true;
+          cancelLimit();
+          cancelLimit = countdown(
+            error.wait,
+            (seconds) => {
+              if (!valid()) return cancelLimit();
+              message(
+                `Weather usage limit reached. ${retryIn(seconds * 1000)}`,
+              );
+            },
+            () => {
+              if (!valid()) return;
+              if (again) requestForecast();
+              else {
+                message('Weather usage limit reached.', true);
+                retry.hidden = false;
+              }
+            },
           );
-          retry.hidden = false;
+          return;
         }
+        message(
+          error instanceof Error
+            ? error.message
+            : 'Weather unavailable. Try again.',
+          true,
+        );
+        retry.hidden = false;
       })
       .finally(() => {
         if (valid()) {
