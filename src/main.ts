@@ -1632,6 +1632,11 @@ void refreshSavedRoutes();
 updateSaveButton();
 
 setupPanel(map);
+// Settings always open with the values in use; unapplied edits are dropped.
+$('open-settings').addEventListener('click', () => {
+  settings();
+  $<HTMLInputElement>('photon').value = photonUrl;
+});
 setupMapView(map, {
   hasRoute: () => state.points.some((p) => p.coord !== null),
   addPoint: (coord, asStart) => {
