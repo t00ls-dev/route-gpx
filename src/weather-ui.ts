@@ -17,6 +17,7 @@ import {
   nearestHour,
   passageTime,
   sampleRoute,
+  sampleRouteStops,
   weatherWindow,
   type WeatherForecast,
   type WeatherPoint,
@@ -43,6 +44,8 @@ export function setupWeather(
   $<HTMLInputElement>('weather-server').value = endpoint;
   let forecast: WeatherForecast | undefined,
     points: WeatherPoint[] = [],
+    /** Distinct route stops for the fetched samples. */
+    stops = 0,
     sourceRoute: Route | null = null,
     sourceDeparture: string | undefined,
     sourceEndpoint = '',
@@ -334,7 +337,11 @@ export function setupWeather(
     });
     $('weather-result').hidden = false;
     retry.hidden = true;
-    message('');
+    // More stops than the sample cap: say how many have their own card.
+    const sampled = points.filter((p) => p.stop).length;
+    message(
+      sampled < stops ? `Weather sampled at ${sampled} of ${stops} stops.` : '',
+    );
   }
   // Date errors show next to the field, which lives in the route summary.
   const dateError = (value: string) => {
@@ -395,12 +402,17 @@ export function setupWeather(
   }
   function requestForecast() {
     let samples: WeatherPoint[],
+      requestedStops: number,
       passage: number[],
       interval: { start: number; end: number };
     try {
       const route = getRoute();
       if (!route) throw new Error('Calculate or import a route first.');
-      samples = sampleRoute(route, getState().points, getSpeed());
+      ({ samples, stops: requestedStops } = sampleRouteStops(
+        route,
+        getState().points,
+        getSpeed(),
+      ));
       passage = times(samples);
       interval = forecastInterval(passage[0], passage.at(-1)!);
     } catch (error) {
@@ -437,6 +449,7 @@ export function setupWeather(
         if (!valid()) return;
         forecast = data;
         points = samples;
+        stops = requestedStops;
         sourceRoute = route;
         sourceDeparture = date;
         sourceEndpoint = base;

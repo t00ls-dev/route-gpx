@@ -314,6 +314,37 @@ test('elevation is requested only when opened, shows stats and the map cursor, a
   );
   expect(requests).toHaveLength(count);
 });
+test('routes with more than 20 stops still get weather', async ({ page }) => {
+  await setup(page);
+  // 23 named waypoints (the import maximum) plus start and destination.
+  const wpts = Array.from(
+    { length: 23 },
+    (_, i) =>
+      `<wpt lat="0" lon="${((i + 1) / 24).toFixed(5)}"><name>Town ${i + 1}</name></wpt>`,
+  ).join('');
+  const track = Array.from(
+    { length: 25 },
+    (_, i) => `<trkpt lat="0" lon="${(i / 24).toFixed(5)}"/>`,
+  ).join('');
+  await page.locator('#import').setInputFiles({
+    name: 'towns.gpx',
+    mimeType: 'application/gpx+xml',
+    buffer: Buffer.from(
+      `<gpx><trk><name>Towns</name><trkseg>${track}</trkseg></trk>${wpts}</gpx>`,
+    ),
+  });
+  await expect(page.locator('#points li')).toHaveCount(25);
+  await date(page);
+  await fetchWeather(page);
+  await expect(page.locator('.weather-card')).toHaveCount(20);
+  await expect(page.locator('#weather-status')).toHaveText(
+    'Weather sampled at 20 of 25 stops.',
+  );
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('#weather-status')).toHaveText(
+    'Clima amostrado em 20 de 25 paradas.',
+  );
+});
 test('recorded GPX elevations need no request', async ({ page }) => {
   const requests: string[] = [];
   page.on('request', (r) => {
