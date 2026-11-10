@@ -168,9 +168,14 @@
         </p>
         <h2>Map and location</h2>
         <p>
-          Use Route panel to open or close the side panel or mobile bottom
-          sheet. Its state is remembered in this tab session. Full screen
-          expands the map; press it again or Escape to leave.
+          The route panel is a side panel on wide screens, with a button in its
+          header to hide it, and a bottom sheet on phones. Tap the handle of the
+          sheet to open or close it, or drag it to half or full height; closed,
+          it still shows the route distance and time, the latest status and the
+          export buttons. On phones, More actions next to Copy link holds the
+          GPX name, Save route, Import and Share GPX. The panel state is
+          remembered in this tab session. Full screen expands the map; press it
+          again or Escape to leave.
         </p>
         <p>
           Use my location requests your position directly. The browser asks for
@@ -420,29 +425,30 @@
         <p>
           Time, arrival, weather passage times and daylight all come from the
           route distance and your average speed, not from the routing service.
-          Open Average speed in the route summary and drag the slider: values
-          are 1, 5, 10… up to 200 km/h or 130 mph, starting at 60 km/h. The
-          speed is remembered on this device and changes only when you move the
-          slider; switching units converts it to the nearest position. Route
-          links and saved routes do not carry it, so opening one never changes
-          your speed. The estimate excludes stops and traffic. The route
-          summary, right below Calculate route, holds the departure date and
-          shows the distance, the time and, when a departure is set, the arrival
-          time, with the speed used. Itinerary, in the summary below Travel the
-          route, shows the highway references, each road with its distance and
-          the routing provider. When the router provides it, each road starts
-          with its maneuver and an arrow: turn left or right (slightly, sharp),
-          U-turn, keep left or right, ramps and exits, and the roundabout exit
-          to take. Each instruction also shows its position along the route (for
-          example km 12.3, or mi in miles); select it to center the map on that
-          spot, which stays marked until you click the map. With Prefer main
-          roads, long local roads are highlighted; select the road-review
-          warning in the summary to open the itinerary at the first one. To keep
-          each instruction on one line, common words in road names are
-          abbreviated (R., Av., Estr., Prof., St, Ave…); the full name appears
-          when you hover and is read by screen readers. When you open the
-          Itinerary of an imported track, the app asks the OSRM server to match
-          the track to the roads (points about every 300 to 400 m, 10 per
+          In Trip options, drag the Average speed slider: values are 1, 5, 10…
+          up to 200 km/h or 130 mph, starting at 60 km/h. The speed is
+          remembered on this device and changes only when you move the slider;
+          switching units converts it to the nearest position. Route links and
+          saved routes do not carry it, so opening one never changes your speed.
+          The estimate excludes stops and traffic. The route summary shows the
+          distance, the time and, when a departure is set, the arrival time,
+          with the speed used. Trip options, right below it, holds the departure
+          date, the average speed, the distance units and Prefer main roads, and
+          is available before a route exists. Itinerary, the first row below
+          Trip options, shows the highway references, each road with its
+          distance and the routing provider. When the router provides it, each
+          road starts with its maneuver and an arrow: turn left or right
+          (slightly, sharp), U-turn, keep left or right, ramps and exits, and
+          the roundabout exit to take. Each instruction also shows its position
+          along the route (for example km 12.3, or mi in miles); select it to
+          center the map on that spot, which stays marked until you click the
+          map. With Prefer main roads, long local roads are highlighted; select
+          the road-review warning in the summary to open the itinerary at the
+          first one. To keep each instruction on one line, common words in road
+          names are abbreviated (R., Av., Estr., Prof., St, Ave…); the full name
+          appears when you hover and is read by screen readers. When you open
+          the Itinerary of an imported track, the app asks the OSRM server to
+          match the track to the roads (points about every 300 to 400 m, 10 per
           request, so long tracks take up to a minute; after an edit, only the
           stretches next to the changed point are asked again) and shows the
           directions on the exact imported track; stretches off the road network
@@ -471,15 +477,16 @@
         </p>
         <h2>Settings and JSON</h2>
         <p>
-          Change server base URLs in Settings. A route link that suggests other
-          routing or search servers opens with the default servers; a notice
-          names them, and Use link servers applies them only if you choose. Use
-          HTTPS and servers that allow browser requests (CORS). The advanced
-          JSON editor gives you the same points and options used by route links.
-          Routing and address-search servers belong to the route and travel with
-          links, saved routes and backups; the suggestion, weather and IP-region
-          servers stay on this device only. Provider behavior and usage limits
-          are described in the
+          Open Settings with the sliders icon in the header to change server
+          base URLs; Apply settings saves them and closes the dialog. A route
+          link that suggests other routing or search servers opens with the
+          default servers; a notice names them, and Use link servers applies
+          them only if you choose. Use HTTPS and servers that allow browser
+          requests (CORS). The advanced JSON editor gives you the same points
+          and options used by route links. Routing and address-search servers
+          belong to the route and travel with links, saved routes and backups;
+          the suggestion, weather and IP-region servers stay on this device
+          only. Provider behavior and usage limits are described in the
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >services and privacy details</a
@@ -659,10 +666,15 @@
         </p>
         <h2>Mapa e localização</h2>
         <p>
-          Use Painel da rota para abrir ou fechar o painel lateral ou a folha
-          inferior no celular. O estado é lembrado durante a sessão desta aba.
-          Tela cheia expande o mapa; toque novamente ou pressione Escape para
-          sair.
+          O painel da rota é um painel lateral em telas largas, com um botão no
+          cabeçalho para ocultá-lo, e uma folha inferior no celular. Toque na
+          alça da folha para abrir ou fechar, ou arraste para meia altura ou
+          altura cheia; fechada, ela ainda mostra a distância e o tempo da rota,
+          o último status e os botões de exportação. No celular, Mais ações, ao
+          lado de Copiar link, reúne Nome do GPX, Salvar rota, Importar e
+          Compartilhar GPX. O estado do painel é lembrado durante a sessão desta
+          aba. Tela cheia expande o mapa; toque novamente ou pressione Escape
+          para sair.
         </p>
         <p>
           Usar minha localização solicita a posição diretamente. O navegador
@@ -924,37 +936,39 @@
         <p>
           Tempo, chegada, horários de passagem do clima e luz do dia vêm da
           distância da rota e da sua velocidade média, não do serviço de rotas.
-          Abra Velocidade média no resumo da rota e arraste o controle: os
+          Em Opções da viagem, arraste o controle de Velocidade média: os
           valores são 1, 5, 10… até 200 km/h ou 130 mph, começando em 60 km/h. A
           velocidade fica guardada neste aparelho e só muda quando você mexe no
           controle; trocar a unidade converte para a posição mais próxima. Links
           e rotas salvas não levam a velocidade, então abrir um deles nunca muda
-          a sua. A estimativa não inclui paradas nem trânsito. O resumo da rota,
-          logo abaixo de Calcular rota, traz a data de saída e mostra a
-          distância, o tempo e, quando há saída, o horário de chegada, com a
-          velocidade usada. Itinerário, no resumo abaixo de Percorrer a rota,
-          mostra as rodovias, cada via com sua distância e o provedor de rotas.
-          Quando o roteador informa, cada via começa com a manobra e uma seta:
-          virar à esquerda ou à direita (levemente, acentuadamente), retorno,
-          manter-se à esquerda ou à direita, acessos e saídas e a saída a pegar
-          na rotatória. Cada instrução também mostra sua posição na rota (por
-          exemplo km 12,3, ou mi em milhas); selecione-a para centralizar o mapa
-          no local, que fica marcado até você clicar no mapa. Com Preferir vias
-          principais, vias locais longas ficam destacadas; selecione o aviso de
-          trechos para conferir no resumo para abrir o itinerário no primeiro
-          deles. Para cada instrução caber em uma linha, palavras comuns dos
-          nomes das vias são abreviadas (R., Av., Estr., Prof., St, Ave…); o
-          nome completo aparece ao passar o mouse e é lido por leitores de tela.
-          Ao abrir o Itinerário de um trajeto importado, o app pede ao servidor
-          OSRM para ajustar o trajeto às vias (pontos a cada cerca de 300 a 400
-          m, 10 por pedido, então trajetos longos levam até um minuto; depois de
-          uma edição, só os trechos vizinhos ao ponto alterado são pedidos de
-          novo) e mostra as direções sobre o trajeto importado exato; trechos
-          fora da malha viária ficam sem elas. Uma rota salva antes das direções
-          de manobra as recebe com um pedido ao abrir o Itinerário, só se a via
-          for a mesma; a rota salva mantém a geometria e guarda as direções; se
-          a via mudou, ela registra isso e não pede de novo. As instruções
-          seguem o perfil de carro e descrevem a malha viária.
+          a sua. A estimativa não inclui paradas nem trânsito. O resumo da rota
+          mostra a distância, o tempo e, quando há saída, o horário de chegada,
+          com a velocidade usada. Opções da viagem, logo abaixo, traz a data de
+          saída, a velocidade média, as unidades de distância e Preferir vias
+          principais, e fica disponível antes de existir uma rota. Itinerário, a
+          primeira linha abaixo de Opções da viagem, mostra as rodovias, cada
+          via com sua distância e o provedor de rotas. Quando o roteador
+          informa, cada via começa com a manobra e uma seta: virar à esquerda ou
+          à direita (levemente, acentuadamente), retorno, manter-se à esquerda
+          ou à direita, acessos e saídas e a saída a pegar na rotatória. Cada
+          instrução também mostra sua posição na rota (por exemplo km 12,3, ou
+          mi em milhas); selecione-a para centralizar o mapa no local, que fica
+          marcado até você clicar no mapa. Com Preferir vias principais, vias
+          locais longas ficam destacadas; selecione o aviso de trechos para
+          conferir no resumo para abrir o itinerário no primeiro deles. Para
+          cada instrução caber em uma linha, palavras comuns dos nomes das vias
+          são abreviadas (R., Av., Estr., Prof., St, Ave…); o nome completo
+          aparece ao passar o mouse e é lido por leitores de tela. Ao abrir o
+          Itinerário de um trajeto importado, o app pede ao servidor OSRM para
+          ajustar o trajeto às vias (pontos a cada cerca de 300 a 400 m, 10 por
+          pedido, então trajetos longos levam até um minuto; depois de uma
+          edição, só os trechos vizinhos ao ponto alterado são pedidos de novo)
+          e mostra as direções sobre o trajeto importado exato; trechos fora da
+          malha viária ficam sem elas. Uma rota salva antes das direções de
+          manobra as recebe com um pedido ao abrir o Itinerário, só se a via for
+          a mesma; a rota salva mantém a geometria e guarda as direções; se a
+          via mudou, ela registra isso e não pede de novo. As instruções seguem
+          o perfil de carro e descrevem a malha viária.
         </p>
         <h2>Unidades de distância e desfazer</h2>
         <p>
@@ -977,15 +991,16 @@
         </p>
         <h2>Configurações e JSON</h2>
         <p>
-          Altere as URLs base dos servidores nas Configurações. Um link de rota
-          que sugere outros servidores de rota ou busca abre com os servidores
-          padrão; um aviso mostra quais são, e Usar servidores do link só os
-          aplica se você escolher. Use HTTPS e servidores que permitam
-          requisições do navegador (CORS). O editor JSON avançado usa os mesmos
-          pontos e opções dos links de rota. Os servidores de rota e de busca de
-          endereço fazem parte da rota e acompanham links, rotas salvas e
-          backups; os servidores de sugestões, clima e região por IP ficam só
-          neste aparelho. Os
+          Abra as Configurações pelo ícone de controles no cabeçalho para
+          alterar as URLs base dos servidores; Aplicar configurações salva e
+          fecha a janela. Um link de rota que sugere outros servidores de rota
+          ou busca abre com os servidores padrão; um aviso mostra quais são, e
+          Usar servidores do link só os aplica se você escolher. Use HTTPS e
+          servidores que permitam requisições do navegador (CORS). O editor JSON
+          avançado usa os mesmos pontos e opções dos links de rota. Os
+          servidores de rota e de busca de endereço fazem parte da rota e
+          acompanham links, rotas salvas e backups; os servidores de sugestões,
+          clima e região por IP ficam só neste aparelho. Os
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >detalhes de serviços e privacidade</a
