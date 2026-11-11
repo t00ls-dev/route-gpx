@@ -731,9 +731,10 @@ header button.icon-control {
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+/* A value never wraps: a block too narrow for it moves to the next row. */
 .stats > div {
   flex: 1 1 96px;
-  min-width: 0;
+  min-width: fit-content;
   padding: 8px 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-large);
@@ -749,7 +750,7 @@ header button.icon-control {
   font-size: 20px;
   font-weight: 650;
   letter-spacing: -0.3px;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .stats dd span {
   display: block;
