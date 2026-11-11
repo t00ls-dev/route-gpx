@@ -413,6 +413,7 @@ const pt: Record<string, string> = {
   'Route marks': 'Marcas da rota',
   'Direction arrows': 'Setas de direção',
   'Halfway point': 'Metade da rota',
+  'Weather on the map': 'Clima no mapa',
   None: 'Nenhuma',
   Day: 'Dia',
   Twilight: 'Crepúsculo',

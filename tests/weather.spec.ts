@@ -1029,6 +1029,46 @@ test.describe('phone page height', () => {
   });
 });
 
+test('weather icons can be hidden from the map, keeping the cards and the forecast', async ({
+  page,
+}) => {
+  await setup(page, true);
+  let calls = 0;
+  page.on('request', (r) => {
+    if (r.url().includes('/v1/forecast?')) calls++;
+  });
+  await date(page);
+  await fetchWeather(page);
+  const cards = await page.locator('.weather-card').count();
+  await expect(page.locator('.weather-marker').first()).toBeVisible();
+  const before = calls;
+  await page.locator('#layers-toggle').click();
+  const toggle = page.locator('#marks-weather');
+  await expect(toggle).toBeChecked();
+  await expect(page.locator('label:has(#marks-weather)')).toHaveText(
+    'Weather on the map',
+  );
+  await toggle.uncheck();
+  await expect(page.locator('.weather-marker').first()).toBeHidden();
+  await expect(page.locator('.weather-card')).toHaveCount(cards);
+  expect(calls).toBe(before);
+  // A device preference: kept across reloads, never in the link.
+  expect(new URL(page.url()).hash).not.toMatch(/weather/);
+  await page.reload();
+  await expect(page.locator('#download')).toBeEnabled();
+  await page.locator('#weather-section > summary').click();
+  await fetchWeather(page);
+  await expect(page.locator('.weather-card')).toHaveCount(cards);
+  await expect(page.locator('.weather-marker').first()).toBeHidden();
+  await page.locator('#language').selectOption('pt');
+  await page.locator('#layers-toggle').click();
+  await expect(page.locator('label:has(#marks-weather)')).toHaveText(
+    'Clima no mapa',
+  );
+  await page.locator('#marks-weather').check();
+  await expect(page.locator('.weather-marker').first()).toBeVisible();
+});
+
 test('consecutive samples with equivalent weather share one card and one marker', async ({
   page,
 }) => {
