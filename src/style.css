@@ -402,7 +402,12 @@ header button.icon-control {
   flex: none;
   padding: 0 60px 0 16px;
 }
+/* The panel is the containing block of its absolute descendants (visually
+   hidden text, the phone's hidden status), so its scroll clips them; escaping
+   it, they made the page taller than the screen, and scrollIntoView then
+   scrolled the whole planner off screen. */
 #route-panel {
+  position: relative;
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
