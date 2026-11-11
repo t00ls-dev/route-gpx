@@ -6,6 +6,10 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ## [Unreleased]
 
+### Added
+
+- On roads the route uses both ways, weather cards say Outbound or Return, and the return markers sit beside the outbound ones instead of on top of them.
+
 ### Changed
 
 - Distance units (km or mi) and the new temperature units (°C or °F, with rain in mm or in) are chosen in Settings, start as Automatic from the browser's language region or time zone, and are remembered on the device; route links and saved routes no longer carry units.

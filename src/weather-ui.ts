@@ -35,6 +35,7 @@ import {
   type WeatherPoint,
 } from './weather';
 import { distanceUnits, temperatureUnits } from './unit-preferences';
+import { weatherPasses } from './route-marks';
 const AUTOMATIC = 'automatic-departure';
 /**
  * Runs a change that resizes content above `element` (weather cards, arrival)
@@ -248,6 +249,8 @@ export function setupWeather(
       });
     const details = $('weather-details');
     details.replaceChildren();
+    // On a road used both ways, each sample names its pass.
+    const passes = weatherPasses(sourceRoute!, points);
     points.forEach((point, i) => {
       const hour = nearestHour(forecast!.hours[i], passage[i]);
       const risks = classifyWeather(
@@ -255,6 +258,10 @@ export function setupWeather(
       );
       const weather = weatherDescription(hour.code);
       const km = distanceLabel(point.distance, distanceUnits(), locale);
+      const pass = passes[i];
+      const passText = pass
+        ? ` · ${t(pass === 'return' ? 'Return' : 'Outbound')}`
+        : '';
 
       const severity = risks[0]?.severity ?? 0;
       const item = document.createElement('li');
@@ -266,7 +273,7 @@ export function setupWeather(
       const header = document.createElement('span');
       header.className = 'weather-card-header';
       const when = document.createElement('strong');
-      when.textContent = `${time(passage[i])} · ${km}`;
+      when.textContent = `${time(passage[i])} · ${km}${passText}`;
       const badge = document.createElement('span');
       badge.className = 'weather-card-severity';
       badge.textContent = t(severity ? `Alert ${severity}` : 'No alert');
@@ -394,10 +401,14 @@ export function setupWeather(
       const marker = L.marker(point.coord, {
         pane: 'weather',
         icon: L.divIcon({
-          className: 'weather-marker',
+          // A return marker hangs to the left, beside the outbound one.
+          className:
+            pass === 'return'
+              ? 'weather-marker weather-marker-return'
+              : 'weather-marker',
           html: markerBody,
           iconSize: [60, 52],
-          iconAnchor: [2, 40],
+          iconAnchor: pass === 'return' ? [58, 40] : [2, 40],
         }),
         keyboard: true,
       }).addTo(markers);
@@ -406,11 +417,11 @@ export function setupWeather(
         .getElement()
         ?.setAttribute(
           'aria-label',
-          `${t('View weather')}: ${time(passage[i])} · ${km} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${windSpeed === null ? '' : ` · ${windSpeed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
+          `${t('View weather')}: ${time(passage[i])} · ${km}${passText} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${windSpeed === null ? '' : ` · ${windSpeed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
         );
       detail.setAttribute(
         'aria-label',
-        `${t('Show on map')}: ${time(passage[i])} · ${km} · ${conditions.textContent} · ${temperature.textContent} · ${rain.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${uvRisk ? ` · ${uvText}` : ''}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
+        `${t('Show on map')}: ${time(passage[i])} · ${km}${passText} · ${conditions.textContent} · ${temperature.textContent} · ${rain.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${uvRisk ? ` · ${uvText}` : ''}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
       );
       detail.setAttribute('aria-controls', 'map');
       detail.onclick = () => {

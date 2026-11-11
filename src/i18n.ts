@@ -209,6 +209,8 @@ const pt: Record<string, string> = {
   'Average speed': 'Velocidade média',
   'Distance units': 'Unidades de distância',
   'Temperature units': 'Unidades de temperatura',
+  Outbound: 'Ida',
+  Return: 'Volta',
   'Automatic (km)': 'Automático (km)',
   'Automatic (mi)': 'Automático (mi)',
   'Automatic (°C)': 'Automático (°C)',
