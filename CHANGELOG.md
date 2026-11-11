@@ -6,6 +6,10 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ## [Unreleased]
 
+### Fixed
+
+- On phones, the arrival shows the time on one line, with the date below it when it is on another day, and Add stop, Reverse and Round trip stay on one row.
+
 ## [1.0.0] - 2026-11-11
 
 ### Added

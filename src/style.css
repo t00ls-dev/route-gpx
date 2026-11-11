@@ -740,6 +740,11 @@ header button.icon-control {
   letter-spacing: -0.3px;
   overflow-wrap: anywhere;
 }
+.stats dd span {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
 .stats-basis {
   margin: 8px 0 0;
 }
@@ -1392,6 +1397,31 @@ dialog.settings::backdrop {
   }
   #route-panel {
     padding: 4px 16px 12px;
+  }
+  /* Summary values follow the screen width so each stays on one line. */
+  .stats > div {
+    padding: 8px;
+  }
+  .stats strong {
+    font-size: clamp(16px, 5vw, 20px);
+  }
+  /* Point actions share one row: icon above the label, which may wrap. */
+  .inline-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin-left: 0;
+  }
+  .inline-actions > button {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 2px;
+    min-width: 0;
+    padding: 6px 4px;
+    font-size: 14px;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
   }
   .action-bar,
   .planner.panel-closed .action-bar {

@@ -156,3 +156,60 @@ test.describe('bottom sheet', () => {
     await expect(page.locator('body')).not.toHaveClass(/sheet-full/);
   });
 });
+
+test.describe('phone summary', () => {
+  test.use({
+    viewport: { width: 375, height: 812 },
+    hasTouch: true,
+    timezoneId: 'America/Sao_Paulo',
+  });
+  test('arrival on another day keeps the time on one line, with the date below', async ({
+    page,
+  }) => {
+    // 23:20 local: the automatic departure is 23:30 and the arrival after midnight.
+    await page.clock.setFixedTime(new Date('2026-11-11T02:20:00Z'));
+    await page.route('**/route/v1/driving/**', async (r) => {
+      const part = new URL(r.request().url()).pathname.split('/driving/')[1]!;
+      const coords = part.split(';').map((p) => p.split(',').map(Number));
+      await r.fulfill({
+        json: {
+          code: 'Ok',
+          waypoints: coords.map((location) => ({ location, distance: 0 })),
+          routes: [
+            {
+              distance: 30900,
+              duration: 2000,
+              geometry: { coordinates: coords },
+              legs: [{ steps: [] }],
+            },
+          ],
+        },
+      });
+    });
+    await page.addInitScript(() => localStorage.setItem('average-speed', '25'));
+    await page.goto(base);
+    await page.locator('#language').selectOption('pt');
+    await page.locator('#location-0').fill('-22.591897, -43.416001');
+    await page.locator('#location-1').fill('-22.692000, -43.459000');
+    await page.locator('#location-1').press('Tab');
+    await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+    const arrival = page.locator('#summary .stats > div').nth(2);
+    await expect(arrival.locator('strong')).toHaveText('00:44');
+    await expect(arrival.locator('dd span')).toHaveText('11 de nov.');
+    // Each value stays on one line, and the three point actions share a row.
+    for (const value of await page.locator('#summary .stats strong').all())
+      expect(
+        await value.evaluate((e) => {
+          const range = document.createRange();
+          range.selectNodeContents(e);
+          return new Set([...range.getClientRects()].map((r) => r.top)).size;
+        }),
+      ).toBe(1);
+    const tops = await page
+      .locator('.inline-actions > button')
+      .evaluateAll((buttons) =>
+        buttons.map((b) => Math.round(b.getBoundingClientRect().top)),
+      );
+    expect(new Set(tops).size).toBe(1);
+  });
+});
