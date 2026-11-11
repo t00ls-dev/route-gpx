@@ -70,3 +70,70 @@ export function uvCategory(
           ? 'Very high'
           : 'Extreme';
 }
+
+/**
+ * How close two weather samples must be to share one card and one marker:
+ * within these differences of the first sample of the run. SI units.
+ */
+export const MERGE_THRESHOLDS = {
+  temperature: 2,
+  probability: 20,
+  wind: 10,
+} as const;
+/** What a weather card shows for one sample, as compared when merging. */
+export interface CardSample {
+  /** A route point (start, stop or destination): always its own card. */
+  stop: boolean;
+  text: string;
+  severity: number;
+  risks: string[];
+  relation: string;
+  /** UV category when shown, and whether it carries a UV alert. */
+  uv: string | null;
+  uvAlert: boolean;
+  pass: string | null;
+  temperature: number | null;
+  probability: number | null;
+  wind: number | null;
+}
+const close = (a: number | null, b: number | null, limit: number) =>
+  a === null || b === null ? a === b : Math.abs(a - b) <= limit;
+/**
+ * Runs of consecutive samples with equivalent conditions, as index lists.
+ * Each sample is compared with the first of its run, so slow drift still
+ * ends a run; route points never join or extend one.
+ */
+export function groupWeather(samples: CardSample[]): number[][] {
+  const groups: number[][] = [];
+  samples.forEach((sample, i) => {
+    const group = groups.at(-1);
+    const first = group ? samples[group[0]] : null;
+    if (
+      group &&
+      first &&
+      !first.stop &&
+      !sample.stop &&
+      sample.text === first.text &&
+      sample.severity === first.severity &&
+      sample.risks.join('|') === first.risks.join('|') &&
+      sample.relation === first.relation &&
+      sample.uv === first.uv &&
+      sample.uvAlert === first.uvAlert &&
+      sample.pass === first.pass &&
+      close(
+        sample.temperature,
+        first.temperature,
+        MERGE_THRESHOLDS.temperature,
+      ) &&
+      close(
+        sample.probability,
+        first.probability,
+        MERGE_THRESHOLDS.probability,
+      ) &&
+      close(sample.wind, first.wind, MERGE_THRESHOLDS.wind)
+    )
+      group.push(i);
+    else groups.push([i]);
+  });
+  return groups;
+}

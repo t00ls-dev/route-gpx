@@ -1,7 +1,9 @@
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   classifyWeather,
+  groupWeather,
   uvCategory,
+  type CardSample,
   WEATHER_THRESHOLDS as T,
 } from '../src/weather-risk';
 import { setLanguage, t, weatherDescription } from '../src/i18n';
@@ -130,4 +132,67 @@ it('maps all published WMO codes to translated text and icons in both directions
     expect(t(desc.text)).toBe(desc.text);
   }
   expect(weatherDescription(null).icon).toBe('help');
+});
+
+describe('merging equivalent weather cards', () => {
+  const sample = (over: Partial<CardSample> = {}): CardSample => ({
+    stop: false,
+    text: 'Clear sky',
+    severity: 0,
+    risks: [],
+    relation: 'Crosswind',
+    uv: 'High',
+    uvAlert: false,
+    pass: null,
+    temperature: 20,
+    probability: 10,
+    wind: 8,
+    ...over,
+  });
+  it('merges runs of equivalent samples and keeps route points apart', () => {
+    const start = sample({ stop: true }),
+      end = sample({ stop: true });
+    expect(groupWeather([start, sample(), sample(), sample(), end])).toEqual([
+      [0],
+      [1, 2, 3],
+      [4],
+    ]);
+    // A stop in the middle ends the run on both sides.
+    expect(
+      groupWeather([sample(), sample(), sample({ stop: true }), sample()]),
+    ).toEqual([[0, 1], [2], [3]]);
+  });
+  it('splits at each threshold, measured from the first sample of the run', () => {
+    const split = (over: Partial<CardSample>) =>
+      groupWeather([sample(), sample(over)]).length;
+    expect(split({ temperature: 22 })).toBe(1);
+    expect(split({ temperature: 22.1 })).toBe(2);
+    expect(split({ probability: 30 })).toBe(1);
+    expect(split({ probability: 31 })).toBe(2);
+    expect(split({ wind: 18 })).toBe(1);
+    expect(split({ wind: 18.5 })).toBe(2);
+    for (const over of [
+      { text: 'Mainly clear' },
+      { severity: 1, risks: ['Rain risk'] },
+      { risks: ['Fog / low visibility'] },
+      { relation: 'Headwind' },
+      { uv: 'Very high' },
+      { uvAlert: true },
+      { pass: 'return' },
+      { temperature: null },
+    ])
+      expect(split(over)).toBe(2);
+    // Slow drift: each step is small, but the third is too far from the first.
+    expect(
+      groupWeather([
+        sample({ temperature: 20 }),
+        sample({ temperature: 21.5 }),
+        sample({ temperature: 23 }),
+      ]),
+    ).toEqual([[0, 1], [2]]);
+    // Missing values match each other.
+    expect(
+      groupWeather([sample({ wind: null }), sample({ wind: null })]),
+    ).toEqual([[0, 1]]);
+  });
 });
