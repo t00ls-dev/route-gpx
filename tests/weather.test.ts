@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   defaults,
   decodeState,
@@ -16,6 +16,7 @@ import {
   localDateTime,
   nearestHour,
   passageTime,
+  routeBends,
   sampleRoute,
   sampleRouteStops,
   weatherWindow,
@@ -415,4 +416,97 @@ it('counts only route points as stops, not the samples between them', () => {
     expect(samples.filter((p) => p.stop)).toHaveLength(3);
     expect(samples.length).toBeGreaterThan(3);
   }
+});
+
+describe('weather samples at sharp bends', () => {
+  // About 111.2 m per 0.001° near the equator.
+  const path = (...corners: [number, number][]): Route['segments'] => [
+    corners.flatMap(([lat, lon], i) => {
+      if (!i) return [[lat, lon] as [number, number]];
+      const [plat, plon] = corners[i - 1];
+      const n = Math.max(1, Math.round(meters([plat, plon], [lat, lon]) / 50));
+      return Array.from({ length: n }, (_, k): [number, number] => [
+        plat + ((lat - plat) * (k + 1)) / n,
+        plon + ((lon - plon) * (k + 1)) / n,
+      ]);
+    }),
+  ];
+  const asRoute = (segments: Route['segments']): Route => ({
+    segments,
+    distance: 0,
+    duration: 0,
+    provider: 'test',
+    steps: [],
+  });
+  const stops = (segments: Route['segments']) => [
+    { name: 'A', coord: segments[0][0] },
+    { name: 'B', coord: segments.at(-1)!.at(-1)! },
+  ];
+  it('finds a right-angle corner once and ignores gentle curves', () => {
+    // 20 km east, then 20 km north.
+    const corner = path([0, 0], [0, 0.18], [0.18, 0.18]);
+    const bends = routeBends(corner);
+    expect(bends).toHaveLength(1);
+    expect(Math.abs(bends[0].distance - 20015)).toBeLessThan(150);
+    expect(bends[0].turn).toBeGreaterThan(80);
+    // A 30° change of direction is not a bend.
+    expect(routeBends(path([0, 0], [0, 0.18], [0.104, 0.36]))).toEqual([]);
+    expect(routeBends(path([0, 0], [0, 0.36]))).toEqual([]);
+  });
+  it('adds a sample just past the corner, facing the new direction', () => {
+    // 13 km east, then 20 km north: the corner is between distance samples.
+    const corner = path([0, 0], [0, 0.117], [0.18, 0.117]);
+    const { samples } = sampleRouteStops(asRoute(corner), stops(corner));
+    const bend = samples.filter((p) => p.bend);
+    expect(bend).toHaveLength(1);
+    expect(bend[0].distance).toBeGreaterThan(13010);
+    expect(bend[0].distance).toBeLessThan(13200);
+    // Heading north after the turn.
+    expect(Math.abs((((bend[0].bearing ?? 0) + 180) % 360) - 180)).toBeLessThan(
+      5,
+    );
+  });
+  it('uses only free slots, sharpest turns first, kept apart', () => {
+    // A zigzag of 3 km legs alternating east and north, 60 km in all.
+    const corners: [number, number][] = [[0, 0]];
+    for (let i = 0; i < 20; i++) {
+      const [lat, lon] = corners.at(-1)!;
+      corners.push(i % 2 ? [lat + 0.027, lon] : [lat, lon + 0.027]);
+    }
+    const zigzag = path(...corners);
+    const { samples } = sampleRouteStops(asRoute(zigzag), stops(zigzag));
+    expect(samples.length).toBeLessThanOrEqual(20);
+    const sorted = samples.map((p) => p.distance).sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++)
+      if (samples.find((p) => p.distance === sorted[i])?.bend)
+        expect(sorted[i] - sorted[i - 1]).toBeGreaterThanOrEqual(2000);
+  });
+  it('leaves full and straight routes as they were', () => {
+    // 800 km with a corner: distance samples stay those of a straight route
+    // of the same length; the bend only takes a slot they leave free.
+    const long = path([0, 0], [0, 3.6], [3.6, 3.6]);
+    const straightLong = path([0, 0], [0, 7.2]);
+    const bent = sampleRouteStops(asRoute(long), stops(long), 15).samples;
+    const plain = sampleRouteStops(
+      asRoute(straightLong),
+      stops(straightLong),
+      15,
+    ).samples;
+    expect(
+      bent.filter((p) => !p.bend).map((p) => Math.round(p.distance)),
+    ).toEqual(plain.map((p) => Math.round(p.distance)));
+    expect(bent.length).toBeLessThanOrEqual(20);
+    const straight = path([0, 0], [0, 0.9]);
+    expect(
+      sampleRouteStops(asRoute(straight), stops(straight)).samples.some(
+        (p) => p.bend,
+      ),
+    ).toBe(false);
+  });
+  it('never finds a bend across a GPX segment gap', () => {
+    // Two straight segments at a right angle, with a gap between them.
+    const [east] = path([0, 0], [0, 0.18]);
+    const [north] = path([0.001, 0.181], [0.18, 0.181]);
+    expect(routeBends([east, north])).toEqual([]);
+  });
 });

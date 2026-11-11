@@ -1,6 +1,7 @@
 import { meters, type Coord, type Point, type Route } from './core';
 import { travelTimeSeconds } from './travel-time';
 import { bearingBetween } from './weather-wind';
+import { indexTrack, pointAtDistance } from './track-position';
 const FORECAST_DAYS = 16;
 const PAST_WEATHER_DAYS = 90;
 export const HOUR = 3_600_000;
@@ -13,6 +14,8 @@ export interface WeatherPoint {
   bearing?: number | null;
   /** A route point (start, stop or destination), not an interpolated sample. */
   stop?: boolean;
+  /** Placed just after a sharp bend, so the wind relation follows the turn. */
+  bend?: boolean;
 }
 export interface WeatherHour {
   time: number;
@@ -94,6 +97,54 @@ export function sampleRoute(
   speedKmh = 60,
 ): WeatherPoint[] {
   return sampleRouteStops(route, controls, speedKmh).samples;
+}
+
+/**
+ * Sharp bends: a turn of at least 60° (enough to move the wind relation
+ * across its 45° classes) between the 300 m before and after a point, checked
+ * every 100 m, keeping one bend per kilometre.
+ */
+export const BEND_THRESHOLDS = {
+  turn: 60,
+  window: 300,
+  step: 100,
+  apart: 1000,
+} as const;
+/**
+ * Sharp bends along the track, largest turn first. Never across GPX segment
+ * gaps and never within the window of either end.
+ */
+export function routeBends(
+  segments: Coord[][],
+): { distance: number; turn: number }[] {
+  const index = indexTrack(segments);
+  const { turn: minimum, window, step, apart } = BEND_THRESHOLDS;
+  const found: { distance: number; turn: number }[] = [];
+  for (let d = window; d <= index.total - window; d += step) {
+    const a = pointAtDistance(index, d - window)!,
+      b = pointAtDistance(index, d)!,
+      c = pointAtDistance(index, d + window)!;
+    if (a.segment !== b.segment || b.segment !== c.segment) continue;
+    const before = bearingBetween(a.coord, b.coord),
+      after = bearingBetween(b.coord, c.coord);
+    if (before === null || after === null) continue;
+    const difference = Math.abs(after - before) % 360;
+    const turn = difference > 180 ? 360 - difference : difference;
+    if (turn >= minimum) found.push({ distance: d, turn });
+  }
+  // One bend per curve: the sharpest point within a kilometre (earliest on ties).
+  return found
+    .filter(
+      (bend) =>
+        !found.some(
+          (other) =>
+            other !== bend &&
+            Math.abs(other.distance - bend.distance) < apart &&
+            (other.turn > bend.turn ||
+              (other.turn === bend.turn && other.distance < bend.distance)),
+        ),
+    )
+    .sort((x, y) => y.turn - x.turn || x.distance - y.distance);
 }
 
 /** Automatic stops placed on an imported track, as opposed to named ones. */
@@ -230,6 +281,17 @@ export function sampleRouteStops(
     }
     if (unique.length === 2 && total < preferredSpacing)
       unique.push(interpolate(total / 2));
+  }
+  // Free slots go to sharp bends, largest first, just past each turn so the
+  // sample takes the new direction; never next to another sample.
+  if (unique.length < MAX_WEATHER_POINTS) {
+    const gap = Math.max(2000, preferredSpacing / 4);
+    for (const bend of routeBends(route.segments)) {
+      if (unique.length >= MAX_WEATHER_POINTS) break;
+      const at = Math.min(total, bend.distance + BEND_THRESHOLDS.step);
+      if (unique.some((point) => Math.abs(point.distance - at) < gap)) continue;
+      unique.push({ ...interpolate(at), bend: true });
+    }
   }
   const result = unique
     .sort((a, b) => a.distance - b.distance)
