@@ -266,7 +266,6 @@ const overlays = setupRouteOverlays(map, {
 });
 const marks = setupRouteMarks(map, {
   route: () => current,
-  state: () => state,
 });
 const departureTime = () =>
   departureOf(state) ? Date.parse(departureOf(state)!) : NaN;

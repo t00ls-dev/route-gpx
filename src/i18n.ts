@@ -412,7 +412,6 @@ const pt: Record<string, string> = {
     'Dados de elevação: Copernicus DEM GLO-90 via Open-Meteo',
   'Route marks': 'Marcas da rota',
   'Direction arrows': 'Setas de direção',
-  'Halfway point': 'Metade da rota',
   'Weather on the map': 'Clima no mapa',
   None: 'Nenhuma',
   Day: 'Dia',
@@ -499,7 +498,6 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (time, light) =>
       `${time} · ${({ daylight: 'dia', twilight: 'crepúsculo', dark: 'escuro' } as Record<string, string>)[light]}`,
   ],
-  [/^Halfway · (.+)$/, (distance) => `Metade · ${distance}`],
   [
     /^Min (.+) · Max (.+) · Avg (.+)$/,
     (min, max, avg) => `Mín ${min} · Máx ${max} · Média ${avg}`,

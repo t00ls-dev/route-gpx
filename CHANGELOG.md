@@ -18,6 +18,10 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 - On phones, the status message shows only at the top of the route panel, up to two lines, and Calculate route takes the full width of its row.
 - The Departure label sits above its field, and the automatic option is labeled Automatic departure.
 
+### Removed
+
+- The Halfway point route mark, the ½ badge at the middle of the route.
+
 ### Fixed
 
 - The weather note "Weather sampled at N of M stops" no longer appears when every route point has a card; it counted the samples between stops as stops.

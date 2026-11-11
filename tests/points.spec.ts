@@ -261,7 +261,7 @@ for (const mobile of [false, true]) {
     });
   });
 }
-test('route marks: arrows by default, parallel lines on a round trip, halfway point, persisted and translated', async ({
+test('route marks: arrows by default, parallel lines on a round trip, persisted and translated', async ({
   page,
 }) => {
   let routes = 0;
@@ -271,7 +271,6 @@ test('route marks: arrows by default, parallel lines on a round trip, halfway po
   await setup(page);
   await fillPair(page);
   await expect(page.locator('.route-arrow').first()).toBeAttached();
-  await expect(page.locator('.route-halfway')).toHaveCount(0);
   await expect(page.locator('path.route-line-pass')).toHaveCount(0);
   // Round trip: the mocked router returns the same straight road back.
   await page.locator('#roundtrip').click();
@@ -281,21 +280,16 @@ test('route marks: arrows by default, parallel lines on a round trip, halfway po
   await page.locator('#layers-toggle').click();
   await expect(page.locator('#marks-heading')).toHaveText('Route marks');
   await expect(page.locator('#marks-arrows')).toBeChecked();
-  await expect(page.locator('#marks-halfway')).not.toBeChecked();
-  await page.locator('#marks-halfway').check();
-  await expect(page.locator('.route-halfway')).toHaveCount(1);
+  // The halfway point was removed: no switch for it.
+  await expect(page.locator('#marks-halfway')).toHaveCount(0);
   await page.locator('#marks-arrows').uncheck();
   await expect(page.locator('.route-arrow')).toHaveCount(0);
   await page.keyboard.press('Escape');
-  const half = (await page.locator('.route-halfway').boundingBox())!;
-  await page.mouse.move(half.x + half.width / 2, half.y + half.height / 2);
-  await expect(page.locator('.leaflet-tooltip')).toContainText('Halfway · ');
   // Device preferences: kept across reloads, never in the link.
-  expect(new URL(page.url()).hash).not.toMatch(/arrows|halfway/);
+  expect(new URL(page.url()).hash).not.toMatch(/arrows/);
   expect(routes).toBe(before);
   await page.reload();
   await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
-  await expect(page.locator('.route-halfway')).toHaveCount(1);
   await expect(page.locator('.route-arrow')).toHaveCount(0);
   await page.locator('#language').selectOption('pt');
   await page.locator('#layers-toggle').click();
