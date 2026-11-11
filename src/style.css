@@ -595,6 +595,16 @@ header button.icon-control {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The narrowest phones show only the pin; the name stays in aria-label and title. */
+@media (max-width: 359px) {
+  .point-actions button:first-child {
+    width: var(--control);
+    padding: 0;
+  }
+  .point-actions button:first-child .button-label {
+    display: none;
+  }
+}
 .point-actions button:last-child:not(:disabled) {
   color: var(--color-danger);
 }
@@ -641,11 +651,12 @@ header button.icon-control {
 .trip-options[open] {
   padding-bottom: 6px;
 }
+/* The label sits above the field, which takes the full width. */
 .departure-field {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
 }
 .departure-field label {
   margin: 0;
@@ -1951,7 +1962,7 @@ input[type='range'].range-input:disabled {
   -webkit-appearance: none;
   appearance: none;
   overflow: hidden;
-  width: min(100%, 250px);
+  width: 100%;
   height: 44px;
   min-height: 44px;
   padding: 6px 8px;
@@ -2392,8 +2403,7 @@ input[type='range'].range-input:disabled {
 
 /* Adjustments to the feature rules above for the current layout. */
 .departure-field > #departure {
-  flex: 1 1 200px;
-  width: auto;
+  flex: none;
 }
 .weather-card {
   border-left-width: 1px;

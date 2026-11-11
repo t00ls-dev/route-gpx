@@ -6,9 +6,14 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ## [Unreleased]
 
+### Changed
+
+- The Departure label sits above its field, and the automatic option is labeled Automatic departure.
+
 ### Fixed
 
 - On phones, the arrival shows the time on one line, with the date below it when it is on another day, and Add stop, Reverse and Round trip stay on one row.
+- On the narrowest phones, Set on map shows only its pin instead of a cut-off label.
 
 ## [1.0.0] - 2026-11-11
 

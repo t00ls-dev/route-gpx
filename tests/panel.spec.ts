@@ -213,3 +213,24 @@ test.describe('phone summary', () => {
     expect(new Set(tops).size).toBe(1);
   });
 });
+
+test.describe('narrow phone', () => {
+  test.use({ viewport: { width: 320, height: 640 }, hasTouch: true });
+  test('Set on map keeps its name with the pin only, and Departure sits below its label', async ({
+    page,
+  }) => {
+    await page.goto(base);
+    const onMap = page
+      .locator('#points li.selected .point-actions button')
+      .first();
+    await expect(onMap).toHaveAccessibleName('Set on map');
+    await expect(onMap.locator('.button-label')).toBeHidden();
+    const label = (await page.locator('label[for=departure]').boundingBox())!;
+    const field = (await page.locator('#departure').boundingBox())!;
+    expect(field.y).toBeGreaterThanOrEqual(label.y + label.height - 1);
+    expect(Math.round(field.height)).toBe(44);
+    await expect(page.locator('.departure-automatic')).toHaveText(
+      'Automatic departure',
+    );
+  });
+});
