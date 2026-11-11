@@ -1069,6 +1069,67 @@ test('weather icons can be hidden from the map, keeping the cards and the foreca
   await expect(page.locator('.weather-marker').first()).toBeVisible();
 });
 
+test('a sharp bend gets its own weather sample with the wind relation of the new direction', async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date('2026-11-07T10:00:00Z'));
+  await page.addInitScript(() => localStorage.setItem('auto-departure', 'off'));
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  let calls = 0;
+  await page.route('**/v1/forecast?**', (r) => {
+    calls++;
+    const rows = weatherResponse(new URL(r.request().url()));
+    // Wind from the north everywhere.
+    for (const { hourly } of rows) hourly.wind_direction_10m.fill(0);
+    return r.fulfill({ json: rows });
+  });
+  // 13 km east, then 20 km north.
+  await page.route('**/route/v1/driving/**', (r) =>
+    r.fulfill({
+      json: {
+        code: 'Ok',
+        waypoints: [
+          { location: [0, 0], distance: 0 },
+          { location: [0.117, 0.18], distance: 0 },
+        ],
+        routes: [
+          {
+            distance: 33000,
+            duration: 2000,
+            geometry: {
+              coordinates: [
+                [0, 0],
+                [0.117, 0],
+                [0.117, 0.18],
+              ],
+            },
+            legs: [],
+          },
+        ],
+      },
+    }),
+  );
+  const state = { ...defaults(), language: 'en' as const };
+  state.points = [
+    { name: 'Start', coord: [0, 0] },
+    { name: 'Destination', coord: [0.18, 0.117] },
+  ];
+  await page.goto(base + encodeState(state));
+  await expect(page.locator('#download')).toBeEnabled();
+  await page.locator('#weather-section > summary').click();
+  await date(page);
+  await fetchWeather(page);
+  const wind = page.locator('.weather-card-wind');
+  // Heading east the north wind is a crosswind; past the corner, a headwind.
+  await expect(wind.first()).toContainText('Crosswind');
+  const corner = page.locator('.weather-card').filter({
+    has: page.locator('.weather-card-header', { hasText: '13.1 km' }),
+  });
+  await expect(corner).toHaveCount(1);
+  await expect(corner.locator('.weather-card-wind')).toContainText('Headwind');
+  expect(calls).toBe(1);
+});
+
 test('consecutive samples with equivalent weather share one card and one marker', async ({
   page,
 }) => {
@@ -1533,11 +1594,16 @@ test('wind follows bends, translates and switches units without another weather 
   });
   await date(page);
   await fetchWeather(page);
-  await expect(page.locator('.weather-card')).toHaveCount(3);
-  await expect(page.locator('.weather-card-wind .icon-wind')).toHaveCount(3);
+  // Start, the sample just past the corner, 20 km and the destination.
+  await expect(page.locator('.weather-card')).toHaveCount(4);
+  await expect(page.locator('.weather-card-wind .icon-wind')).toHaveCount(4);
   await expect(
     page.locator('.weather-card-wind .icon-wind').first(),
   ).toHaveAttribute('aria-hidden', 'true');
+  // Wind from the east: against the first leg, across the second one.
+  await expect(page.locator('.weather-card-wind').nth(1)).toHaveText(
+    'Crosswind · 20 km/h',
+  );
   await expect(page.locator('.weather-card-wind').first()).toHaveText(
     'Headwind · 20 km/h',
   );
