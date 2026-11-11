@@ -10,7 +10,8 @@ import { distanceUnits } from './unit-preferences';
 /**
  * Route marks: direction arrows, separate parallel lines where the route uses
  * the same road twice in opposite directions (out-and-back), and an optional
- * halfway point. Visual only: the route, links and GPX are untouched.
+ * halfway point, and the switch for weather icons on the map. Visual only:
+ * the route, links, GPX and weather requests are untouched.
  */
 
 const SAMPLE = 20,
@@ -232,7 +233,13 @@ export function setupRouteMarks(
   const settings = {
     arrows: isOn('route-arrows', true),
     halfway: isOn('route-halfway', false),
+    weather: isOn('weather-markers', true),
   };
+  // Weather icons live in their own pane; hiding it keeps the cards and the
+  // forecast, and takes the markers out of focus and screen readers too.
+  const showWeather = () =>
+    map.getContainer().classList.toggle('hide-weather', !settings.weather);
+  showWeather();
 
   const group = document.createElement('div');
   group.className = 'marks-group';
@@ -246,6 +253,7 @@ export function setupRouteMarks(
   for (const [id, key, label] of [
     ['arrows', 'route-arrows', 'Direction arrows'],
     ['halfway', 'route-halfway', 'Halfway point'],
+    ['weather', 'weather-markers', 'Weather on the map'],
   ] as const) {
     const wrapper = document.createElement('label');
     wrapper.className = 'check';
@@ -265,6 +273,7 @@ export function setupRouteMarks(
       } catch {
         /* Optional device preference. */
       }
+      showWeather();
       draw();
     };
     wrapper.append(input, text);

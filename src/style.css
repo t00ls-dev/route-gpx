@@ -1857,6 +1857,10 @@ input[type='range'].range-input:disabled {
 #weather-section input[type='datetime-local'] {
   max-width: 100%;
 }
+/* Map layers › Weather on the map: off hides the icons, not the cards. */
+.hide-weather .leaflet-weather-pane {
+  display: none;
+}
 .leaflet-marker-icon.weather-marker {
   color: #526b82;
   pointer-events: none;

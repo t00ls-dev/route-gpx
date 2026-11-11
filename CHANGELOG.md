@@ -8,6 +8,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Added
 
+- Weather on the map, in Map layers › Route marks, hides or shows the weather icons and wind arrows on the map, remembered on the device; the weather cards stay in the panel.
 - On roads the route uses both ways, weather cards say Outbound or Return, and the return markers sit beside the outbound ones instead of on top of them.
 
 ### Changed
