@@ -161,6 +161,27 @@ export function setupPanel(map: L.Map): void {
   window.addEventListener('resize', layout);
   window.addEventListener('orientationchange', layout);
 
+  // The page never scrolls; only the panel does. iOS can leave the document
+  // scrolled after its keyboard closes (also the address bar's, when a URL is
+  // typed), which moves the header, the map and the sheet handle off screen.
+  // Return to the top, except while a field is edited (iOS scrolls it into
+  // view above the keyboard) or the page is pinch-zoomed.
+  const editing = () =>
+    document.activeElement instanceof HTMLElement &&
+    document.activeElement.matches(
+      'input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select, [contenteditable]',
+    );
+  const settle = () => {
+    if ((visualViewport?.scale ?? 1) > 1.01 || editing()) return;
+    if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+  };
+  settle();
+  window.addEventListener('pageshow', settle);
+  window.addEventListener('resize', settle);
+  visualViewport?.addEventListener('resize', settle);
+  // After a field loses focus the keyboard is still closing.
+  document.addEventListener('focusout', () => setTimeout(settle, 300));
+
   const more = $('more-actions');
   more.onclick = () => {
     const expanded = more.getAttribute('aria-expanded') !== 'true';

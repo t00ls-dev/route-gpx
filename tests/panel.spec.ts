@@ -214,6 +214,36 @@ test.describe('phone summary', () => {
   });
 });
 
+test.describe('phone page scroll', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test('a document left scrolled returns to the top, except while a field is edited', async ({
+    page,
+  }) => {
+    await page.goto(base);
+    // iOS can leave the page scrolled after its keyboard closes; recreate
+    // that state with a taller document.
+    const scrollAway = () =>
+      page.evaluate(() => {
+        document.documentElement.style.height = '2000px';
+        document.body.style.overflow = 'visible';
+        window.scrollTo(0, 400);
+        return window.scrollY;
+      });
+    expect(await scrollAway()).toBe(400);
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page.locator('#panel-toggle')).toBeInViewport();
+    // While an address is typed, iOS keeps the field above the keyboard.
+    await page.locator('#location-0').focus();
+    expect(await scrollAway()).toBe(400);
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    expect(await page.evaluate(() => window.scrollY)).toBe(400);
+    // Once the field loses focus and the keyboard closes, the page settles.
+    await page.locator('#location-0').blur();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  });
+});
+
 test.describe('narrow phone', () => {
   test.use({ viewport: { width: 320, height: 640 }, hasTouch: true });
   test('Set on map keeps its name with the pin only, and Departure sits below its label', async ({
