@@ -35,6 +35,15 @@ it('switches existing content and placeholders without overwriting typed place n
   expect(document.querySelector('input')?.placeholder).toBe('My road trip');
 });
 
+it('translates the map hint for each kind of point', () => {
+  setLanguage('pt');
+  expect(t('Set the start on the map')).toBe('Defina o início no mapa');
+  expect(t('Set the destination on the map')).toBe('Defina o destino no mapa');
+  expect(t('Set stop 2 on the map')).toBe('Defina a parada 2 no mapa');
+  setLanguage('en');
+  expect(t('Set stop 2 on the map')).toBe('Set stop 2 on the map');
+});
+
 it('translates generated stop names and short status messages', () => {
   setLanguage('pt');
   expect(

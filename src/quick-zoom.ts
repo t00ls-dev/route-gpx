@@ -13,6 +13,28 @@ const TAP_TIME = 250,
   MOVE_THRESHOLD = 8,
   PIXELS_PER_ZOOM = 100;
 
+/**
+ * The private Map methods Leaflet's own pinch zoom uses. A non-animated
+ * `setZoomAround` resets the view, which removes every tile until the new
+ * ones load (the map blinks); these scale the current tiles instead.
+ */
+interface PinchMap {
+  _stop(): void;
+  _moveStart(zoomChanged: boolean, noMoveStart: boolean): void;
+  _move(
+    center: L.LatLng,
+    zoom: number,
+    data: { pinch: boolean; round: boolean },
+  ): void;
+  _animateZoom(
+    center: L.LatLng,
+    zoom: number,
+    startAnim: boolean,
+    noUpdate: boolean,
+  ): void;
+  _limitZoom(zoom: number): number;
+}
+
 export function setupQuickZoom(map: L.Map): void {
   const container = map.getContainer();
   let down: { id: number; x: number; y: number; time: number } | null = null,
@@ -22,9 +44,21 @@ export function setupQuickZoom(map: L.Map): void {
       y: number;
       zoom: number;
       point: L.Point;
+      anchor: L.LatLng;
       moved: boolean;
+      target: number;
+      frame: number;
     } | null = null,
     swallowDoubleClick = false;
+  const pinchMap = map as unknown as PinchMap;
+  // The center that keeps the gesture's map point under the finger at `zoom`.
+  const centerFor = (anchor: L.LatLng, point: L.Point, zoom: number) =>
+    map.unproject(
+      map
+        .project(anchor, zoom)
+        .subtract(point.subtract(map.getSize().divideBy(2))),
+      zoom,
+    );
   const ignored = (target: EventTarget | null) =>
     !!(target as Element | null)?.closest?.(
       '.leaflet-control,.leaflet-marker-icon,.map-credits',
@@ -51,12 +85,16 @@ export function setupQuickZoom(map: L.Map): void {
       Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <
         TAP_DISTANCE
     ) {
+      const point = map.mouseEventToContainerPoint(event);
       gesture = {
         id: event.pointerId,
         y: event.clientY,
         zoom: map.getZoom(),
-        point: map.mouseEventToContainerPoint(event),
+        point,
+        anchor: map.containerPointToLatLng(point),
         moved: false,
+        target: map.getZoom(),
+        frame: 0,
       };
       lastTap = null;
       map.dragging.disable();
@@ -80,24 +118,42 @@ export function setupQuickZoom(map: L.Map): void {
     if (!gesture.moved && Math.abs(dy) < MOVE_THRESHOLD) return;
     if (!gesture.moved) {
       gesture.moved = true;
-      // Fractional levels while dragging, so the zoom follows the finger.
-      map.options.zoomSnap = 0;
+      pinchMap._stop();
+      pinchMap._moveStart(true, false);
     }
-    const zoom = Math.min(
+    // Fractional levels while dragging, so the zoom follows the finger; the
+    // tiles are scaled as during a pinch, not reloaded.
+    gesture.target = Math.min(
       map.getMaxZoom(),
       Math.max(map.getMinZoom(), gesture.zoom + dy / PIXELS_PER_ZOOM),
     );
-    map.setZoomAround(gesture.point, zoom, { animate: false });
+    if (gesture.frame) return;
+    const current = gesture;
+    current.frame = requestAnimationFrame(() => {
+      current.frame = 0;
+      if (gesture !== current) return;
+      pinchMap._move(
+        centerFor(current.anchor, current.point, current.target),
+        current.target,
+        { pinch: true, round: false },
+      );
+    });
   });
 
   function end() {
     if (!gesture) return;
-    const { moved, point } = gesture;
+    const { moved, point, anchor, target, frame } = gesture;
     gesture = null;
+    cancelAnimationFrame(frame);
     map.dragging.enable();
     if (moved) {
-      map.options.zoomSnap = 1;
-      map.setZoomAround(point, Math.round(map.getZoom()), { animate: false });
+      // Settle on the nearest level as a pinch does: animated, keeping the
+      // current tiles until the new level loads.
+      const zoom = pinchMap._limitZoom(target);
+      const center = centerFor(anchor, point, zoom);
+      if (map.options.zoomAnimation)
+        pinchMap._animateZoom(center, zoom, true, !!map.options.zoomSnap);
+      else map.setView(center, zoom, { animate: false });
     } else
       // The second touch was cancelled natively, so do the double-tap zoom here.
       map.setZoomAround(point, Math.min(map.getMaxZoom(), map.getZoom() + 1));

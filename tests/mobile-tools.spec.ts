@@ -379,16 +379,34 @@ test('one-finger zoom: double tap and drag down zooms in, up zooms out, without 
       type,
       touchPoints: type === 'touchEnd' ? [] : [{ x, y: ty }],
     });
+  // Tiles removed from the map while dragging: none, as during a pinch, so
+  // the map never blinks (a view reset removes every tile until new ones load).
+  const removedTiles = () =>
+    page.evaluate(() => (window as unknown as { removed: number }).removed);
   const quickZoom = async (dy: number) => {
     await touch('touchStart');
     await touch('touchEnd');
     await page.waitForTimeout(80);
     await touch('touchStart');
+    await page.evaluate(() => {
+      const w = window as unknown as { removed: number };
+      w.removed = 0;
+      new MutationObserver((records) => {
+        for (const record of records)
+          for (const node of record.removedNodes)
+            if ((node as Element).classList?.contains('leaflet-tile'))
+              w.removed++;
+      }).observe(document.getElementById('map')!, {
+        childList: true,
+        subtree: true,
+      });
+    });
     for (let step = 1; step <= 10; step++) {
       await touch('touchMove', y + (dy * step) / 10);
       await page.waitForTimeout(30);
     }
     await page.waitForTimeout(600); // Longer than the point menu's long press.
+    expect(await removedTiles()).toBe(0);
     await touch('touchEnd');
     await page.waitForTimeout(400);
   };

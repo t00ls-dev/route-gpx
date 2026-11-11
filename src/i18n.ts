@@ -453,9 +453,9 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   [/^Location of point (\d+)$/, (n) => `Local do ponto ${n}`],
   [/^Results for point (\d+)$/, (n) => `Resultados do ponto ${n}`],
   [
-    /^Set (Start|Destination|Stop \d+) on the map$/,
+    /^Set (the start|the destination|stop \d+) on the map$/,
     (p) =>
-      `Defina ${p === 'Start' ? 'o início' : p === 'Destination' ? 'o destino' : 'a ' + t(p).toLowerCase()} no mapa`,
+      `Defina ${p === 'the start' ? 'o início' : p === 'the destination' ? 'o destino' : 'a ' + t(p.replace('stop', 'Stop')).toLowerCase()} no mapa`,
   ],
 
   [/^(.+) in the dark$/, (distance) => `${distance} no escuro`],

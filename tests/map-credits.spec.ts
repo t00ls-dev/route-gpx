@@ -36,7 +36,16 @@ for (const [width, height] of [
       await page.goto(base);
       const toggle = page.locator('.map-credits-toggle');
       if (width < 760) {
-        await expect(toggle).toBeHidden();
+        // The half-height sheet keeps the credits on the map above it, beside
+        // the tool column.
+        await expect(toggle).toBeVisible();
+        const open = (await toggle.boundingBox())!;
+        expect(open.y + open.height).toBeLessThanOrEqual(
+          (await page.locator('#sheet').boundingBox())!.y,
+        );
+        expect(open.x + open.width).toBeLessThan(
+          (await page.locator('#undo').boundingBox())!.x,
+        );
         await page.locator('#panel-toggle').tap();
       }
       await page.locator('#layers-toggle').tap();
@@ -130,8 +139,9 @@ for (const [width, height] of [
       await expect(dialog).toBeHidden();
       await expect(toggle).toBeFocused();
       if (width < 760) {
+        // Reopened at half height, the sheet leaves the credits reachable.
         await page.locator('#panel-toggle').tap();
-        await expect(toggle).toBeHidden();
+        await expect(toggle).toBeVisible();
       }
     });
   }
