@@ -9,6 +9,7 @@ import { isImportedRoute, isMixedRoute } from './track-legs';
 import { travelTimeSeconds } from './travel-time';
 import { distanceLabel } from './units';
 import { indexTrack, pointAtDistance, type TrackIndex } from './track-position';
+import { distanceUnits } from './unit-preferences';
 
 /**
  * "Travel the route": a cursor moves along the full-resolution track, with the
@@ -56,7 +57,7 @@ export function setupPlayback(
 
   const locale = () => (deps.state().language === 'pt' ? 'pt-BR' : 'en');
   const label = (meters: number) =>
-    distanceLabel(meters, deps.state().units, locale());
+    distanceLabel(meters, distanceUnits(), locale());
 
   function setPlaying(playing: boolean) {
     cancelAnimationFrame(frame);

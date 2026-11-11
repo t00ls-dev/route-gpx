@@ -139,7 +139,6 @@ describe('short v2 links', () => {
   };
   it('writes v2 links and roundtrips every option', () => {
     const s = sample();
-    s.units = 'imperial';
     s.prefer = false;
     s.points.splice(1, 0, { name: 'Draft', coord: null });
     const hash = encodeState(s);
@@ -160,7 +159,6 @@ describe('short v2 links', () => {
       [['Start'], ['Destination']],
       1,
       '',
-      'm',
     ]);
     s.valhalla = 'https://example.org/valhalla';
     expect(payloadOf(encodeState(s)).at(-1)).toEqual([
@@ -169,6 +167,24 @@ describe('short v2 links', () => {
       '',
     ]);
     expect(decodeState(encodeState(s))).toEqual(s);
+  });
+  it('ignores distance units in older links and keeps their slot as 0', () => {
+    const s = defaults();
+    s.language = 'pt';
+    // Index 3 held the units ('m' or 'i'); it is now always 0.
+    expect(payloadOf(encodeState(s))[3]).toBe(0);
+    for (const units of ['m', 'i', 'x', 7]) {
+      const back = decodeState(
+        toLink([[['Start'], ['Destination']], 1, '', units, 'pt']),
+      );
+      expect(back).not.toHaveProperty('units');
+      expect(back.language).toBe('pt');
+    }
+    for (const units of ['metric', 'imperial', 'invalid']) {
+      const legacy = { ...s, units } as typeof s;
+      expect(decodeState(encodeStateV1(legacy))).toEqual(s);
+      expect(validateState(legacy)).toEqual(s);
+    }
   });
   it('still reads v1 links', () => {
     const s = sample();

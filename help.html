@@ -444,38 +444,44 @@
           The estimate excludes stops and traffic. The route summary shows the
           distance, the time and, when a departure is set, the arrival time,
           with the speed used. Trip options, right below it, holds the departure
-          date, the average speed, the distance units and Prefer main roads, and
-          is available before a route exists. Itinerary, the first row below
-          Trip options, shows the highway references, each road with its
-          distance and the routing provider. When the router provides it, each
-          road starts with its maneuver and an arrow: turn left or right
-          (slightly, sharp), U-turn, keep left or right, ramps and exits, and
-          the roundabout exit to take. Each instruction also shows its position
-          along the route (for example km 12.3, or mi in miles); select it to
-          center the map on that spot, which stays marked until you click the
-          map. With Prefer main roads, long local roads are highlighted; select
-          the road-review warning in the summary to open the itinerary at the
-          first one. To keep each instruction on one line, common words in road
-          names are abbreviated (R., Av., Estr., Prof., St, Ave…); the full name
-          appears when you hover and is read by screen readers. When you open
-          the Itinerary of an imported track, the app asks the OSRM server to
-          match the track to the roads (points about every 300 to 400 m, 10 per
-          request, so long tracks take up to a minute; after an edit, only the
-          stretches next to the changed point are asked again) and shows the
-          directions on the exact imported track; stretches off the road network
-          have none. A route saved before turn directions existed gets them with
-          one request when you open its Itinerary, only if the road is the same;
-          the saved route keeps its geometry and stores the directions; if the
-          road has changed, it remembers that and does not ask again.
-          Instructions follow the driving profile and describe the road network.
+          date, the average speed and Prefer main roads, and is available before
+          a route exists. Itinerary, the first row below Trip options, shows the
+          highway references, each road with its distance and the routing
+          provider. When the router provides it, each road starts with its
+          maneuver and an arrow: turn left or right (slightly, sharp), U-turn,
+          keep left or right, ramps and exits, and the roundabout exit to take.
+          Each instruction also shows its position along the route (for example
+          km 12.3, or mi in miles); select it to center the map on that spot,
+          which stays marked until you click the map. With Prefer main roads,
+          long local roads are highlighted; select the road-review warning in
+          the summary to open the itinerary at the first one. To keep each
+          instruction on one line, common words in road names are abbreviated
+          (R., Av., Estr., Prof., St, Ave…); the full name appears when you
+          hover and is read by screen readers. When you open the Itinerary of an
+          imported track, the app asks the OSRM server to match the track to the
+          roads (points about every 300 to 400 m, 10 per request, so long tracks
+          take up to a minute; after an edit, only the stretches next to the
+          changed point are asked again) and shows the directions on the exact
+          imported track; stretches off the road network have none. A route
+          saved before turn directions existed gets them with one request when
+          you open its Itinerary, only if the road is the same; the saved route
+          keeps its geometry and stores the directions; if the road has changed,
+          it remembers that and does not ask again. Instructions follow the
+          driving profile and describe the road network.
         </p>
-        <h2>Distance units and undo</h2>
+        <h2>Units and undo</h2>
         <p>
-          Choose km or mi beside the road preference. Distances switch between
-          kilometers and miles independently of language; GPX coordinates are
-          unchanged. Undo restores up to 50 changes in this tab, including
-          moved, removed or reordered points. Ctrl+Z or ⌘Z works outside text
-          fields, which keep the normal text undo.
+          In Settings, choose Distance units (kilometers or miles: distances,
+          speeds, wind and altitude) and Temperature units (Celsius or
+          Fahrenheit: weather temperature, with rain in millimeters or inches).
+          Each starts as Automatic, which follows your browser's language region
+          or, without one, its time zone, and shows what it chose, for example
+          Automatic (km). Units are remembered on this device and apply at once,
+          independently of language; route links and saved routes do not carry
+          them, so a shared route opens in the units of whoever opens it. GPX
+          coordinates are unchanged. Undo restores up to 50 changes in this tab,
+          including moved, removed or reordered points. Ctrl+Z or ⌘Z works
+          outside text fields, which keep the normal text undo.
         </p>
         <h2>Lock editing</h2>
         <p>
@@ -488,16 +494,17 @@
         </p>
         <h2>Settings and JSON</h2>
         <p>
-          Open Settings with the sliders icon in the header to change server
-          base URLs; Apply settings saves them and closes the dialog. A route
-          link that suggests other routing or search servers opens with the
-          default servers; a notice names them, and Use link servers applies
-          them only if you choose. Use HTTPS and servers that allow browser
-          requests (CORS). The advanced JSON editor gives you the same points
-          and options used by route links. Routing and address-search servers
-          belong to the route and travel with links, saved routes and backups;
-          the suggestion, weather and IP-region servers stay on this device
-          only. Provider behavior and usage limits are described in the
+          Open Settings with the sliders icon in the header to choose units
+          (they apply at once) and to change server base URLs; Apply settings
+          saves the servers and closes the dialog. A route link that suggests
+          other routing or search servers opens with the default servers; a
+          notice names them, and Use link servers applies them only if you
+          choose. Use HTTPS and servers that allow browser requests (CORS). The
+          advanced JSON editor gives you the same points and options used by
+          route links. Routing and address-search servers belong to the route
+          and travel with links, saved routes and backups; the suggestion,
+          weather and IP-region servers stay on this device only. Provider
+          behavior and usage limits are described in the
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >services and privacy details</a
@@ -964,13 +971,13 @@
           a sua. A estimativa não inclui paradas nem trânsito. O resumo da rota
           mostra a distância, o tempo e, quando há saída, o horário de chegada,
           com a velocidade usada. Opções da viagem, logo abaixo, traz a data de
-          saída, a velocidade média, as unidades de distância e Preferir vias
-          principais, e fica disponível antes de existir uma rota. Itinerário, a
-          primeira linha abaixo de Opções da viagem, mostra as rodovias, cada
-          via com sua distância e o provedor de rotas. Quando o roteador
-          informa, cada via começa com a manobra e uma seta: virar à esquerda ou
-          à direita (levemente, acentuadamente), retorno, manter-se à esquerda
-          ou à direita, acessos e saídas e a saída a pegar na rotatória. Cada
+          saída, a velocidade média e Preferir vias principais, e fica
+          disponível antes de existir uma rota. Itinerário, a primeira linha
+          abaixo de Opções da viagem, mostra as rodovias, cada via com sua
+          distância e o provedor de rotas. Quando o roteador informa, cada via
+          começa com a manobra e uma seta: virar à esquerda ou à direita
+          (levemente, acentuadamente), retorno, manter-se à esquerda ou à
+          direita, acessos e saídas e a saída a pegar na rotatória. Cada
           instrução também mostra sua posição na rota (por exemplo km 12,3, ou
           mi em milhas); selecione-a para centralizar o mapa no local, que fica
           marcado até você clicar no mapa. Com Preferir vias principais, vias
@@ -990,14 +997,20 @@
           via mudou, ela registra isso e não pede de novo. As instruções seguem
           o perfil de carro e descrevem a malha viária.
         </p>
-        <h2>Unidades de distância e desfazer</h2>
+        <h2>Unidades e desfazer</h2>
         <p>
-          Escolha km ou mi ao lado da preferência de vias. As distâncias mudam
-          entre quilômetros e milhas, independente do idioma; as coordenadas do
-          GPX permanecem iguais. Desfazer recupera até 50 alterações nesta aba,
-          incluindo pontos movidos, removidos ou reordenados. Ctrl+Z ou ⌘Z
-          funciona fora dos campos de texto, que mantêm a função de desfazer a
-          digitação.
+          Em Configurações, escolha Unidades de distância (quilômetros ou
+          milhas: distâncias, velocidades, vento e altitude) e Unidades de
+          temperatura (Celsius ou Fahrenheit: temperatura do clima, com a chuva
+          em milímetros ou polegadas). Cada uma começa em Automático, que segue
+          a região do idioma do navegador ou, sem ela, o fuso horário, e mostra
+          o que escolheu, por exemplo Automático (km). As unidades ficam
+          guardadas neste aparelho e valem na hora, independente do idioma;
+          links e rotas salvas não as levam, então uma rota compartilhada abre
+          nas unidades de quem a abre. As coordenadas do GPX permanecem iguais.
+          Desfazer recupera até 50 alterações nesta aba, incluindo pontos
+          movidos, removidos ou reordenados. Ctrl+Z ou ⌘Z funciona fora dos
+          campos de texto, que mantêm a função de desfazer a digitação.
         </p>
         <h2>Bloquear edição</h2>
         <p>
@@ -1012,10 +1025,11 @@
         <h2>Configurações e JSON</h2>
         <p>
           Abra as Configurações pelo ícone de controles no cabeçalho para
-          alterar as URLs base dos servidores; Aplicar configurações salva e
-          fecha a janela. Um link de rota que sugere outros servidores de rota
-          ou busca abre com os servidores padrão; um aviso mostra quais são, e
-          Usar servidores do link só os aplica se você escolher. Use HTTPS e
+          escolher as unidades (valem na hora) e alterar as URLs base dos
+          servidores; Aplicar configurações salva os servidores e fecha a
+          janela. Um link de rota que sugere outros servidores de rota ou busca
+          abre com os servidores padrão; um aviso mostra quais são, e Usar
+          servidores do link só os aplica se você escolher. Use HTTPS e
           servidores que permitam requisições do navegador (CORS). O editor JSON
           avançado usa os mesmos pontos e opções dos links de rota. Os
           servidores de rota e de busca de endereço fazem parte da rota e

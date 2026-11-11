@@ -8,9 +8,9 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 
 - **Plan:** set start, destination and stops with addresses, coordinates, map clicks or your location.
 - **Edit:** move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits.
-- **Review:** distance, estimated duration, road references and an itinerary with turn directions, in kilometers or miles, estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics and the climbs along the route, and a virtual playback that travels the route.
+- **Review:** distance, estimated duration, road references and an itinerary with turn directions, in kilometers or miles (detected from the browser, changeable in Settings), estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics and the climbs along the route, and a virtual playback that travels the route.
 - **GPX, FIT and TCX:** import GPX, FIT and TCX files up to 10 MB, also as `.gz` or `.zip` (only geometry, names, course points and recorded elevation are read, locally) and export GPX 1.1 with complete track segments and named waypoints.
-- **Weather:** conditions and risks along the route for a departure date, including recent past dates.
+- **Weather:** conditions and risks along the route for a departure date, including recent past dates, in Celsius or Fahrenheit.
 
 - **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight and route marks (direction arrows, separate out-and-back lines, halfway point).
 - **Save and share:** route links, named routes saved in this browser and JSON backup import/export.

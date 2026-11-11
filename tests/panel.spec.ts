@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { chooseUnits } from './unit-settings';
 const base = 'http://127.0.0.1:5173/';
 test.beforeEach(async ({ page }) => {
   await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
@@ -13,9 +14,11 @@ const sheetHeight = async (page: Page) =>
 test('trip options are available before a route exists', async ({ page }) => {
   await page.goto(base);
   await expect(page.locator('#summary')).toBeHidden();
-  for (const id of ['departure', 'average-speed', 'units', 'prefer'])
+  for (const id of ['departure', 'average-speed', 'prefer'])
     await expect(page.locator(`#trip-options #${id}`)).toBeVisible();
-  await page.locator('#units').selectOption('imperial');
+  // Units moved to Settings and apply at once.
+  await expect(page.locator('#trip-options select')).toHaveCount(0);
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(page.locator('#speed-unit')).toHaveText('mph');
 });
 

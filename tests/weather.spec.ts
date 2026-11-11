@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { defaults, decodeState, encodeState } from '../src/core';
 import { weatherResponse } from './weather-fixture';
+import { chooseUnits } from './unit-settings';
 const base = 'http://127.0.0.1:5173/';
 const gpx =
   '<gpx><trk><name>Weather route</name><trkseg><trkpt lat="0" lon="0"/><trkpt lat="0" lon="1"/></trkseg></trk></gpx>';
@@ -308,7 +309,7 @@ test('elevation is requested only when opened, shows stats and the map cursor, a
   await expect(page.locator('.elevation-readout')).toContainText(
     /Gain so far (4|5)\d\d m · Loss so far 0 m/,
   );
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(page.locator('#elevation-stats')).toContainText('Max 3,281 ft');
   await page.locator('#language').selectOption('pt');
   await expect(page.locator('#elevation-stats')).toContainText('Mín 0 ft');
@@ -539,7 +540,7 @@ test('climbs are listed, shaded in the chart and shown on the map', async ({
   await expect(page.locator('path.climb-line')).toHaveCount(1);
   await expect(page.locator('.climb-summit svg')).toHaveCount(1);
   // Units and language re-render without a new request.
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(climbs.first()).toContainText('mi 2');
   await page.locator('#language').selectOption('pt');
   await expect(page.locator('.climbs-heading')).toHaveText('Subidas (1)');
@@ -771,7 +772,7 @@ test('selected speeds recalculate weather locally and support slow/fast travel a
   await page.locator('#average-speed').fill('200');
   await expect(page.locator('#summary .stats-basis')).toContainText('200 km/h');
   await expect(page.locator('#weather-result')).toBeVisible();
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(page.locator('#summary .stats-basis')).toContainText('125 mph');
   expect(calls).toBe(0);
 });
@@ -995,6 +996,43 @@ for (const language of ['en', 'pt'])
         : /Mainly clear · 24.1 °C · Rain 13% · 0.2 mm/,
     );
   });
+
+test('temperature units switch the weather card to °F and inches without another request', async ({
+  page,
+}) => {
+  await setup(page);
+  let calls = 0;
+  await page.route('**/v1/forecast?**', (route) => {
+    calls++;
+    const rows = weatherResponse(new URL(route.request().url()));
+    for (const { hourly } of rows) {
+      hourly.temperature_2m.fill(24.1);
+      hourly.precipitation.fill(12.7);
+      hourly.precipitation_probability.fill(13);
+    }
+    return route.fulfill({ json: rows });
+  });
+  await date(page);
+  await fetchWeather(page);
+  const card = page.locator('.weather-card').first();
+  await expect(card.locator('.weather-card-temperature')).toHaveText('24.1 °C');
+  await expect(card.locator('.weather-card-rain')).toHaveText(
+    'Rain 13% · 12.7 mm',
+  );
+  const requests = calls;
+  await chooseUnits(page, { temperature: 'fahrenheit' });
+  await expect(card.locator('.weather-card-temperature')).toHaveText('75.4 °F');
+  await expect(card.locator('.weather-card-rain')).toHaveText(
+    'Rain 13% · 0.5 in',
+  );
+  // Distance units are a separate choice.
+  await expect(card.locator('.weather-card-header')).toContainText('km');
+  await page.locator('#language').selectOption('pt');
+  await expect(card.locator('.weather-card-rain')).toHaveText(
+    'Chuva 13% · 0,5 in',
+  );
+  expect(calls).toBe(requests);
+});
 
 test('a UV alert shows on the UV line as the range up to the worst hour of its window', async ({
   page,
@@ -1298,7 +1336,7 @@ test('wind follows bends, translates and switches units without another weather 
   await expect(page.locator('.weather-card-wind').last()).toHaveText(
     'Vento lateral · 20 km/h',
   );
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(page.locator('.weather-card-wind').first()).toHaveText(
     'Vento contra · 12,4 mph',
   );
@@ -1502,7 +1540,7 @@ for (const [speed, direction, strength, angle] of [
         'data-direction',
         String(angle),
       );
-    await page.locator('#units').selectOption('imperial');
+    await chooseUnits(page, { distance: 'imperial' });
     await expect(page.locator('.weather-marker-wind').first()).toHaveAttribute(
       'data-strength',
       strength,

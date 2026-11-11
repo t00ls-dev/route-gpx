@@ -1,4 +1,5 @@
 export type DistanceUnits = 'metric' | 'imperial';
+export type TemperatureUnits = 'celsius' | 'fahrenheit';
 export function distanceLabel(
   meters: number,
   units: DistanceUnits = 'metric',
@@ -46,4 +47,28 @@ export function elevationLabel(
     units === 'imperial' ? meters * 3.280839895 : meters,
   );
   return `${value.toLocaleString(locale)} ${units === 'imperial' ? 'ft' : 'm'}`;
+}
+/** Weather temperature from °C, at most one decimal; `—` when unknown. */
+export function temperatureLabel(
+  celsius: number | null,
+  units: TemperatureUnits = 'celsius',
+  locale = 'en',
+): string {
+  if (celsius === null) return `— ${units === 'fahrenheit' ? '°F' : '°C'}`;
+  const value = units === 'fahrenheit' ? (celsius * 9) / 5 + 32 : celsius;
+  return `${value.toLocaleString(locale, { maximumFractionDigits: 1 })} ${units === 'fahrenheit' ? '°F' : '°C'}`;
+}
+/**
+ * Precipitation from mm, in inches with the Fahrenheit choice (as weather
+ * reports there do): at most one decimal in mm, two in inches.
+ */
+export function precipitationLabel(
+  mm: number | null,
+  units: TemperatureUnits = 'celsius',
+  locale = 'en',
+): string {
+  const unit = units === 'fahrenheit' ? 'in' : 'mm';
+  if (mm === null) return `— ${unit}`;
+  const value = units === 'fahrenheit' ? mm / 25.4 : mm;
+  return `${value.toLocaleString(locale, { maximumFractionDigits: units === 'fahrenheit' ? 2 : 1 })} ${unit}`;
 }

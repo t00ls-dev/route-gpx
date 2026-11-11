@@ -3,7 +3,7 @@ import { byId as $ } from './dom';
 import L from 'leaflet';
 import { type Route, type State, serverUrl } from './core';
 import { t, weatherDescription } from './i18n';
-import { distanceLabel } from './units';
+import { distanceLabel, precipitationLabel, temperatureLabel } from './units';
 import { classifyWeather, uvCategory } from './weather-risk';
 import { windRelation, windStrength, windFlowDirection } from './weather-wind';
 import { icon, centerIcon } from './icons';
@@ -34,6 +34,7 @@ import {
   type WeatherForecast,
   type WeatherPoint,
 } from './weather';
+import { distanceUnits, temperatureUnits } from './unit-preferences';
 const AUTOMATIC = 'automatic-departure';
 /**
  * Runs a change that resizes content above `element` (weather cards, arrival)
@@ -253,7 +254,7 @@ export function setupWeather(
         weatherWindow(forecast!.hours[i], passage[i]),
       );
       const weather = weatherDescription(hour.code);
-      const km = distanceLabel(point.distance, state.units, locale);
+      const km = distanceLabel(point.distance, distanceUnits(), locale);
 
       const severity = risks[0]?.severity ?? 0;
       const item = document.createElement('li');
@@ -273,20 +274,20 @@ export function setupWeather(
       const conditions = document.createElement('span');
       conditions.className = 'weather-card-conditions';
       conditions.append(icon(weather.icon), t(weather.text));
-      // One topic per line, as wind and UV, in the interface's number format.
-      const number = (value: number | null) =>
-        value === null
-          ? '—'
-          : value.toLocaleString(locale, { maximumFractionDigits: 1 });
+      // One topic per line, as wind and UV, in the chosen units and the
+      // interface's number format.
       const temperature = document.createElement('span');
       temperature.className = 'weather-card-temperature';
-      temperature.append(icon('thermometer'), `${number(hour.temperature)} °C`);
+      temperature.append(
+        icon('thermometer'),
+        temperatureLabel(hour.temperature, temperatureUnits(), locale),
+      );
       const rain = document.createElement('span');
       rain.className = 'weather-card-rain';
       rain.append(
         icon('droplet'),
         t(
-          `Rain ${hour.probability ?? '—'}% · ${number(hour.precipitation)} mm`,
+          `Rain ${hour.probability ?? '—'}% · ${precipitationLabel(hour.precipitation, temperatureUnits(), locale)}`,
         ),
       );
       const relation = windRelation(
@@ -299,13 +300,13 @@ export function setupWeather(
       const windSpeed =
         hour.wind === null
           ? null
-          : speedFromKmh(hour.wind, state.units).toLocaleString(locale, {
+          : speedFromKmh(hour.wind, distanceUnits()).toLocaleString(locale, {
               maximumFractionDigits: 1,
             });
       wind.append(
         icon('wind'),
         document.createTextNode(
-          `${t(relation)}${windSpeed === null ? '' : ` · ${windSpeed} ${state.units === 'imperial' ? 'mph' : 'km/h'}`}`,
+          `${t(relation)}${windSpeed === null ? '' : ` · ${windSpeed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`}`,
         ),
       );
       detail.append(header, conditions, temperature, rain, wind);
@@ -382,12 +383,12 @@ export function setupWeather(
       windValue.textContent =
         hour.wind === null
           ? '—'
-          : speedFromKmh(hour.wind, state.units).toLocaleString(locale, {
+          : speedFromKmh(hour.wind, distanceUnits()).toLocaleString(locale, {
               maximumFractionDigits: hour.wind < 100 ? 1 : 0,
             });
       const windUnit = document.createElement('span');
       windUnit.className = 'weather-marker-wind-unit';
-      windUnit.textContent = state.units === 'imperial' ? 'mph' : 'km/h';
+      windUnit.textContent = distanceUnits() === 'imperial' ? 'mph' : 'km/h';
       windBadge.append(arrow, windValue, windUnit);
       markerBody.append(markerIcon, windBadge);
       const marker = L.marker(point.coord, {
@@ -405,7 +406,7 @@ export function setupWeather(
         .getElement()
         ?.setAttribute(
           'aria-label',
-          `${t('View weather')}: ${time(passage[i])} · ${km} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${windSpeed === null ? '' : ` · ${windSpeed} ${state.units === 'imperial' ? 'mph' : 'km/h'}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
+          `${t('View weather')}: ${time(passage[i])} · ${km} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${windSpeed === null ? '' : ` · ${windSpeed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
         );
       detail.setAttribute(
         'aria-label',

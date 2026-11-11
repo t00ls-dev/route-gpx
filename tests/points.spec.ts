@@ -3,6 +3,7 @@ import { defaults, encodeState, encodeStateV1 } from '../src/core';
 import { readFile } from 'node:fs/promises';
 import { Fit, le, name, recordFields, semi } from './fit-fixture';
 import { test, expect, type Page } from '@playwright/test';
+import { chooseUnits } from './unit-settings';
 const base = 'http://127.0.0.1:5173/';
 const start = '-22.930929, -43.238286',
   end = '-23.050160, -43.535240';
@@ -472,9 +473,9 @@ test('the itinerary shows turn directions in both languages', async ({
   });
   expect(view.dx).toBeLessThan(3);
   expect(view.dy).toBeLessThan(3);
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(items.nth(1)).toContainText('mi 10.3');
-  await page.locator('#units').selectOption('metric');
+  await chooseUnits(page, { distance: 'metric' });
   await expect(items.nth(1).locator('svg.icon-maneuver-left')).toHaveCount(1);
   await expect(items.nth(1).locator('svg')).toHaveAttribute(
     'aria-hidden',
@@ -667,7 +668,7 @@ test('invalid coordinates cannot enable a stale GPX download', async ({
   await expect(page.locator('#location-1')).toHaveValue(end);
 });
 
-test('distance units change without rerouting or changing GPX geometry and can be undone', async ({
+test('distance units change without rerouting, changing GPX geometry or the link, and stay on the device', async ({
   page,
 }) => {
   await setup(page);
@@ -684,9 +685,10 @@ test('distance units change without rerouting or changing GPX geometry and can b
     await readFile((await before.path())!, 'utf8')
   ).match(/<trkpt[^>]*\/>/g);
   const hashBefore = page.url();
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(page.locator('#summary')).toContainText('26.1 mi');
-  expect(page.url()).not.toBe(hashBefore);
+  // A viewer preference: the link stays the same.
+  expect(page.url()).toBe(hashBefore);
   const [after] = await Promise.all([
     page.waitForEvent('download'),
     page.locator('#download').click(),
@@ -696,8 +698,12 @@ test('distance units change without rerouting or changing GPX geometry and can b
   );
   expect(newGeometry).toEqual(originalGeometry);
   expect(routingRequests).toBe(0);
-  await page.locator('#undo').click();
-  await expect(page.locator('#units')).toHaveValue('metric');
+  // A device preference, not a route edit: a reload keeps miles.
+  await page.reload();
+  await expect(page.locator('#summary')).toContainText('26.1 mi', {
+    timeout: 15000,
+  });
+  await chooseUnits(page, { distance: 'auto' });
   await expect(page.locator('#summary')).toContainText('42 km');
 });
 
@@ -721,7 +727,7 @@ test('average speed: keyboard steps, units, kept on the device and never taken f
   await page.locator('#average-speed').press('End');
   await expect(page.locator('#average-speed-value')).toHaveText('200');
   await expect(page.locator('#speed-range')).toHaveText('1–200 km/h');
-  await page.locator('#units').selectOption('imperial');
+  await chooseUnits(page, { distance: 'imperial' });
   await expect(page.locator('#average-speed-value')).toHaveText('125');
   await expect(page.locator('#speed-range')).toHaveText('1–130 mph');
   await expect(page.locator('#average-speed')).toHaveAttribute('step', '5');
@@ -730,7 +736,7 @@ test('average speed: keyboard steps, units, kept on the device and never taken f
   await page.locator('#average-speed').press('End');
   await expect(page.locator('#average-speed-value')).toHaveText('130');
   await expect(page.locator('#summary')).toContainText('12 min');
-  await page.locator('#units').selectOption('metric');
+  await chooseUnits(page, { distance: 'metric' });
   await page.locator('#average-speed').fill('25');
   await expect(page.locator('#summary')).toContainText('At 25 km/h · no stops');
   // Kept on this device across reloads, not in the link.
@@ -762,6 +768,55 @@ test('an older route link with a speed opens with its points and the device spee
     );
     await expect(page.locator('#summary')).toContainText('42 min');
   }
+});
+
+test('an older route link in miles opens in the units detected on this device', async ({
+  page,
+}) => {
+  await setup(page);
+  const state = defaults();
+  state.points = [
+    { name: 'Start', coord: [-22.930929, -43.238286] },
+    { name: 'Destination', coord: [-23.05016, -43.53524] },
+  ];
+  await page.goto(
+    base + encodeStateV1({ ...state, units: 'imperial' } as typeof state),
+  );
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('#location-0')).toHaveValue(start);
+  // The test browser reads English without a country in UTC: km.
+  await expect(page.locator('#summary')).toContainText('42 km');
+});
+
+test.describe('a browser set to American English', () => {
+  test.use({ locale: 'en-US' });
+  test('Automatic units follow the browser region and Settings name them', async ({
+    page,
+  }) => {
+    await setup(page);
+    await fillPair(page);
+    await expect(page.locator('#summary')).toContainText('26.1 mi');
+    await expect(page.locator('#speed-unit')).toHaveText('mph');
+    await page.locator('#open-settings').click();
+    await expect(page.locator('#distance-units')).toHaveValue('auto');
+    await expect(page.locator('#distance-units option[value=auto]')).toHaveText(
+      'Automatic (mi)',
+    );
+    await expect(
+      page.locator('#temperature-units option[value=auto]'),
+    ).toHaveText('Automatic (°F)');
+    await page.locator('#distance-units').selectOption('metric');
+    await page.locator('#close-settings').click();
+    await expect(page.locator('#summary')).toContainText('42 km');
+    await page.locator('#language').selectOption('pt');
+    await page.locator('#open-settings').click();
+    await expect(page.locator('#distance-units option[value=auto]')).toHaveText(
+      'Automático (mi)',
+    );
+    await expect(
+      page.locator('#distance-units option[value=metric]'),
+    ).toHaveText('Quilômetros');
+  });
 });
 
 test('an invalid settings URL leaves every server unchanged', async ({

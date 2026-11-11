@@ -14,7 +14,6 @@ export interface Point {
 }
 export interface State {
   departure?: string;
-  units?: 'metric' | 'imperial';
   language?: 'en' | 'pt';
   version: 1;
   points: Point[];
@@ -66,7 +65,6 @@ export interface Route {
 }
 export const defaults = (): State => ({
   version: 1,
-  units: 'metric',
   points: [
     { name: 'Start', coord: null },
     { name: 'Destination', coord: null },
@@ -169,7 +167,8 @@ export function encodeStateV1(state: State): string {
 }
 /**
  * `#v2=` link: base64url raw DEFLATE of a positional JSON array
- * `[points, prefer, name, units, language, speed, departure, servers]`.
+ * `[points, prefer, name, units, language, speed, departure, servers]`; the
+ * units and speed slots are kept as 0 (both are now device preferences).
  * Points are `[name, lat, lon]` (6 decimals) or `[name]`; absent options are 0
  * and trailing ones are dropped; servers are omitted when all are defaults and
  * otherwise use "" for each default. Decoding reuses `validateState`.
@@ -187,11 +186,7 @@ export function encodeState(state: State): string {
     ),
     state.prefer === true ? 1 : state.prefer === false ? 0 : state.prefer,
     state.name,
-    state.units === 'imperial'
-      ? 'i'
-      : state.units === 'metric'
-        ? 'm'
-        : (state.units ?? 0),
+    0, // Former distance units slot, kept so positions stay compatible.
     state.language ?? 0,
     0, // Former average speed slot, kept so positions stay compatible.
     state.departure ?? 0,
@@ -211,8 +206,9 @@ function decodeV2(text: string): unknown {
   if (bytes.length > MAX_V2_JSON_BYTES) throw new Error(INVALID_LINK);
   const x: unknown = JSON.parse(strFromU8(bytes));
   if (!Array.isArray(x) || !Array.isArray(x[0])) throw new Error(INVALID_LINK);
-  // Index 5 held the average speed, now a device preference that links ignore.
-  const [points, prefer, name, units, language, , departure, servers] =
+  // Indexes 3 and 5 held the distance units and average speed, now device
+  // preferences that links ignore.
+  const [points, prefer, name, , language, , departure, servers] =
     x as unknown[];
   if (servers !== undefined && servers !== 0 && !Array.isArray(servers))
     throw new Error(INVALID_LINK);
@@ -232,8 +228,6 @@ function decodeV2(text: string): unknown {
     ),
     prefer: prefer === 1 ? true : prefer === 0 ? false : prefer,
     name,
-    units:
-      units === 'm' ? 'metric' : units === 'i' ? 'imperial' : optional(units),
     language: optional(language),
     departure: optional(departure),
     osrm: server(0),
@@ -260,15 +254,15 @@ export function decodeState(hash: string): State {
   );
 }
 /**
- * Validates untrusted state from links, the JSON editor or backups. A legacy
- * `averageSpeedKmh` (any value) is ignored: the speed is a device preference.
+ * Validates untrusted state from links, the JSON editor or backups. Legacy
+ * `averageSpeedKmh` and `units` (any value) are ignored: the speed and the
+ * units are device preferences.
  */
 export function validateState(raw: unknown): State {
   if (!raw || typeof raw !== 'object')
     throw new Error('This route link contains invalid points or options.');
   const x = { ...raw } as State;
   if (
-    (x.units !== undefined && !['metric', 'imperial'].includes(x.units)) ||
     (x.language !== undefined && !['en', 'pt'].includes(x.language)) ||
     (x.departure !== undefined &&
       (typeof x.departure !== 'string' ||
@@ -295,7 +289,6 @@ export function validateState(raw: unknown): State {
     points: x.points.map((p) => ({ name: p.name, coord: p.coord })),
     prefer: x.prefer,
     name: x.name,
-    ...(x.units !== undefined ? { units: x.units } : {}),
     ...(x.language !== undefined ? { language: x.language } : {}),
     ...(x.departure !== undefined ? { departure: x.departure } : {}),
     osrm: serverUrl(x.osrm),
