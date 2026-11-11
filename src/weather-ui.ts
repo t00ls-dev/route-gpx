@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { type Route, type State, serverUrl } from './core';
 import { t, weatherDescription } from './i18n';
 import { distanceLabel, precipitationLabel, temperatureLabel } from './units';
-import { classifyWeather, uvCategory } from './weather-risk';
+import { classifyWeather, groupWeather, uvCategory } from './weather-risk';
 import { windRelation, windStrength, windFlowDirection } from './weather-wind';
 import { icon, centerIcon } from './icons';
 import {
@@ -251,14 +251,88 @@ export function setupWeather(
     details.replaceChildren();
     // On a road used both ways, each sample names its pass.
     const passes = weatherPasses(sourceRoute!, points);
-    points.forEach((point, i) => {
+    // What each sample shows; consecutive equivalent samples share a card.
+    const facts = points.map((point, i) => {
       const hour = nearestHour(forecast!.hours[i], passage[i]);
-      const risks = classifyWeather(
-        weatherWindow(forecast!.hours[i], passage[i]),
+      const window = weatherWindow(forecast!.hours[i], passage[i]);
+      const risks = classifyWeather(window);
+      const uvRisk = risks.find((risk) => UV_RISKS.has(risk.text));
+      const nearUv = hour.uv === null ? null : Math.round(hour.uv);
+      // A UV alert covers the worst hour of the passage window.
+      const topUv = uvRisk
+        ? Math.round(Math.max(...window.map((h) => h.uv ?? -Infinity)))
+        : nearUv;
+      return {
+        point,
+        hour,
+        risks,
+        uvRisk,
+        nearUv,
+        topUv,
+        weather: weatherDescription(hour.code),
+        relation: windRelation(hour.wind, hour.windDirection, point.bearing),
+        pass: passes[i],
+      };
+    });
+    const groups = groupWeather(
+      facts.map((f) => ({
+        stop: !!f.point.stop,
+        text: f.weather.text,
+        severity: f.risks[0]?.severity ?? 0,
+        risks: f.risks.map((risk) => risk.text).sort(),
+        relation: f.relation,
+        uv: f.topUv !== null && f.topUv >= 1 ? uvCategory(f.topUv) : null,
+        uvAlert: !!f.uvRisk,
+        pass: f.pass,
+        temperature: f.hour.temperature,
+        probability: f.hour.probability,
+        wind: f.hour.wind,
+      })),
+    );
+    const speedUnit = () => (distanceUnits() === 'imperial' ? 'mph' : 'km/h');
+    const speedLabel = (kmh: number | null) =>
+      kmh === null
+        ? null
+        : `${speedFromKmh(kmh, distanceUnits()).toLocaleString(locale, {
+            maximumFractionDigits: 1,
+          })} ${speedUnit()}`;
+    /** "4 km" or "4–9 km": the number of the lowest, the label of the highest. */
+    const range = (
+      values: (number | null)[],
+      label: (value: number | null) => string,
+    ) => {
+      const known = values.filter((v): v is number => v !== null);
+      if (!known.length) return label(null);
+      const low = Math.min(...known),
+        high = Math.max(...known);
+      const top = label(high);
+      return label(low) === top ? top : `${label(low).split(' ')[0]}–${top}`;
+    };
+    const clock = (v: number) =>
+      new Date(v).toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    const sameDay = (a: number, b: number) =>
+      new Date(a).toDateString() === new Date(b).toDateString();
+    groups.forEach((group) => {
+      const first = group[0],
+        last = group.at(-1)!,
+        // The marker sits on the middle sample of the run.
+        mid = group[Math.floor((group.length - 1) / 2)];
+      const f = facts[first],
+        m = facts[mid];
+      const { weather, relation, pass, risks, uvRisk } = f;
+      const at = (i: number) => facts[i];
+      const values = (pick: (i: number) => number | null) => group.map(pick);
+      const km = range(
+        values((i) => at(i).point.distance),
+        (v) => distanceLabel(v ?? 0, distanceUnits(), locale),
       );
-      const weather = weatherDescription(hour.code);
-      const km = distanceLabel(point.distance, distanceUnits(), locale);
-      const pass = passes[i];
+      const when =
+        first === last
+          ? time(passage[first])
+          : `${time(passage[first])}–${sameDay(passage[first], passage[last]) ? clock(passage[last]) : time(passage[last])}`;
       const passText = pass
         ? ` · ${t(pass === 'return' ? 'Return' : 'Outbound')}`
         : '';
@@ -268,77 +342,77 @@ export function setupWeather(
       const detail = document.createElement('button');
       detail.type = 'button';
       detail.className = 'weather-card';
-      detail.id = `weather-point-${i}`;
+      detail.id = `weather-point-${first}`;
       detail.dataset.severity = String(severity);
       const header = document.createElement('span');
       header.className = 'weather-card-header';
-      const when = document.createElement('strong');
-      when.textContent = `${time(passage[i])} · ${km}${passText}`;
+      const heading = document.createElement('strong');
+      heading.textContent = `${when} · ${km}${passText}`;
       const badge = document.createElement('span');
       badge.className = 'weather-card-severity';
       badge.textContent = t(severity ? `Alert ${severity}` : 'No alert');
-      header.append(when, badge);
+      header.append(heading, badge);
       const conditions = document.createElement('span');
       conditions.className = 'weather-card-conditions';
       conditions.append(icon(weather.icon), t(weather.text));
       // One topic per line, as wind and UV, in the chosen units and the
-      // interface's number format.
+      // interface's number format; a merged card shows ranges.
       const temperature = document.createElement('span');
       temperature.className = 'weather-card-temperature';
       temperature.append(
         icon('thermometer'),
-        temperatureLabel(hour.temperature, temperatureUnits(), locale),
+        range(
+          values((i) => at(i).hour.temperature),
+          (v) => temperatureLabel(v, temperatureUnits(), locale),
+        ),
       );
       const rain = document.createElement('span');
       rain.className = 'weather-card-rain';
       rain.append(
         icon('droplet'),
         t(
-          `Rain ${hour.probability ?? '—'}% · ${precipitationLabel(hour.precipitation, temperatureUnits(), locale)}`,
+          `Rain ${range(
+            values((i) => at(i).hour.probability),
+            (v) => `${v ?? '—'}%`,
+          )} · ${range(
+            values((i) => at(i).hour.precipitation),
+            (v) => precipitationLabel(v, temperatureUnits(), locale),
+          )}`,
         ),
-      );
-      const relation = windRelation(
-        hour.wind,
-        hour.windDirection,
-        point.bearing,
       );
       const wind = document.createElement('span');
       wind.className = 'weather-card-wind';
-      const windSpeed =
-        hour.wind === null
-          ? null
-          : speedFromKmh(hour.wind, distanceUnits()).toLocaleString(locale, {
-              maximumFractionDigits: 1,
-            });
+      const windRange = values((i) => at(i).hour.wind).every((v) => v === null)
+        ? null
+        : range(
+            values((i) => at(i).hour.wind),
+            (v) => speedLabel(v) ?? '—',
+          );
       wind.append(
         icon('wind'),
         document.createTextNode(
-          `${t(relation)}${windSpeed === null ? '' : ` · ${windSpeed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`}`,
+          `${t(relation)}${windRange === null ? '' : ` · ${windRange}`}`,
         ),
       );
       detail.append(header, conditions, temperature, rain, wind);
-      // UV only while the sun counts (rounded index 1 or more). A UV alert
-      // covers the worst hour of the passage window, so the line then shows
-      // the range from the nearest hour to that worst value and carries the
-      // alert itself, instead of a separate warning that could contradict it.
-      const uvRisk = risks.find((risk) => UV_RISKS.has(risk.text));
-      const windowUv = Math.max(
-        ...weatherWindow(forecast!.hours[i], passage[i]).map(
-          (h) => h.uv ?? -Infinity,
-        ),
-      );
-      const nearUv = hour.uv === null ? null : Math.round(hour.uv);
-      const topUv = uvRisk ? Math.round(windowUv) : nearUv;
+      // UV only while the sun counts (rounded index 1 or more). With a UV
+      // alert the line carries it, from the nearest hour up to the worst one.
       let uvText = '';
-      if (topUv !== null && topUv >= 1) {
-        const range =
-          nearUv === null || nearUv >= topUv
-            ? `${topUv}`
-            : `${nearUv}–${topUv}`;
-        uvText = t(`UV ${range} · ${uvCategory(topUv)}`);
+      const tops = values((i) => at(i).topUv).filter(
+        (v): v is number => v !== null,
+      );
+      if (tops.length && Math.max(...tops) >= 1) {
+        const high = Math.max(...tops);
+        const lows = values((i) => at(i).nearUv ?? at(i).topUv).filter(
+          (v): v is number => v !== null,
+        );
+        const low = Math.min(...lows, high);
+        uvText = t(
+          `UV ${low < high ? `${low}–${high}` : high} · ${uvCategory(high)}`,
+        );
         const uv = document.createElement('span');
         uv.className = 'weather-card-uv';
-        uv.dataset.category = uvCategory(topUv);
+        uv.dataset.category = uvCategory(high);
         if (uvRisk) uv.dataset.alert = '';
         uv.append(
           icon(uvRisk ? 'alert' : 'weather-sun'),
@@ -369,6 +443,7 @@ export function setupWeather(
       markerIcon.setAttribute('aria-hidden', 'true');
       const mapSymbol = icon(weather.icon);
       markerIcon.append(mapSymbol);
+      const hour = m.hour;
       const strength = windStrength(hour.wind);
       const flow =
         hour.wind !== null && hour.wind >= 1
@@ -395,10 +470,10 @@ export function setupWeather(
             });
       const windUnit = document.createElement('span');
       windUnit.className = 'weather-marker-wind-unit';
-      windUnit.textContent = distanceUnits() === 'imperial' ? 'mph' : 'km/h';
+      windUnit.textContent = speedUnit();
       windBadge.append(arrow, windValue, windUnit);
       markerBody.append(markerIcon, windBadge);
-      const marker = L.marker(point.coord, {
+      const marker = L.marker(m.point.coord, {
         pane: 'weather',
         icon: L.divIcon({
           // A return marker hangs to the left, beside the outbound one.
@@ -413,15 +488,16 @@ export function setupWeather(
         keyboard: true,
       }).addTo(markers);
       centerIcon(mapSymbol);
+      const markerSpeed = speedLabel(hour.wind);
       marker
         .getElement()
         ?.setAttribute(
           'aria-label',
-          `${t('View weather')}: ${time(passage[i])} · ${km}${passText} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${windSpeed === null ? '' : ` · ${windSpeed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
+          `${t('View weather')}: ${when} · ${km}${passText} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${markerSpeed === null ? '' : ` · ${markerSpeed}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
         );
       detail.setAttribute(
         'aria-label',
-        `${t('Show on map')}: ${time(passage[i])} · ${km}${passText} · ${conditions.textContent} · ${temperature.textContent} · ${rain.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${uvRisk ? ` · ${uvText}` : ''}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
+        `${t('Show on map')}: ${when} · ${km}${passText} · ${conditions.textContent} · ${temperature.textContent} · ${rain.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${uvRisk ? ` · ${uvText}` : ''}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
       );
       detail.setAttribute('aria-controls', 'map');
       detail.onclick = () => {
@@ -431,7 +507,7 @@ export function setupWeather(
         )
           $('panel-toggle').click();
         map.stop();
-        map.setView(point.coord, Math.max(map.getZoom(), 12), {
+        map.setView(m.point.coord, Math.max(map.getZoom(), 12), {
           animate: false,
         });
         marker.getElement()?.focus({ preventScroll: true });

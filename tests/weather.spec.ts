@@ -1029,6 +1029,55 @@ test.describe('phone page height', () => {
   });
 });
 
+test('consecutive samples with equivalent weather share one card and one marker', async ({
+  page,
+}) => {
+  // 111 km at 5 km/h: samples every 10 km between start and destination.
+  await setup(page, true, 5);
+  let calls = 0;
+  await page.route('**/v1/forecast?**', (route) => {
+    calls++;
+    const rows = weatherResponse(new URL(route.request().url()));
+    rows.forEach(({ hourly }, i) => {
+      hourly.temperature_2m.fill(22 + (i % 3) * 0.5);
+      hourly.precipitation.fill(0);
+      hourly.precipitation_probability.fill(10);
+      hourly.weather_code.fill(0);
+      hourly.wind_gusts_10m.fill(10);
+    });
+    return route.fulfill({ json: rows });
+  });
+  await date(page);
+  await fetchWeather(page);
+  const cards = page.locator('.weather-card');
+  // Start and destination keep their own cards; the stretch between merges.
+  await expect(cards).toHaveCount(3);
+  await expect(page.locator('.weather-marker')).toHaveCount(3);
+  const merged = cards.nth(1);
+  await expect(merged.locator('.weather-card-header')).toContainText(
+    '10–110 km',
+  );
+  // From the first to the last hour of the stretch, on the next day.
+  await expect(merged.locator('.weather-card-header')).toContainText(
+    /Nov 8, \d{2}:\d{2} [AP]M–Nov 9, \d{2}:\d{2} [AP]M/,
+  );
+  await expect(merged.locator('.weather-card-temperature')).toHaveText(
+    '22–23 °C',
+  );
+  await expect(merged).toHaveAttribute('aria-label', /10–110 km/);
+  await page.locator('.weather-marker').nth(1).click();
+  await expect(merged).toHaveAttribute('aria-current', 'true');
+  await page.locator('#language').selectOption('pt');
+  await expect(merged.locator('.weather-card-header')).toContainText(
+    '10–110 km',
+  );
+  await expect(merged.locator('.weather-card-rain')).toHaveText(
+    'Chuva 10% · 0 mm',
+  );
+  // Merging only changes the presentation: still one weather request.
+  expect(calls).toBe(1);
+});
+
 test('a road used both ways labels outbound and return, with both markers visible', async ({
   page,
 }) => {
@@ -1192,9 +1241,9 @@ for (const [severity, color] of [
     await setup(page);
     await page.route('**/v1/forecast?**', (route) => {
       const rows = weatherResponse(new URL(route.request().url()));
-      for (const row of rows) {
+      for (const [location, row] of rows.entries()) {
         const values = row.hourly;
-        values.temperature_2m.fill(20);
+        values.temperature_2m.fill(location % 2 ? 23 : 20);
         values.precipitation_probability.fill(severity === 1 ? 80 : 0);
         values.precipitation.fill(severity === 3 ? 12 : 0);
         values.weather_code.fill(severity === 3 ? 65 : 0);
@@ -1265,6 +1314,17 @@ test('slower travel adds hourly samples automatically and faster travel reuses t
   page,
 }) => {
   await setup(page, false, 60);
+  // Temperature follows longitude (about 2.4 °C per 15 km sample along the
+  // equator), so samples from separate requests never merge into one card.
+  await page.route('**/v1/forecast?**', (route) => {
+    const url = new URL(route.request().url());
+    const longitudes = url.searchParams.get('longitude')!.split(',');
+    const rows = weatherResponse(url);
+    rows.forEach(({ hourly }, i) =>
+      hourly.temperature_2m.fill(20 + Number(longitudes[i]) * 18),
+    );
+    return route.fulfill({ json: rows });
+  });
   const requests: URL[] = [];
   page.on('request', (request) => {
     if (request.url().includes('/v1/forecast?'))
