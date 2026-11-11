@@ -1,16 +1,14 @@
 import L from 'leaflet';
-import { meters, type Coord, type Route, type State } from './core';
+import { meters, type Coord, type Route } from './core';
 import { byId as $ } from './dom';
 import { icon } from './icons';
-import { distanceLabel } from './units';
 import { indexTrack, pointAtDistance, type TrackIndex } from './track-position';
 import type { Range } from './route-overlays';
-import { distanceUnits } from './unit-preferences';
 
 /**
  * Route marks: direction arrows, separate parallel lines where the route uses
- * the same road twice in opposite directions (out-and-back), and an optional
- * halfway point, and the switch for weather icons on the map. Visual only:
+ * the same road twice in opposite directions (out-and-back), and the switch
+ * for weather icons on the map. Visual only:
  * the route, links, GPX and weather requests are untouched.
  */
 
@@ -226,13 +224,12 @@ const isOn = (key: string, fallback: boolean) => {
 
 export function setupRouteMarks(
   map: L.Map,
-  deps: { route: () => Route | null; state: () => State },
+  deps: { route: () => Route | null },
 ) {
   const layer = L.layerGroup().addTo(map);
   map.createPane('route-marks').style.zIndex = '460';
   const settings = {
     arrows: isOn('route-arrows', true),
-    halfway: isOn('route-halfway', false),
     weather: isOn('weather-markers', true),
   };
   // Weather icons live in their own pane; hiding it keeps the cards and the
@@ -252,7 +249,6 @@ export function setupRouteMarks(
   group.append(heading);
   for (const [id, key, label] of [
     ['arrows', 'route-arrows', 'Direction arrows'],
-    ['halfway', 'route-halfway', 'Halfway point'],
     ['weather', 'weather-markers', 'Weather on the map'],
   ] as const) {
     const wrapper = document.createElement('label');
@@ -327,26 +323,6 @@ export function setupRouteMarks(
           .getElement()
           ?.setAttribute('aria-hidden', 'true');
       }
-    }
-    if (settings.halfway) {
-      const half = index.total / 2;
-      const point = pointAtDistance(index, half)!;
-      const state = deps.state();
-      const marker = L.marker(point.coord, {
-        pane: 'route-marks',
-        keyboard: false,
-        icon: L.divIcon({
-          className: 'route-halfway',
-          html: '<span>½</span>',
-          iconSize: [26, 26],
-          // Beside the point, not on it: on a round trip the halfway point is
-          // the turnaround, where a route pin already stands.
-          iconAnchor: [34, 13],
-        }),
-      }).addTo(layer);
-      marker.bindTooltip(
-        `Halfway · ${distanceLabel(half, distanceUnits(), state.language === 'pt' ? 'pt-BR' : 'en')}`,
-      );
     }
   }
   map.on('zoomend moveend', draw);

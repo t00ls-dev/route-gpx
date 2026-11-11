@@ -12,7 +12,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 - **GPX, FIT and TCX:** import GPX, FIT and TCX files up to 10 MB, also as `.gz` or `.zip` (only geometry, names, course points and recorded elevation are read, locally) and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates, in Celsius or Fahrenheit.
 
-- **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight and route marks (direction arrows, separate out-and-back lines, halfway point).
+- **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight and route marks (direction arrows, separate out-and-back lines, weather icons on or off).
 - **Save and share:** route links, named routes saved in this browser and JSON backup import/export.
 - **Interface:** available in English and Portuguese.
 
