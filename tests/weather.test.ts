@@ -284,7 +284,7 @@ it('keeps sampling the long remainder when mandatory waypoints cluster near the 
   expect(Math.max(...gaps)).toBeLessThan(37500);
 });
 
-it('samples at regular 20 km intervals before the destination', () => {
+it('spaces samples evenly between route points, no more than 20 km apart', () => {
   const samples = sampleRoute(
     {
       ...route,
@@ -297,9 +297,13 @@ it('samples at regular 20 km intervals before the destination', () => {
     },
     [],
   );
-  expect(samples.slice(0, -1).map((point) => point.distance)).toEqual([
-    0, 20000, 40000,
-  ]);
+  // 55.6 km between start and destination: three equal gaps of 18.5 km.
+  const gaps = samples.slice(1).map((p, i) => p.distance - samples[i].distance);
+  expect(gaps).toHaveLength(3);
+  for (const gap of gaps) {
+    expect(gap).toBeLessThanOrEqual(20000);
+    expect(Math.abs(gap - gaps[0])).toBeLessThan(0.01);
+  }
   expect(samples.at(-1)!.coord).toEqual([0, 0.5]);
 });
 
@@ -454,13 +458,14 @@ describe('weather samples at sharp bends', () => {
     expect(routeBends(path([0, 0], [0, 0.36]))).toEqual([]);
   });
   it('adds a sample just past the corner, facing the new direction', () => {
-    // 13 km east, then 20 km north: the corner is between distance samples.
-    const corner = path([0, 0], [0, 0.117], [0.18, 0.117]);
+    // 8 km east, then 25 km north: the corner is far from the distance
+    // sample in the middle of the 33 km leg.
+    const corner = path([0, 0], [0, 0.072], [0.225, 0.072]);
     const { samples } = sampleRouteStops(asRoute(corner), stops(corner));
     const bend = samples.filter((p) => p.bend);
     expect(bend).toHaveLength(1);
-    expect(bend[0].distance).toBeGreaterThan(13010);
-    expect(bend[0].distance).toBeLessThan(13200);
+    expect(bend[0].distance).toBeGreaterThan(8006);
+    expect(bend[0].distance).toBeLessThan(8200);
     // Heading north after the turn.
     expect(Math.abs((((bend[0].bearing ?? 0) + 180) % 360) - 180)).toBeLessThan(
       5,
@@ -509,4 +514,46 @@ describe('weather samples at sharp bends', () => {
     const [north] = path([0.001, 0.181], [0.18, 0.181]);
     expect(routeBends([east, north])).toEqual([]);
   });
+});
+
+it('never samples right beside a route point, without gaps over the spacing', () => {
+  // Out-and-back: 15.3 km north to a stop, then back to the start.
+  const out = Array.from({ length: 154 }, (_, i): [number, number] => [
+    i * 0.0009,
+    0,
+  ]);
+  const trip: Route = {
+    segments: [[...out, ...out.slice(0, -1).reverse()]],
+    distance: 0,
+    duration: 0,
+    provider: 'test',
+    steps: [],
+  };
+  const controls = [
+    { name: 'Start', coord: out[0] },
+    { name: 'Stop 1', coord: out.at(-1)! },
+    { name: 'Destination', coord: out[0] },
+  ];
+  // At 1 km/h, 30.6 km would need 30 points: the cap of 20 takes priority
+  // and the spacing grows to 2 km.
+  for (const [speed, spacing] of [
+    [25, 20000],
+    [15, 15000],
+    [5, 5000],
+    [1, 2000],
+  ]) {
+    const { samples } = sampleRouteStops(trip, controls, speed);
+    expect(samples.length).toBeLessThanOrEqual(20);
+    const stops = samples.filter((p) => p.stop);
+    expect(stops).toHaveLength(3);
+    for (const sample of samples.filter((p) => !p.stop))
+      for (const stop of stops)
+        expect(
+          Math.abs(sample.distance - stop.distance),
+        ).toBeGreaterThanOrEqual(spacing / 2 - 1);
+    for (let i = 1; i < samples.length; i++)
+      expect(samples[i].distance - samples[i - 1].distance).toBeLessThanOrEqual(
+        spacing + 0.01,
+      );
+  }
 });

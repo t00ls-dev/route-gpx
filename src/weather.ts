@@ -266,18 +266,23 @@ export function sampleRouteStops(
       : [...distinct];
   const remaining = MAX_WEATHER_POINTS - unique.length;
   if (remaining > 0 && total > 0) {
-    // Expand in multiples of the preferred spacing to retain every mandatory point within the cap.
+    // Grow the spacing in multiples of the preferred one so every route point fits within the cap.
     const spacing = Math.max(
       preferredSpacing,
       Math.ceil(total / (remaining + 1) / preferredSpacing) * preferredSpacing,
     );
-    for (
-      let distance = spacing;
-      distance < total && unique.length < MAX_WEATHER_POINTS;
-      distance += spacing
-    ) {
-      if (!unique.some((point) => Math.abs(point.distance - distance) < 1))
-        unique.push(interpolate(distance));
+    // Even spacing within each leg between route points: no sample lands
+    // beside a stop (same place and hour), and no gap exceeds the spacing
+    // while the cap allows; moving a stop only changes its neighbouring legs.
+    const ends = [...unique].sort((a, b) => a.distance - b.distance);
+    for (let i = 1; i < ends.length; i++) {
+      const from = ends[i - 1].distance,
+        leg = ends[i].distance - from;
+      const parts = Math.ceil(leg / spacing - 1e-9);
+      for (let k = 1; k < parts; k++) {
+        if (unique.length >= MAX_WEATHER_POINTS) break;
+        unique.push(interpolate(from + (leg * k) / parts));
+      }
     }
     if (unique.length === 2 && total < preferredSpacing)
       unique.push(interpolate(total / 2));

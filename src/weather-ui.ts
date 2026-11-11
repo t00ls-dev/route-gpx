@@ -313,8 +313,14 @@ export function setupWeather(
         hour: '2-digit',
         minute: '2-digit',
       });
-    const sameDay = (a: number, b: number) =>
-      new Date(a).toDateString() === new Date(b).toDateString();
+    // Local calendar days between two times, for "23:51–06:23 (+1)".
+    const daysApart = (a: number, b: number) => {
+      const day = (v: number) => {
+        const d = new Date(v);
+        return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+      };
+      return Math.round((day(b) - day(a)) / 86_400_000);
+    };
     groups.forEach((group) => {
       const first = group[0],
         last = group.at(-1)!,
@@ -329,10 +335,15 @@ export function setupWeather(
         values((i) => at(i).point.distance),
         (v) => distanceLabel(v ?? 0, distanceUnits(), locale),
       );
+      // A later day: the end time with its day offset, as "23:51–06:23 (+1)".
+      const until = (from: number, to: number) => {
+        const days = daysApart(from, to);
+        return `${clock(to)}${days ? ` (+${days})` : ''}`;
+      };
       const when =
         first === last
           ? time(passage[first])
-          : `${time(passage[first])}–${sameDay(passage[first], passage[last]) ? clock(passage[last]) : time(passage[last])}`;
+          : `${time(passage[first])}–${until(passage[first], passage[last])}`;
       const passText = pass
         ? ` · ${t(pass === 'return' ? 'Return' : 'Outbound')}`
         : '';
@@ -347,11 +358,16 @@ export function setupWeather(
       const header = document.createElement('span');
       header.className = 'weather-card-header';
       const heading = document.createElement('strong');
-      heading.textContent = `${when} · ${km}${passText}`;
+      heading.textContent = when;
       const badge = document.createElement('span');
       badge.className = 'weather-card-severity';
       badge.textContent = t(severity ? `Alert ${severity}` : 'No alert');
       header.append(heading, badge);
+      // Where along the route, on its own line like the other topics, so the
+      // header keeps the time and the badge on one line.
+      const place = document.createElement('span');
+      place.className = 'weather-card-place';
+      place.append(icon('route'), `${km}${passText}`);
       const conditions = document.createElement('span');
       conditions.className = 'weather-card-conditions';
       conditions.append(icon(weather.icon), t(weather.text));
@@ -394,7 +410,7 @@ export function setupWeather(
           `${t(relation)}${windRange === null ? '' : ` · ${windRange}`}`,
         ),
       );
-      detail.append(header, conditions, temperature, rain, wind);
+      detail.append(header, place, conditions, temperature, rain, wind);
       // UV only while the sun counts (rounded index 1 or more). With a UV
       // alert the line carries it, from the nearest hour up to the worst one.
       let uvText = '';

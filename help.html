@@ -272,7 +272,8 @@
           calendar days including today are rejected. For past dates, values are
           archived model estimates, not exact observations at each route point.
           Imported GPX, FIT and TCX tracks work too. Samples include endpoints
-          and waypoints, approximately every 20 km. Below 20 km/h, spacing is
+          and waypoints, approximately every 20 km, evenly spaced between route
+          points so none lands right beside one. Below 20 km/h, spacing is
           reduced to about one hour of travel (5 km at 5 km/h, for example).
           Points left free under the maximum go to sharp bends (a turn of 60° or
           more), just past each turn and at least 2 km from other samples, so
@@ -331,22 +332,25 @@
         </p>
         <p>
           Each sampled point has one card combining weather and risk, without a
-          separate alert list: the conditions, the temperature, rain (chance and
-          amount, for example Rain 13% · 0.2 mm), the wind relative to the route
-          and, in daylight, UV, one per line. In daylight the card also shows
-          the UV index with its WHO category (low 0–2, moderate 3–5, high 6–7,
-          very high 8–10, extreme 11+); it is a model estimate for open sky,
-          without shade or reflection, and is omitted when the service has no
-          value. When the UV alert applies, the UV line carries it and shows the
-          range from the passage hour to the worst hour around it, for example
-          UV 7–8 · very high. Alert 1, 2 and 3 use yellow, orange and red plus
-          text labels; no-alert cards are neutral. Consecutive samples with the
-          same conditions share one card and one map marker, with time, distance
-          and value ranges (for example 10:30–12:30 · 4–9 km and 22–23 °C): the
-          same condition, alerts, wind relation and UV category, and temperature
-          within 2 °C, rain chance within 20 points and wind within 10 km/h of
-          the first of them. The start, stops and destination always keep their
-          own card. All cards use the main panel scroll.
+          separate alert list: the time and alert level, the distance along the
+          route (with Outbound or Return on a road used both ways), the
+          conditions, the temperature, rain (chance and amount, for example Rain
+          13% · 0.2 mm), the wind relative to the route and, in daylight, UV,
+          one per line. In daylight the card also shows the UV index with its
+          WHO category (low 0–2, moderate 3–5, high 6–7, very high 8–10, extreme
+          11+); it is a model estimate for open sky, without shade or
+          reflection, and is omitted when the service has no value. When the UV
+          alert applies, the UV line carries it and shows the range from the
+          passage hour to the worst hour around it, for example UV 7–8 · very
+          high. Alert 1, 2 and 3 use yellow, orange and red plus text labels;
+          no-alert cards are neutral. Consecutive samples with the same
+          conditions share one card and one map marker, with time, distance and
+          value ranges (a range ending the next day shows the end time with +1)
+          (for example 10:30–12:30 · 4–9 km and 22–23 °C): the same condition,
+          alerts, wind relation and UV category, and temperature within 2 °C,
+          rain chance within 20 points and wind within 10 km/h of the first of
+          them. The start, stops and destination always keep their own card. All
+          cards use the main panel scroll.
         </p>
         <p>
           Cards use matching outline SVG icons; map markers use colored,
@@ -803,17 +807,18 @@
           passadas, os valores são estimativas arquivadas dos modelos, não
           observações exatas em cada ponto da rota. Também funciona com trajetos
           GPX, FIT e TCX importados. As amostras incluem origem, destino e
-          passagens, aproximadamente a cada 20 km. Abaixo de 20 km/h, o
-          espaçamento é reduzido para cerca de uma hora de deslocamento (5 km a
-          5 km/h, por exemplo). Os pontos que sobram abaixo do máximo vão para
-          as curvas fechadas (mudança de direção de 60° ou mais), logo depois de
-          cada curva e a pelo menos 2 km das outras amostras, para a relação com
-          o vento acompanhar a nova direção. O máximo de 20 pontos tem
-          prioridade e pode exigir intervalos maiores. Uma rota com mais de 20
-          pontos mantém origem e destino e amostra as paradas mais próximas de
-          uma distribuição uniforme ao longo da rota, preferindo as paradas com
-          nome; o painel informa quantas paradas foram amostradas. Selecione um
-          ícone de tempo no mapa para abrir seu card de clima no painel.
+          passagens, aproximadamente a cada 20 km, distribuídas por igual entre
+          os pontos da rota para nenhuma cair colada a um deles. Abaixo de 20
+          km/h, o espaçamento é reduzido para cerca de uma hora de deslocamento
+          (5 km a 5 km/h, por exemplo). Os pontos que sobram abaixo do máximo
+          vão para as curvas fechadas (mudança de direção de 60° ou mais), logo
+          depois de cada curva e a pelo menos 2 km das outras amostras, para a
+          relação com o vento acompanhar a nova direção. O máximo de 20 pontos
+          tem prioridade e pode exigir intervalos maiores. Uma rota com mais de
+          20 pontos mantém origem e destino e amostra as paradas mais próximas
+          de uma distribuição uniforme ao longo da rota, preferindo as paradas
+          com nome; o painel informa quantas paradas foram amostradas. Selecione
+          um ícone de tempo no mapa para abrir seu card de clima no painel.
           Selecionar um card centraliza o mapa no ponto e recolhe o painel no
           celular; Enter e Espaço também funcionam. Numa via que a rota usa nos
           dois sentidos, como uma ida e volta, cada card diz Ida ou Volta, e os
@@ -867,23 +872,26 @@
         </p>
         <p>
           Cada ponto amostrado tem um único card com condições e riscos, sem
-          lista separada de alertas: as condições, a temperatura, a chuva
-          (chance e quantidade, por exemplo Chuva 13% · 0,2 mm), o vento em
-          relação à rota e, durante o dia, o UV, um por linha. Durante o dia, o
-          card também mostra o índice UV com a categoria da OMS (baixo 0–2,
-          moderado 3–5, alto 6–7, muito alto 8–10, extremo 11+); é uma
-          estimativa do modelo para céu aberto, sem sombra nem reflexo, e é
-          omitido quando o serviço não tem o valor. Quando há alerta de UV, a
-          própria linha de UV o indica e mostra a faixa da hora da passagem até
-          a pior hora em torno dela, por exemplo UV 7–8 · muito alto. Alerta 1,
-          2 e 3 usam amarelo, laranja e vermelho, além de rótulos; sem alerta, o
-          card é neutro. Amostras seguidas com as mesmas condições dividem um
-          card e um marcador no mapa, com faixas de horário, distância e valores
-          (por exemplo 10:30–12:30 · 4–9 km e 22–23 °C): mesma condição, mesmos
-          alertas, mesma relação com o vento e mesma categoria de UV, com
-          temperatura até 2 °C, chance de chuva até 20 pontos e vento até 10
-          km/h da primeira delas. A partida, as paradas e a chegada sempre têm
-          card próprio. Todos usam a rolagem do painel principal.
+          lista separada de alertas: o horário e o nível de alerta, a distância
+          na rota (com Ida ou Volta numa via usada nos dois sentidos), as
+          condições, a temperatura, a chuva (chance e quantidade, por exemplo
+          Chuva 13% · 0,2 mm), o vento em relação à rota e, durante o dia, o UV,
+          um por linha. Durante o dia, o card também mostra o índice UV com a
+          categoria da OMS (baixo 0–2, moderado 3–5, alto 6–7, muito alto 8–10,
+          extremo 11+); é uma estimativa do modelo para céu aberto, sem sombra
+          nem reflexo, e é omitido quando o serviço não tem o valor. Quando há
+          alerta de UV, a própria linha de UV o indica e mostra a faixa da hora
+          da passagem até a pior hora em torno dela, por exemplo UV 7–8 · muito
+          alto. Alerta 1, 2 e 3 usam amarelo, laranja e vermelho, além de
+          rótulos; sem alerta, o card é neutro. Amostras seguidas com as mesmas
+          condições dividem um card e um marcador no mapa, com faixas de
+          horário, distância e valores (uma faixa que termina no dia seguinte
+          mostra o horário final com +1) (por exemplo 10:30–12:30 · 4–9 km e
+          22–23 °C): mesma condição, mesmos alertas, mesma relação com o vento e
+          mesma categoria de UV, com temperatura até 2 °C, chance de chuva até
+          20 pontos e vento até 10 km/h da primeira delas. A partida, as paradas
+          e a chegada sempre têm card próprio. Todos usam a rolagem do painel
+          principal.
         </p>
         <p>
           Os cards usam ícones SVG em traço no mesmo estilo; o mapa usa ícones
