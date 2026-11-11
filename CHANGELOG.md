@@ -14,6 +14,9 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 - On phones, the arrival shows the time on one line, with the date below it when it is on another day, and Add stop, Reverse and Round trip stay on one row.
 - On the narrowest phones, Set on map shows only its pin instead of a cut-off label.
+- Zooming with one finger (tap, then touch again and drag) no longer makes the map disappear for a moment.
+- On phones, the map credits button stays visible above the route panel; only the full-height panel hides it.
+- The English map hint reads as a sentence, for example Set the start on the map.
 
 ## [1.0.0] - 2026-11-11
 

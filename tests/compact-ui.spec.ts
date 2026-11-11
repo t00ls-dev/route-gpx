@@ -110,7 +110,14 @@ for (const width of [320, 360, 390, 430]) {
       expect(menu.x).toBeGreaterThanOrEqual(0);
       expect(menu.x + menu.width).toBeLessThan(column.x);
       await page.keyboard.press('Escape');
-      await expect(page.locator('.map-credits-toggle')).toBeHidden();
+      // With the sheet open, the credits stay on the map above it, beside the
+      // tool column that reaches the sheet on short screens.
+      await expect(page.locator('.map-credits-toggle')).toBeVisible();
+      const openCredit = (await page.locator('.map-credits').boundingBox())!;
+      expect(openCredit.y + openCredit.height).toBeLessThanOrEqual(
+        (await page.locator('#sheet').boundingBox())!.y,
+      );
+      expect(openCredit.x + openCredit.width).toBeLessThan(column.x);
       await page.locator('#panel-toggle').tap();
       const credit = (await page.locator('.map-credits').boundingBox())!,
         handle = (await page.locator('#panel-toggle').boundingBox())!;

@@ -371,11 +371,18 @@ function updateSelection() {
         .querySelector('button')
         ?.setAttribute('aria-pressed', String(i === selected));
     });
+  // A sentence, not the field label: "Set the start on the map".
+  const target =
+    selected === 0
+      ? 'the start'
+      : selected === state.points.length - 1
+        ? 'the destination'
+        : `stop ${selected}`;
   $('map-note').textContent = locked
     ? 'Route locked. Unlock editing to change it.'
     : matchMedia('(pointer: coarse)').matches
       ? 'Touch and hold to choose a route point'
-      : `Set ${pointLabel(selected)} on the map`;
+      : `Set ${target} on the map`;
   $<HTMLButtonElement>('undo').disabled =
     locked || (!undoHistory.canUndo && !dirty.size);
   $<HTMLButtonElement>('calculate').disabled =
