@@ -268,6 +268,7 @@ const pt: Record<string, string> = {
   'Close settings': 'Fechar configurações',
   'Route summary': 'Resumo da rota',
   'Route details': 'Detalhes da rota',
+  "What's new": 'Novidades',
   Import: 'Importar',
   'Copy route link': 'Copiar link da rota',
   'Copy link': 'Copiar link',

@@ -23,7 +23,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 3. Add stops, adjust the points and review the calculated route.
 4. Optionally enter a **GPX name**, then press **Download GPX**.
 
-Gestures, shortcuts and every control are explained on the [Help page](https://route-gpx.t00ls.dev/help.html).
+Gestures, shortcuts and every control are explained on the [Help page](https://route-gpx.t00ls.dev/help.html). Recent changes are listed on [What's new](https://route-gpx.t00ls.dev/changelog.html) and in the [changelog](CHANGELOG.md).
 
 ## Good to know
 

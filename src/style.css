@@ -924,14 +924,19 @@ div.step-item {
 .planner footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
   margin-top: auto;
   padding-top: 4px;
   font-size: 13px;
   color: var(--color-text-muted);
 }
 .planner footer a {
+  display: inline-flex;
+  align-items: center;
   min-height: var(--control);
+}
+.planner footer span {
+  margin-right: auto;
 }
 
 /* Export actions, always in view below the scrolling panel. */
@@ -1513,6 +1518,15 @@ dialog.settings::backdrop {
   z-index: 1;
   top: 0;
 }
+.help-page #back {
+  white-space: nowrap;
+}
+/* The narrowest phones keep the logo and drop the brand text. */
+@media (max-width: 359px) {
+  .help-page .brand {
+    font-size: 0;
+  }
+}
 .help-page h1 {
   margin: 12px 0 22px;
   font-size: 28px;
@@ -1528,6 +1542,16 @@ dialog.settings::backdrop {
   font-size: 16px;
   line-height: 1.7;
   color: #334754;
+}
+/* What's new: entries under each date, grouped by kind of change. */
+.changelog-page h3 {
+  margin: 14px 0 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+.changelog-page ul {
+  margin: 4px 0;
+  padding-left: 22px;
 }
 .help-page pre {
   padding: 14px;
