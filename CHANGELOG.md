@@ -14,7 +14,6 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 - On phones, the arrival shows the time on one line, with the date below it when it is on another day, and Add stop, Reverse and Round trip stay on one row.
 - On the narrowest phones, Set on map shows only its pin instead of a cut-off label.
-- On phones, the page returns to the map and panel when the browser leaves it scrolled after its keyboard closes, for example after typing an address in the address bar.
 
 ## [1.0.0] - 2026-11-11
 
