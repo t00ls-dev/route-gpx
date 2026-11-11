@@ -12,5 +12,6 @@ Related issue: <!-- #123, or "none" -->
 
 - [ ] UI text changes are in `src/i18n.ts`, checked in both language directions (or not applicable).
 - [ ] The README is updated and `help.html` reflects any behavior change (or not applicable).
+- [ ] User-visible changes have an entry in `CHANGELOG.md` and in both languages of `changelog.html` (or not applicable).
 - [ ] Service, privacy and credit texts are updated for new or changed external services (or not applicable).
 - [ ] No UI screenshots or generated files are committed.

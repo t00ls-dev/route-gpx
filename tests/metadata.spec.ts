@@ -131,3 +131,50 @@ test('help opens at a linked section and keeps the route hash for Back to map', 
     './index.html#v2=abc',
   );
 });
+
+test("What's new switches language and metadata and keeps the route for Back to map", async ({
+  page,
+}) => {
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  await page.goto(base + 'changelog.html?lang=pt#v2=abc');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await expect(page.locator('#changelog-pt')).toBeVisible();
+  await expect(page.locator('#changelog-en')).toBeHidden();
+  await expect(page).toHaveTitle('route-gpx — Novidades');
+  await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+    'href',
+    'https://route-gpx.t00ls.dev/changelog.html',
+  );
+  await expect(page.locator('#back')).toHaveAttribute(
+    'href',
+    './index.html#v2=abc',
+  );
+  await page.locator('#language').selectOption('en');
+  await expect(page.locator('#changelog-en')).toBeVisible();
+  await expect(page).toHaveTitle("route-gpx — What's New");
+  await expect(page.locator('meta[name=description]')).toHaveAttribute(
+    'content',
+    /See what changed/,
+  );
+  // The help link keeps the language and the route.
+  await expect(page.locator('#changelog-en a[data-page-link]')).toHaveAttribute(
+    'href',
+    './help.html?lang=en#v2=abc',
+  );
+});
+
+test("the panel footer and the help page link to What's new in the chosen language", async ({
+  page,
+}) => {
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  await page.goto(base);
+  await page.locator('#language').selectOption('pt');
+  const link = page.locator('#changelog');
+  await expect(link).toHaveText('Novidades');
+  await expect(link).toHaveAttribute('href', /^\.\/changelog\.html\?lang=pt#/);
+  await page.goto(base + 'help.html?lang=pt#v2=abc');
+  await expect(page.locator('#help-pt a[data-page-link]')).toHaveAttribute(
+    'href',
+    './changelog.html?lang=pt#v2=abc',
+  );
+});

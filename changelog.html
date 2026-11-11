@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>route-gpx — What's New</title>
+    <meta
+      name="description"
+      content="See what changed in route-gpx: new features, changes and fixes in the route planner and GPX export, newest first."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="application-name" content="route-gpx" />
+    <link rel="canonical" href="https://route-gpx.t00ls.dev/changelog.html" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="route-gpx" />
+    <meta property="og:title" content="route-gpx — What's New" />
+    <meta
+      property="og:description"
+      content="See what changed in route-gpx: new features, changes and fixes in the route planner and GPX export, newest first."
+    />
+    <meta
+      property="og:url"
+      content="https://route-gpx.t00ls.dev/changelog.html"
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:image"
+      content="https://route-gpx.t00ls.dev/social-card.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="route-gpx — Choose your roads. Download every turn."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="route-gpx — What's New" />
+    <meta
+      name="twitter:description"
+      content="See what changed in route-gpx: new features, changes and fixes in the route planner and GPX export, newest first."
+    />
+    <meta
+      name="twitter:image"
+      content="https://route-gpx.t00ls.dev/social-card.png"
+    />
+    <meta name="twitter:image:alt" content="route-gpx route planner" />
+  </head>
+  <body class="help-page changelog-page">
+    <header>
+      <a aria-label="route-gpx" class="brand" href="./index.html"
+        ><img
+          class="brand-icon"
+          src="/icons/icon.svg"
+          width="28"
+          height="28"
+          alt=""
+          aria-hidden="true"
+        />route<span>-gpx</span></a
+      ><label class="language-control"
+        ><span class="sr-only">Language / Idioma</span
+        ><select id="language" aria-label="Language / Idioma">
+          <option value="en">English</option>
+          <option value="pt">Português</option>
+        </select></label
+      ><a id="back" href="./index.html">Back to map</a>
+    </header>
+    <main>
+      <article lang="en" id="changelog-en">
+        <h1>What's new</h1>
+        <p>
+          Visible changes to route-gpx, grouped by kind. Recent changes are
+          already live and will be part of the next release. For instructions,
+          see the <a href="./help.html" data-page-link>help</a>.
+        </p>
+        <section data-release="Unreleased">
+          <h2>Recent changes</h2>
+          <h3 data-kind="Added">Added</h3>
+          <ul>
+            <li>
+              The route planner: route points from addresses, coordinates or the
+              map, OSRM routing with a Valhalla fallback, complete GPX export,
+              English and Portuguese interface, distance units, average speed,
+              undo, share links, a local library of named routes with backups,
+              map layers including satellite imagery, place suggestions while
+              typing and a separate help page.
+            </li>
+            <li>
+              A What's new page with the user-visible changes, linked from the
+              route panel footer and the help page.
+              <a href="https://github.com/t00ls-dev/route-gpx/issues/83">#83</a>
+            </li>
+            <li>
+              Turn directions for imported tracks and for routes saved before
+              turn details existed, requested only when the Itinerary is opened;
+              the track itself never changes.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/81">#81</a>
+            </li>
+            <li>
+              Climbs along the route in Elevation: start, length, gain, average
+              and steepest grade and passage time.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/79">#79</a>
+            </li>
+            <li>
+              Automatic departure at the next half hour, so weather, arrival and
+              daylight are ready without choosing a time.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/78">#78</a>
+            </li>
+            <li>
+              Turn arrows and maneuver text in the Itinerary.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/77">#77</a>
+            </li>
+            <li>
+              FIT and TCX import alongside GPX.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/75">#75</a>
+            </li>
+            <li>
+              An elevation profile with total gain and loss.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/72">#72</a>
+            </li>
+            <li>
+              Direction arrows, out-and-back sections drawn as parallel lines
+              and the halfway point on the route.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/71">#71</a>
+            </li>
+            <li>
+              Route coloring by daylight, chosen in Map layers.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/70">#70</a>
+            </li>
+            <li>
+              Travel the route: a cursor that plays along the track with
+              distance and passage time.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/69">#69</a>
+            </li>
+            <li>
+              UV index on weather cards, with alerts for very high and extreme
+              UV.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/68">#68</a>
+            </li>
+            <li>
+              One-finger zoom on touch screens: tap, then touch again and drag.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/63">#63</a>
+            </li>
+            <li>
+              Daylight along the route: sunrise, sunset and distance driven in
+              the dark.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/59">#59</a>
+            </li>
+            <li>
+              An edit lock that protects the route from accidental changes.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/57">#57</a>
+            </li>
+            <li>
+              Shorter route links that messaging apps make clickable; older
+              links still open.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/10">#10</a>
+            </li>
+            <li>Weather along the route for the chosen departure.</li>
+          </ul>
+          <h3 data-kind="Changed">Changed</h3>
+          <ul>
+            <li>
+              New planner layout: a side panel on wide screens and a bottom
+              sheet with three heights on phones, a fixed bar with Download GPX
+              and Copy link, trip options available before a route exists and
+              settings in a dialog.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/82">#82</a>
+            </li>
+            <li>
+              Weather works on routes with more than 20 points, sampling start,
+              destination and evenly spread stops.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/76">#76</a>
+            </li>
+            <li>
+              Time, arrival, weather and daylight always use your average speed,
+              a setting kept on this device.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/67">#67</a>
+            </li>
+            <li>
+              The route summary shows distance, time and arrival first.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/60">#60</a>
+            </li>
+            <li>
+              Editing a point of an imported track recalculates only the changed
+              legs.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/17">#17</a>
+            </li>
+            <li>
+              Links that suggest other routing or search servers open with the
+              default servers until you choose to use them.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/13">#13</a>
+            </li>
+            <li>
+              Remaining interface messages are translated into Portuguese.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/56">#56</a>
+            </li>
+          </ul>
+          <h3 data-kind="Removed">Removed</h3>
+          <ul>
+            <li>
+              The rain radar layer; weather stays along the route.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/58">#58</a>
+            </li>
+          </ul>
+          <h3 data-kind="Fixed">Fixed</h3>
+          <ul>
+            <li>
+              A long press on the map no longer opens the browser's copy or
+              image menu on phones.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/62">#62</a>
+            </li>
+            <li>
+              Settings with one invalid server no longer apply the others, and
+              undo restores the right track after two similar imports.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/12">#12</a>
+            </li>
+            <li>
+              The chosen language is kept across the logo link, undo and reload.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/1">#1</a>
+            </li>
+          </ul>
+        </section>
+      </article>
+      <article lang="pt-BR" id="changelog-pt" hidden>
+        <h1>Novidades</h1>
+        <p>
+          Mudanças visíveis no route-gpx, agrupadas por tipo. As mudanças
+          recentes já estão no site e entram na próxima versão. Para instruções
+          de uso, veja a <a href="./help.html" data-page-link>ajuda</a>.
+        </p>
+        <section data-release="Unreleased">
+          <h2>Mudanças recentes</h2>
+          <h3 data-kind="Added">Novo</h3>
+          <ul>
+            <li>
+              O planejador de rotas: pontos da rota por endereço, coordenadas ou
+              mapa, rotas pelo OSRM com o Valhalla como alternativa, exportação
+              GPX completa, interface em inglês e português, unidades de
+              distância, velocidade média, desfazer, links de compartilhamento,
+              biblioteca local de rotas com nome e backups, camadas do mapa com
+              imagens de satélite, sugestões de lugares ao digitar e uma página
+              de ajuda separada.
+            </li>
+            <li>
+              Uma página de Novidades com as mudanças visíveis, com link no
+              rodapé do painel da rota e na ajuda.
+              <a href="https://github.com/t00ls-dev/route-gpx/issues/83">#83</a>
+            </li>
+            <li>
+              Direções de conversão para trilhas importadas e para rotas salvas
+              antes de existirem os detalhes de manobra, pedidas só quando o
+              Itinerário é aberto; a trilha nunca muda.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/81">#81</a>
+            </li>
+            <li>
+              Subidas ao longo da rota em Elevação: início, extensão, ganho,
+              inclinação média e máxima e horário de passagem.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/79">#79</a>
+            </li>
+            <li>
+              Partida automática na próxima meia hora, para que clima, chegada e
+              luz do dia apareçam sem escolher um horário.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/78">#78</a>
+            </li>
+            <li>
+              Setas de conversão e texto das manobras no Itinerário.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/77">#77</a>
+            </li>
+            <li>
+              Importação de FIT e TCX, além de GPX.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/75">#75</a>
+            </li>
+            <li>
+              Perfil de elevação com ganho e perda totais.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/72">#72</a>
+            </li>
+            <li>
+              Setas de sentido, trechos de ida e volta desenhados como linhas
+              paralelas e o ponto da metade da rota.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/71">#71</a>
+            </li>
+            <li>
+              Coloração da rota pela luz do dia, escolhida em Camadas do mapa.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/70">#70</a>
+            </li>
+            <li>
+              Percorrer a rota: um cursor que anda pela trilha com distância e
+              horário de passagem.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/69">#69</a>
+            </li>
+            <li>
+              Índice UV nos cartões do clima, com alertas para UV muito alto e
+              extremo.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/68">#68</a>
+            </li>
+            <li>
+              Zoom com um dedo em telas de toque: toque, toque de novo e
+              arraste.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/63">#63</a>
+            </li>
+            <li>
+              Luz do dia ao longo da rota: nascer e pôr do sol e distância
+              percorrida no escuro.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/59">#59</a>
+            </li>
+            <li>
+              Um bloqueio de edição que protege a rota de mudanças acidentais.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/57">#57</a>
+            </li>
+            <li>
+              Links de rota mais curtos, que os apps de mensagem tornam
+              clicáveis; links antigos continuam abrindo.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/10">#10</a>
+            </li>
+            <li>Clima ao longo da rota para a partida escolhida.</li>
+          </ul>
+          <h3 data-kind="Changed">Alterado</h3>
+          <ul>
+            <li>
+              Novo layout do planejador: painel lateral em telas largas e folha
+              inferior com três alturas no celular, barra fixa com Baixar GPX e
+              Copiar link, opções da viagem disponíveis antes de haver rota e
+              configurações em uma janela.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/82">#82</a>
+            </li>
+            <li>
+              O clima funciona em rotas com mais de 20 pontos, usando a origem,
+              o destino e paradas bem distribuídas.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/76">#76</a>
+            </li>
+            <li>
+              Tempo, chegada, clima e luz do dia sempre usam a sua velocidade
+              média, uma preferência guardada neste aparelho.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/67">#67</a>
+            </li>
+            <li>
+              O resumo da rota mostra primeiro distância, tempo e chegada.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/60">#60</a>
+            </li>
+            <li>
+              Editar um ponto de uma trilha importada recalcula só os trechos
+              alterados.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/17">#17</a>
+            </li>
+            <li>
+              Links que sugerem outros servidores de rota ou busca abrem com os
+              servidores padrão até você escolher usá-los.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/13">#13</a>
+            </li>
+            <li>
+              As mensagens restantes da interface foram traduzidas para o
+              português.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/56">#56</a>
+            </li>
+          </ul>
+          <h3 data-kind="Removed">Removido</h3>
+          <ul>
+            <li>
+              A camada de radar de chuva; o clima continua ao longo da rota.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/58">#58</a>
+            </li>
+          </ul>
+          <h3 data-kind="Fixed">Corrigido</h3>
+          <ul>
+            <li>
+              Tocar e segurar no mapa não abre mais o menu de copiar ou de
+              imagem do navegador no celular.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/62">#62</a>
+            </li>
+            <li>
+              Configurações com um servidor inválido não aplicam mais os outros,
+              e desfazer restaura a trilha certa após duas importações
+              parecidas.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/12">#12</a>
+            </li>
+            <li>
+              O idioma escolhido é mantido no link do logotipo, ao desfazer e ao
+              recarregar.
+              <a href="https://github.com/t00ls-dev/route-gpx/pull/1">#1</a>
+            </li>
+          </ul>
+        </section>
+      </article>
+    </main>
+    <script type="module" src="/src/help.ts"></script>
+  </body>
+</html>

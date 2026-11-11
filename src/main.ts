@@ -304,6 +304,12 @@ function fit() {
     });
   }
 }
+/** Help and What's new open in the chosen language and keep the route for Back to map. */
+function pageLinks(lang: Language, hash: string) {
+  $<HTMLAnchorElement>('help').href = `./help.html?lang=${lang}${hash}`;
+  $<HTMLAnchorElement>('changelog').href =
+    `./changelog.html?lang=${lang}${hash}`;
+}
 function syncUrl() {
   updateSaveButton();
   undoHistory.record(routeSnapshot(state));
@@ -311,8 +317,7 @@ function syncUrl() {
   $<HTMLButtonElement>('undo').disabled =
     locked || (!undoHistory.canUndo && !dirty.size);
   history.replaceState(null, '', hash);
-  $<HTMLAnchorElement>('help').href =
-    './help.html?lang=' + getLanguage() + hash;
+  pageLinks(getLanguage(), hash);
 }
 function settings() {
   weather.syncInputs();
@@ -1427,8 +1432,7 @@ const initialLanguage: Language = state.language ?? preferredLanguage();
 state.language = initialLanguage;
 $<HTMLSelectElement>('language').value = initialLanguage;
 setLanguage(initialLanguage);
-$<HTMLAnchorElement>('help').href =
-  './help.html?lang=' + initialLanguage + encodeState(state);
+pageLinks(initialLanguage, encodeState(state));
 renderPoints();
 observeTranslations();
 $<HTMLSelectElement>('language').onchange = () => {
@@ -1437,8 +1441,7 @@ $<HTMLSelectElement>('language').onchange = () => {
   state.language = lang;
   setLanguage(lang);
   settings();
-  $<HTMLAnchorElement>('help').href =
-    './help.html?lang=' + lang + encodeState(state);
+  pageLinks(lang, encodeState(state));
   renderPoints();
   if (current) renderRoute(current);
   syncUrl();

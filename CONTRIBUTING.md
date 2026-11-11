@@ -32,6 +32,7 @@ Repository documentation, templates, code comments, commit messages, pull reques
 
 - UI text changes update [`src/i18n.ts`](src/i18n.ts) with the English key and the Portuguese translation; check switching languages in both directions.
 - User-visible behavior changes update the README ([`README.md`](README.md)) and the help page ([`help.html`](help.html)).
+- User-visible changes add an entry to [`CHANGELOG.md`](CHANGELOG.md) and, in English and Portuguese, to the What's new page ([`changelog.html`](changelog.html)), under Unreleased in the matching section (Added, Changed, Deprecated, Removed, Fixed or Security). Write it for site users, not contributors; internal changes (CI, dependencies, tests, repository documentation) have no entry.
 - New or changed external services also update the privacy disclosures and credits (see [`docs/SERVICES.md`](docs/SERVICES.md)).
 - Do not commit UI screenshots or generated files.
 - Do not use emoji as interface icons; use the shared SVG icons in [`src/icons.ts`](src/icons.ts).
