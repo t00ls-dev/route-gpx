@@ -325,12 +325,17 @@
         </p>
         <p>
           Each sampled point has one card combining weather and risk, without a
-          separate alert list. In daylight the card also shows the UV index with
-          its WHO category (low 0–2, moderate 3–5, high 6–7, very high 8–10,
-          extreme 11+); it is a model estimate for open sky, without shade or
-          reflection, and is omitted when the service has no value. Alert 1, 2
-          and 3 use yellow, orange and red plus text labels; no-alert cards are
-          neutral. All cards use the main panel scroll.
+          separate alert list: the conditions, the temperature, rain (chance and
+          amount, for example Rain 13% · 0.2 mm), the wind relative to the route
+          and, in daylight, UV, one per line. In daylight the card also shows
+          the UV index with its WHO category (low 0–2, moderate 3–5, high 6–7,
+          very high 8–10, extreme 11+); it is a model estimate for open sky,
+          without shade or reflection, and is omitted when the service has no
+          value. When the UV alert applies, the UV line carries it and shows the
+          range from the passage hour to the worst hour around it, for example
+          UV 7–8 · very high. Alert 1, 2 and 3 use yellow, orange and red plus
+          text labels; no-alert cards are neutral. All cards use the main panel
+          scroll.
         </p>
         <p>
           Cards use matching outline SVG icons; map markers use colored,
@@ -836,13 +841,17 @@
         </p>
         <p>
           Cada ponto amostrado tem um único card com condições e riscos, sem
-          lista separada de alertas. Durante o dia, o card também mostra o
-          índice UV com a categoria da OMS (baixo 0–2, moderado 3–5, alto 6–7,
-          muito alto 8–10, extremo 11+); é uma estimativa do modelo para céu
-          aberto, sem sombra nem reflexo, e é omitido quando o serviço não tem o
-          valor. Alerta 1, 2 e 3 usam amarelo, laranja e vermelho, além de
-          rótulos; sem alerta, o card é neutro. Todos usam a rolagem do painel
-          principal.
+          lista separada de alertas: as condições, a temperatura, a chuva
+          (chance e quantidade, por exemplo Chuva 13% · 0,2 mm), o vento em
+          relação à rota e, durante o dia, o UV, um por linha. Durante o dia, o
+          card também mostra o índice UV com a categoria da OMS (baixo 0–2,
+          moderado 3–5, alto 6–7, muito alto 8–10, extremo 11+); é uma
+          estimativa do modelo para céu aberto, sem sombra nem reflexo, e é
+          omitido quando o serviço não tem o valor. Quando há alerta de UV, a
+          própria linha de UV o indica e mostra a faixa da hora da passagem até
+          a pior hora em torno dela, por exemplo UV 7–8 · muito alto. Alerta 1,
+          2 e 3 usam amarelo, laranja e vermelho, além de rótulos; sem alerta, o
+          card é neutro. Todos usam a rolagem do painel principal.
         </p>
         <p>
           Os cards usam ícones SVG em traço no mesmo estilo; o mapa usa ícones

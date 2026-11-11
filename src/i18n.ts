@@ -450,6 +450,10 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
   ],
 
   [/^At (.*?) (km\/h|mph) · no stops$/, (n, u) => `A ${n} ${u} · sem paradas`],
+  [
+    /^Rain (.+)% · (.+) mm$/,
+    (chance, amount) => `Chuva ${chance}% · ${amount} mm`,
+  ],
   [/^Location of point (\d+)$/, (n) => `Local do ponto ${n}`],
   [/^Results for point (\d+)$/, (n) => `Resultados do ponto ${n}`],
   [
@@ -474,7 +478,7 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (time) => `Luz do dia no início a partir de ${time}.`,
   ],
   [
-    /^UV (\d+) · (Low|Moderate|High|Very high|Extreme)$/,
+    /^UV (\d+(?:–\d+)?) · (Low|Moderate|High|Very high|Extreme)$/,
     (value, category) =>
       `UV ${value} · ${({ Low: 'baixo', Moderate: 'moderado', High: 'alto', 'Very high': 'muito alto', Extreme: 'extremo' } as Record<string, string>)[category]}`,
   ],

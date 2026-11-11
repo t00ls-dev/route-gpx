@@ -938,6 +938,96 @@ for (const width of [320, 360, 390, 430])
       await expect(marker).not.toHaveAttribute('aria-label', /BBBBB/);
     });
 
+for (const language of ['en', 'pt'])
+  test(`weather card values use the ${language} number format and show one topic per line at 320px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await setup(page);
+    await page.route('**/v1/forecast?**', (route) => {
+      const rows = weatherResponse(new URL(route.request().url()));
+      for (const { hourly } of rows) {
+        hourly.temperature_2m.fill(24.1);
+        hourly.precipitation.fill(0.2);
+        hourly.precipitation_probability.fill(13);
+        hourly.weather_code.fill(1);
+      }
+      return route.fulfill({ json: rows });
+    });
+    await page.locator('#language').selectOption(language);
+    await date(page);
+    await fetchWeather(page);
+    const card = page.locator('.weather-card').first();
+    const pt = language === 'pt';
+    await expect(card.locator('.weather-card-conditions')).toHaveText(
+      pt ? 'Predominantemente limpo' : 'Mainly clear',
+    );
+    await expect(card.locator('.weather-card-temperature')).toHaveText(
+      pt ? '24,1 °C' : '24.1 °C',
+    );
+    await expect(card.locator('.weather-card-rain')).toHaveText(
+      pt ? 'Chuva 13% · 0,2 mm' : 'Rain 13% · 0.2 mm',
+    );
+    await expect(
+      card.locator('.weather-card-temperature .icon-thermometer'),
+    ).toHaveCount(1);
+    await expect(card.locator('.weather-card-rain .icon-droplet')).toHaveCount(
+      1,
+    );
+    // One topic per line: each line is as tall as the one-line wind row.
+    const heights = await card.evaluate((element) =>
+      [
+        '.weather-card-conditions',
+        '.weather-card-temperature',
+        '.weather-card-rain',
+        '.weather-card-wind',
+      ].map((selector) =>
+        Math.round(
+          element.querySelector(selector)!.getBoundingClientRect().height,
+        ),
+      ),
+    );
+    expect(new Set(heights).size).toBe(1);
+    await expect(card).toHaveAttribute(
+      'aria-label',
+      pt
+        ? /Predominantemente limpo · 24,1 °C · Chuva 13% · 0,2 mm/
+        : /Mainly clear · 24.1 °C · Rain 13% · 0.2 mm/,
+    );
+  });
+
+test('a UV alert shows on the UV line as the range up to the worst hour of its window', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.route('**/v1/forecast?**', (route) => {
+    const rows = weatherResponse(new URL(route.request().url()));
+    for (const { hourly } of rows) {
+      hourly.precipitation.fill(0);
+      hourly.precipitation_probability.fill(0);
+      hourly.weather_code.fill(0);
+      hourly.wind_gusts_10m.fill(10);
+      // UV 7 at the departure hour, 8 within the hour after it.
+      hourly.uv_index = hourly.time.map((time) =>
+        new Date(time * 1000).getUTCHours() === 10 ? 7 : 8,
+      );
+    }
+    return route.fulfill({ json: rows });
+  });
+  await date(page);
+  await fetchWeather(page);
+  const card = page.locator('.weather-card').first();
+  await expect(card.locator('.weather-card-severity')).toHaveText('Alert 1');
+  const uv = card.locator('.weather-card-uv');
+  await expect(uv).toHaveText('UV 7–8 · Very high');
+  await expect(uv.locator('.icon-alert')).toHaveCount(1);
+  // One UV line: the alert is not repeated as a separate warning.
+  await expect(card).not.toContainText('Very high UV');
+  await expect(card).toHaveAttribute('aria-label', /UV 7–8 · Very high/);
+  await page.locator('#language').selectOption('pt');
+  await expect(uv).toHaveText('UV 7–8 · muito alto');
+});
+
 for (const [severity, color] of [
   [0, 'rgb(245, 247, 249)'],
   [1, 'rgb(255, 248, 221)'],

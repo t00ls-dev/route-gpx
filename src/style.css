@@ -2038,6 +2038,8 @@ input[type='range'].range-input:disabled {
   font-weight: 650;
 }
 .weather-card-conditions,
+.weather-card-temperature,
+.weather-card-rain,
 .weather-card-wind,
 .weather-card-uv,
 .weather-card-risks {
@@ -2046,7 +2048,8 @@ input[type='range'].range-input:disabled {
   gap: 5px;
   margin: 6px 0 0;
 }
-.weather-card-risks {
+.weather-card-risks,
+.weather-card-uv[data-alert] {
   font-weight: 550;
 }
 
@@ -2114,6 +2117,8 @@ input[type='range'].range-input:disabled {
 }
 
 .weather-card-conditions .button-icon,
+.weather-card-temperature .button-icon,
+.weather-card-rain .button-icon,
 .weather-card-wind .button-icon,
 .weather-card-uv .button-icon,
 .weather-card-risks .button-icon {
