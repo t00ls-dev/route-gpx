@@ -387,3 +387,32 @@ it.each([1, -1])(
     expect(samples.at(-1)!.coord).toEqual([0, -179 * direction]);
   },
 );
+
+it('counts only route points as stops, not the samples between them', () => {
+  // Start, one stop and destination along a 111 km line, sampled every 20 km
+  // at 60 km/h and every 1 km at 1 km/h: still three stops.
+  const line: Route = {
+    segments: [
+      [
+        [0, 0],
+        [0, 0.5],
+        [0, 1],
+      ],
+    ],
+    distance: 111195,
+    duration: 0,
+    provider: 'test',
+    steps: [],
+  };
+  const controls = [
+    { name: 'Start', coord: [0, 0] as [number, number] },
+    { name: 'Stop 1', coord: [0, 0.5] as [number, number] },
+    { name: 'Destination', coord: [0, 1] as [number, number] },
+  ];
+  for (const speed of [60, 1]) {
+    const { samples, stops } = sampleRouteStops(line, controls, speed);
+    expect(stops).toBe(3);
+    expect(samples.filter((p) => p.stop)).toHaveLength(3);
+    expect(samples.length).toBeGreaterThan(3);
+  }
+});

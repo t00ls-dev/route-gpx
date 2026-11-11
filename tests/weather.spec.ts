@@ -1052,6 +1052,10 @@ test('consecutive samples with equivalent weather share one card and one marker'
   const cards = page.locator('.weather-card');
   // Start and destination keep their own cards; the stretch between merges.
   await expect(cards).toHaveCount(3);
+  // Every route point has a card, so no "sampled at N of M stops" note.
+  await expect(page.locator('#weather-section')).not.toContainText(
+    'Weather sampled at',
+  );
   await expect(page.locator('.weather-marker')).toHaveCount(3);
   const merged = cards.nth(1);
   await expect(merged.locator('.weather-card-header')).toContainText(

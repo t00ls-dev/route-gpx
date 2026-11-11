@@ -208,10 +208,11 @@ export function sampleRouteStops(
         .slice(0, i)
         .some((other) => Math.abs(other.distance - p.distance) < 0.01),
   );
+  // A copy: samples added below must not count as route stops.
   const unique =
     distinct.length > MAX_WEATHER_POINTS
       ? chooseStops(distinct, total)
-      : distinct;
+      : [...distinct];
   const remaining = MAX_WEATHER_POINTS - unique.length;
   if (remaining > 0 && total > 0) {
     // Expand in multiples of the preferred spacing to retain every mandatory point within the cap.
