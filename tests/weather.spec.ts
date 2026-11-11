@@ -429,7 +429,7 @@ test('the automatic departure follows the next half hour until the user chooses 
   await expect(page.locator('#departure')).toHaveValue('2026-11-08T15:00');
   await expect(page.locator('#auto-departure')).not.toBeChecked();
   await expect(page.locator('label.departure-automatic')).toHaveText(
-    'Saída automática (próxima meia hora)',
+    'Saída automática',
   );
 });
 test('departure changes keep the field in place without scroll anchoring', async ({

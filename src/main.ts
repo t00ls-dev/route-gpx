@@ -842,11 +842,13 @@ function renderSummary(route: Route) {
   const departure = leaving ? Date.parse(leaving) : NaN;
   const stats = document.createElement('dl');
   stats.className = 'stats';
-  const stat = (label: string, value: string) => {
+  const stat = (label: string, value: string, note?: string) => {
     const item = document.createElement('div');
     const term = text('dt', label);
     const data = document.createElement('dd');
     data.append(text('strong', value));
+    // A smaller second line, so the value stays on one line on phones.
+    if (note) data.append(text('span', note));
     item.append(term, data);
     stats.append(item);
   };
@@ -863,18 +865,18 @@ function renderSummary(route: Route) {
   $('peek-main').textContent = `${distance} · ${time}`;
   if (duration !== null && Number.isFinite(departure)) {
     const arrival = new Date(departure + duration * 1000);
+    // The date is added only when the arrival is on another day.
     stat(
       'Arrival',
+      arrival.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       arrival.toDateString() === new Date(departure).toDateString()
-        ? arrival.toLocaleTimeString(locale, {
-            hour: '2-digit',
-            minute: '2-digit',
-          })
-        : arrival.toLocaleString(locale, {
+        ? undefined
+        : arrival.toLocaleDateString(locale, {
             month: 'short',
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
           }),
     );
   }
