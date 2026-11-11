@@ -2014,6 +2014,7 @@ input[type='range'].range-input:disabled {
   overflow-wrap: anywhere;
 }
 .weather-card {
+  position: relative;
   display: block;
   width: 100%;
   text-align: left;
@@ -2022,7 +2023,8 @@ input[type='range'].range-input:disabled {
   --weather-card-border: #8b9ba6;
   --weather-card-background: #f5f7f9;
   --weather-card-badge: #455964;
-  margin: 8px 0;
+  /* Room above for the alert tab sitting on the top border. */
+  margin: 16px 0 8px;
   padding: 10px;
   border: 1px solid var(--weather-card-border);
   border-left-width: 4px;
@@ -2048,24 +2050,31 @@ input[type='range'].range-input:disabled {
   --weather-card-badge: #9a2227;
 }
 .weather-card-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  display: block;
 }
+/* One line: the date and time, or a range ending with its day offset. */
 .weather-card-header strong {
-  min-width: 0;
+  display: block;
   font-weight: 650;
+  white-space: nowrap;
 }
+/* The alert level is a tab on the card's top border, out of the text flow,
+   so the time keeps the card's full width on the narrowest phones. Half of
+   it sits in the card's top padding, clear of the first line. */
 .weather-card-severity {
-  flex-shrink: 0;
-  padding: 2px 7px;
+  position: absolute;
+  top: -9px;
+  right: 12px;
+  height: 18px;
+  padding: 0 7px;
   border-radius: 4px;
   background: var(--weather-card-badge);
   color: #fff;
   font-weight: 650;
+  line-height: 18px;
+  white-space: nowrap;
 }
+.weather-card-place,
 .weather-card-conditions,
 .weather-card-temperature,
 .weather-card-rain,
@@ -2145,6 +2154,7 @@ input[type='range'].range-input:disabled {
   border-color: var(--weather-card-border);
 }
 
+.weather-card-place .button-icon,
 .weather-card-conditions .button-icon,
 .weather-card-temperature .button-icon,
 .weather-card-rain .button-icon,

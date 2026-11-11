@@ -1083,14 +1083,14 @@ test('a sharp bend gets its own weather sample with the wind relation of the new
     for (const { hourly } of rows) hourly.wind_direction_10m.fill(0);
     return r.fulfill({ json: rows });
   });
-  // 13 km east, then 20 km north.
+  // 8 km east, then 25 km north: the corner is far from the leg's middle.
   await page.route('**/route/v1/driving/**', (r) =>
     r.fulfill({
       json: {
         code: 'Ok',
         waypoints: [
           { location: [0, 0], distance: 0 },
-          { location: [0.117, 0.18], distance: 0 },
+          { location: [0.072, 0.225], distance: 0 },
         ],
         routes: [
           {
@@ -1099,8 +1099,8 @@ test('a sharp bend gets its own weather sample with the wind relation of the new
             geometry: {
               coordinates: [
                 [0, 0],
-                [0.117, 0],
-                [0.117, 0.18],
+                [0.072, 0],
+                [0.072, 0.225],
               ],
             },
             legs: [],
@@ -1112,7 +1112,7 @@ test('a sharp bend gets its own weather sample with the wind relation of the new
   const state = { ...defaults(), language: 'en' as const };
   state.points = [
     { name: 'Start', coord: [0, 0] },
-    { name: 'Destination', coord: [0.18, 0.117] },
+    { name: 'Destination', coord: [0.225, 0.072] },
   ];
   await page.goto(base + encodeState(state));
   await expect(page.locator('#download')).toBeEnabled();
@@ -1123,7 +1123,7 @@ test('a sharp bend gets its own weather sample with the wind relation of the new
   // Heading east the north wind is a crosswind; past the corner, a headwind.
   await expect(wind.first()).toContainText('Crosswind');
   const corner = page.locator('.weather-card').filter({
-    has: page.locator('.weather-card-header', { hasText: '13.1 km' }),
+    has: page.locator('.weather-card-place', { hasText: '8.1 km' }),
   });
   await expect(corner).toHaveCount(1);
   await expect(corner.locator('.weather-card-wind')).toContainText('Headwind');
@@ -1133,7 +1133,7 @@ test('a sharp bend gets its own weather sample with the wind relation of the new
 test('consecutive samples with equivalent weather share one card and one marker', async ({
   page,
 }) => {
-  // 111 km at 5 km/h: samples every 10 km between start and destination.
+  // 111 km at 5 km/h: samples about every 9.3 km between start and destination.
   await setup(page, true, 5);
   let calls = 0;
   await page.route('**/v1/forecast?**', (route) => {
@@ -1159,22 +1159,27 @@ test('consecutive samples with equivalent weather share one card and one marker'
   );
   await expect(page.locator('.weather-marker')).toHaveCount(3);
   const merged = cards.nth(1);
-  await expect(merged.locator('.weather-card-header')).toContainText(
-    '10–110 km',
+  await expect(merged.locator('.weather-card-place')).toContainText(
+    '9.3–101.9 km',
   );
-  // From the first to the last hour of the stretch, on the next day.
-  await expect(merged.locator('.weather-card-header')).toContainText(
-    /Nov 8, \d{2}:\d{2} [AP]M–Nov 9, \d{2}:\d{2} [AP]M/,
+  // From the first to the last hour of the stretch, ending the next day:
+  // the date once, then the end time with its day offset.
+  await expect(merged.locator('.weather-card-header strong')).toHaveText(
+    /^Nov 8, \d{2}:\d{2} [AP]M–\d{2}:\d{2} [AP]M \(\+1\)$/,
+  );
+  await expect(merged).toHaveAttribute(
+    'aria-label',
+    /Nov 8, \d{2}:\d{2} [AP]M–\d{2}:\d{2} [AP]M \(\+1\)/,
   );
   await expect(merged.locator('.weather-card-temperature')).toHaveText(
     '22–23 °C',
   );
-  await expect(merged).toHaveAttribute('aria-label', /10–110 km/);
+  await expect(merged).toHaveAttribute('aria-label', /9\.3–101\.9 km/);
   await page.locator('.weather-marker').nth(1).click();
   await expect(merged).toHaveAttribute('aria-current', 'true');
   await page.locator('#language').selectOption('pt');
-  await expect(merged.locator('.weather-card-header')).toContainText(
-    '10–110 km',
+  await expect(merged.locator('.weather-card-place')).toContainText(
+    '9,3–101,9 km',
   );
   await expect(merged.locator('.weather-card-rain')).toHaveText(
     'Chuva 10% · 0 mm',
@@ -1182,6 +1187,104 @@ test('consecutive samples with equivalent weather share one card and one marker'
   // Merging only changes the presentation: still one weather request.
   expect(calls).toBe(1);
 });
+
+for (const width of [320, 360, 390, 430])
+  for (const language of ['en', 'pt'] as const)
+    test(`weather card lines stay whole at ${width}px in ${language}, with the alert tab clear of them`, async ({
+      page,
+    }) => {
+      // Worst case: slow travel past midnight on a two-digit day, out and
+      // back (Outbound/Return labels), uniform weather merging into ranges.
+      await page.setViewportSize({ width, height: 844 });
+      await page.clock.setFixedTime(new Date('2026-11-17T10:00:00Z'));
+      await page.addInitScript(() => {
+        localStorage.setItem('auto-departure', 'off');
+        localStorage.setItem('average-speed', '5');
+      });
+      await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+      await page.route('**/v1/forecast?**', (r) => {
+        const rows = weatherResponse(new URL(r.request().url()));
+        for (const { hourly } of rows) {
+          hourly.temperature_2m.fill(22);
+          hourly.precipitation.fill(0);
+          hourly.precipitation_probability.fill(10);
+          hourly.weather_code.fill(0);
+          hourly.wind_gusts_10m.fill(10);
+        }
+        return r.fulfill({ json: rows });
+      });
+      await page.route('**/route/v1/driving/**', (r) =>
+        r.fulfill({
+          json: {
+            code: 'Ok',
+            waypoints: [
+              { location: [0, 0], distance: 0 },
+              { location: [0.5, 0], distance: 0 },
+              { location: [0, 0], distance: 0 },
+            ],
+            routes: [
+              {
+                distance: 111195,
+                duration: 7200,
+                geometry: {
+                  coordinates: [
+                    [0, 0],
+                    [0.5, 0],
+                    [0, 0],
+                  ],
+                },
+                legs: [],
+              },
+            ],
+          },
+        }),
+      );
+      const state = { ...defaults(), language };
+      state.points = [
+        { name: 'Start', coord: [0, 0] },
+        { name: 'Turn', coord: [0, 0.5] },
+        { name: 'Destination', coord: [0, 0] },
+      ];
+      await page.goto(base + encodeState(state));
+      await expect(page.locator('#download')).toBeEnabled();
+      await page.locator('#weather-section > summary').click();
+      await date(page, '2026-11-18T22:00');
+      await fetchWeather(page);
+      await expect(
+        page.locator('.weather-card-header strong').nth(1),
+      ).toHaveText(/\(\+1\)$/);
+      const problems = await page
+        .locator('.weather-card')
+        .evaluateAll((cards) =>
+          cards.flatMap((card) => {
+            const heading = card.querySelector<HTMLElement>(
+              '.weather-card-header strong',
+            )!;
+            const place = card.querySelector<HTMLElement>(
+              '.weather-card-place',
+            )!;
+            const tab = card
+              .querySelector('.weather-card-severity')!
+              .getBoundingClientRect();
+            const box = heading.getBoundingClientRect();
+            const oneLine = (element: HTMLElement) =>
+              element.getBoundingClientRect().height <
+              1.5 * parseFloat(getComputedStyle(element).lineHeight);
+            const issues: string[] = [];
+            if (
+              heading.scrollWidth > heading.clientWidth + 1 ||
+              box.right > card.getBoundingClientRect().right
+            )
+              issues.push(`overflow: ${heading.textContent}`);
+            if (!oneLine(heading)) issues.push(`wrap: ${heading.textContent}`);
+            if (!oneLine(place)) issues.push(`wrap: ${place.textContent}`);
+            if (tab.bottom > box.top + 1)
+              issues.push(`tab over: ${heading.textContent}`);
+            return issues;
+          }),
+        );
+      expect(problems).toEqual([]);
+    });
 
 test('a road used both ways labels outbound and return, with both markers visible', async ({
   page,
@@ -1235,10 +1338,10 @@ test('a road used both ways labels outbound and return, with both markers visibl
   const cards = page.locator('.weather-card');
   const first = cards.first(),
     last = cards.last();
-  await expect(first.locator('.weather-card-header')).toContainText(
+  await expect(first.locator('.weather-card-place')).toContainText(
     '0 km · Outbound',
   );
-  await expect(last.locator('.weather-card-header')).toContainText('Return');
+  await expect(last.locator('.weather-card-place')).toContainText('Return');
   // Wind from the east: against the outbound pass, behind the return.
   await expect(first.locator('.weather-card-wind')).toContainText('Headwind');
   await expect(last.locator('.weather-card-wind')).toContainText('Tailwind');
@@ -1259,8 +1362,8 @@ test('a road used both ways labels outbound and return, with both markers visibl
   await start.click();
   await expect(first).toHaveAttribute('aria-current', 'true');
   await page.locator('#language').selectOption('pt');
-  await expect(first.locator('.weather-card-header')).toContainText('Ida');
-  await expect(last.locator('.weather-card-header')).toContainText('Volta');
+  await expect(first.locator('.weather-card-place')).toContainText('Ida');
+  await expect(last.locator('.weather-card-place')).toContainText('Volta');
   // Labels come from the route itself: no extra weather request.
   expect(calls).toBe(1);
 });
@@ -1294,7 +1397,7 @@ test('temperature units switch the weather card to °F and inches without anothe
     'Rain 13% · 0.5 in',
   );
   // Distance units are a separate choice.
-  await expect(card.locator('.weather-card-header')).toContainText('km');
+  await expect(card.locator('.weather-card-place')).toContainText('km');
   await page.locator('#language').selectOption('pt');
   await expect(card.locator('.weather-card-rain')).toHaveText(
     'Chuva 13% · 0,5 in',
@@ -1369,7 +1472,7 @@ for (const [severity, color] of [
     );
     await expect(card).toContainText('20 °C');
     await expect(card).toContainText('0 km');
-    await expect(card).toContainText('Nov');
+    await expect(card.locator('.weather-card-header')).toContainText('Nov 8');
     expect(
       await card.locator('.weather-card-conditions').textContent(),
     ).not.toContain('Heavy rain · Heavy rain');
@@ -1400,6 +1503,9 @@ for (const native of [false, true]) {
     await expect(target).toHaveAttribute('aria-current', 'true');
     await expect(page.locator('body')).not.toHaveClass(/map-fullscreen/);
     await expect(page.locator('#route-panel')).toBeVisible();
+    // The pointer stays where the marker was; once the layout leaves full
+    // screen a route pin may sit under it and show its own hover tooltip.
+    await page.mouse.move(1, 1);
     await expect(page.locator('.leaflet-tooltip,.leaflet-popup')).toHaveCount(
       0,
     );
@@ -1453,7 +1559,7 @@ test('slower travel adds hourly samples automatically and faster travel reuses t
   await expect(page.locator('#weather-result')).toBeVisible();
   expect(requests).toHaveLength(2);
   expect(requests[1].searchParams.get('latitude')!.split(',')).toHaveLength(6);
-  await expect(page.locator('.weather-card').nth(1)).toContainText('15 km');
+  await expect(page.locator('.weather-card').nth(1)).toContainText('13.9 km');
   await page.locator('#average-speed').fill('60');
   await expect(page.locator('#weather-result')).toBeVisible();
   await expect(page.locator('#summary .stats-basis')).toContainText('60 km/h');
@@ -1512,7 +1618,7 @@ for (const mobile of [false, true])
     page.on('request', (request) => {
       if (request.url().includes('/v1/forecast?')) calls++;
     });
-    await expect(card).toHaveAttribute('aria-label', /Show on map.*60 km/);
+    await expect(card).toHaveAttribute('aria-label', /Show on map.*55\.6 km/);
     await card.click();
     await expect(marker).toBeFocused();
     await expect(page.locator('#panel-toggle')).toHaveAttribute(
@@ -1568,7 +1674,9 @@ for (const mobile of [false, true])
     expect(longitudes).toHaveLength(20);
     expect(longitudes[0]).toBe('0.000');
     expect(longitudes.at(-1)).toBe('19.700');
-    await expect(page.locator('.weather-card').nth(1)).toContainText('120 km');
+    await expect(page.locator('.weather-card').nth(1)).toContainText(
+      '115.3 km',
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth > innerWidth,
@@ -1594,9 +1702,10 @@ test('wind follows bends, translates and switches units without another weather 
   });
   await date(page);
   await fetchWeather(page);
-  // Start, the sample just past the corner, 20 km and the destination.
-  await expect(page.locator('.weather-card')).toHaveCount(4);
-  await expect(page.locator('.weather-card-wind .icon-wind')).toHaveCount(4);
+  // Start, the middle of the 22 km leg (which is the corner, facing the new
+  // direction, so no extra bend sample) and the destination.
+  await expect(page.locator('.weather-card')).toHaveCount(3);
+  await expect(page.locator('.weather-card-wind .icon-wind')).toHaveCount(3);
   await expect(
     page.locator('.weather-card-wind .icon-wind').first(),
   ).toHaveAttribute('aria-hidden', 'true');
