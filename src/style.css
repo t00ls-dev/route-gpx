@@ -1389,17 +1389,43 @@ dialog.settings::backdrop {
   #peek-main:empty {
     display: none;
   }
+  /* The sheet header is where phones show the status, open or closed: up to
+     two lines, errors in full. The panel row keeps the live region for screen
+     readers only and gives its width to Calculate route (issue #90). */
   #peek-status {
+    display: -webkit-box;
     overflow: hidden;
     font-size: 14px;
     font-weight: 450;
     color: var(--color-text-muted);
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
   #panel-toggle.error #peek-status {
+    display: block;
     color: var(--color-danger);
-    white-space: normal;
+  }
+  .status-row,
+  .status-row:has(#status.error) {
+    padding: 0;
+    background: none;
+  }
+  #status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  #calculate,
+  #calculate:disabled {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: var(--radius-large);
+    background: var(--color-soft);
   }
   #route-panel {
     padding: 4px 16px 12px;

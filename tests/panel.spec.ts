@@ -93,6 +93,33 @@ test.describe('bottom sheet', () => {
     await expect(page.locator('#route-name')).toBeHidden();
   });
 
+  test('the open sheet shows the status once, at the top, and Calculate route spans its row', async ({
+    page,
+  }) => {
+    await page.goto(base);
+    const message =
+      'Route imported. Edits recalculate only the changed sections.';
+    await page.evaluate((text) => {
+      document.getElementById('status')!.textContent = text;
+    }, message);
+    const peek = page.locator('#peek-status');
+    await expect(peek).toHaveText(message);
+    // Whole in up to two lines, not cut off.
+    const lines = await peek.evaluate((element) => ({
+      clipped: element.scrollHeight > element.clientHeight + 1,
+      count: Math.round(
+        element.clientHeight / parseFloat(getComputedStyle(element).lineHeight),
+      ),
+    }));
+    expect(lines).toEqual({ clipped: false, count: 2 });
+    // The panel row keeps the live region for screen readers only.
+    const status = page.locator('#status');
+    await expect(status).toHaveAttribute('aria-live', 'polite');
+    expect((await status.boundingBox())!.width).toBeLessThanOrEqual(1);
+    const row = (await page.locator('.status-row').boundingBox())!,
+      calculate = (await page.locator('#calculate').boundingBox())!;
+    expect(Math.abs(calculate.width - row.width)).toBeLessThanOrEqual(1);
+  });
   test('dragging the handle moves between closed, half and full height', async ({
     page,
     context,
