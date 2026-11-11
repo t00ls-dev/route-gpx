@@ -13,6 +13,9 @@ export default defineConfig({
     launchOptions: { args: ['--no-sandbox'] },
     // Fixtures use UTC times; keep results independent of the machine's time zone.
     timezoneId: 'UTC',
+    // English without a country: Automatic units resolve to km and °C (from
+    // the UTC zone), while the initial map view still follows "en".
+    locale: 'en-150',
   },
   webServer: {
     command: 'npm run dev -- --host 127.0.0.1',

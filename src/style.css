@@ -688,12 +688,6 @@ header button.icon-control {
   align-items: stretch;
   gap: 8px;
 }
-.unit-control {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 
 /* Status line with the recalculation action. */
 .status-row {

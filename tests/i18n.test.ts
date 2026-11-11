@@ -122,6 +122,8 @@ describe('translation coverage', () => {
     'PT',
     'km',
     'mi',
+    'Celsius',
+    'Fahrenheit',
     'km/h',
     '1–200 km/h',
     'EOX 2025 · CC BY-NC-SA 4.0',

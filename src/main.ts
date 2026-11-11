@@ -30,7 +30,6 @@ import {
   milepostLabel,
   shortDistanceLabel,
   stepDistanceLabel,
-  type DistanceUnits,
 } from './units';
 import { UndoHistory } from './history';
 import {
@@ -105,6 +104,16 @@ import {
   shortRoadName,
 } from './maneuvers';
 import { byId as $ } from './dom';
+import {
+  chosenDistanceUnits,
+  chosenTemperatureUnits,
+  detectedUnits,
+  distanceUnits,
+  rememberDistanceUnits,
+  rememberTemperatureUnits,
+  type DistanceChoice,
+  type TemperatureChoice,
+} from './unit-preferences';
 const text = (tag: string, value: string, className = '') => {
   const e = document.createElement(tag);
   e.textContent = value;
@@ -322,8 +331,11 @@ function syncUrl() {
 function settings() {
   weather.syncInputs();
   const input = $<HTMLInputElement>('average-speed');
-  const bounds = speedInputBounds(state.units);
-  const value = snapSpeed(speedFromKmh(speedKmh, state.units), state.units);
+  const bounds = speedInputBounds(distanceUnits());
+  const value = snapSpeed(
+    speedFromKmh(speedKmh, distanceUnits()),
+    distanceUnits(),
+  );
   // The first notch represents 1; subsequent notches are 5, 10, 15…
   input.min = '0';
   input.max = String(bounds.max);
@@ -334,13 +346,13 @@ function settings() {
   input.setAttribute('aria-valuenow', String(value));
   input.setAttribute(
     'aria-valuetext',
-    `${value} ${state.units === 'imperial' ? 'mph' : 'km/h'}`,
+    `${value} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`,
   );
   $('average-speed-value').textContent = String(value);
   $('speed-range').textContent =
-    `1–${bounds.max} ${state.units === 'imperial' ? 'mph' : 'km/h'}`;
-  $('speed-unit').textContent = state.units === 'imperial' ? 'mph' : 'km/h';
-  $<HTMLSelectElement>('units').value = state.units ?? 'metric';
+    `1–${bounds.max} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`;
+  $('speed-unit').textContent = distanceUnits() === 'imperial' ? 'mph' : 'km/h';
+  unitSelects();
   for (const key of ['osrm', 'valhalla', 'nominatim'] as const)
     $<HTMLInputElement>(key).value = state[key];
   $<HTMLInputElement>('route-name').value = state.name;
@@ -859,7 +871,7 @@ function renderSummary(route: Route) {
     item.append(term, data);
     stats.append(item);
   };
-  const distance = distanceLabel(route.distance, state.units, locale);
+  const distance = distanceLabel(route.distance, distanceUnits(), locale);
   const time =
     minutes === null
       ? '—'
@@ -888,10 +900,10 @@ function renderSummary(route: Route) {
     );
   }
   // The basis of the time estimate, next to the numbers it explains.
-  const speed = speedFromKmh(speedKmh, state.units).toLocaleString(locale, {
+  const speed = speedFromKmh(speedKmh, distanceUnits()).toLocaleString(locale, {
     maximumFractionDigits: 1,
   });
-  const basis = `At ${speed} ${state.units === 'imperial' ? 'mph' : 'km/h'} · no stops`;
+  const basis = `At ${speed} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'} · no stops`;
   const daylight = document.createElement('div');
   daylight.id = 'daylight-summary';
   summary.append(stats, text('p', basis, 'hint stats-basis'), daylight);
@@ -981,7 +993,7 @@ function renderSummary(route: Route) {
         text(
           'span',
           // Trailing space keeps the text readable when copied or read aloud.
-          at === null ? '' : `${milepostLabel(at, state.units, locale)} `,
+          at === null ? '' : `${milepostLabel(at, distanceUnits(), locale)} `,
           'milepost',
         ),
       );
@@ -995,7 +1007,7 @@ function renderSummary(route: Route) {
     // One line: shortened road names and compact lengths; the full text stays
     // in the tooltip and accessible label.
     const road = t(s.name);
-    const length = stepDistanceLabel(s.distance, state.units, locale);
+    const length = stepDistanceLabel(s.distance, distanceUnits(), locale);
     // Highway references are in the chips above the list; on the line they
     // stand in only for a road without a name.
     const shortRoad =
@@ -1018,7 +1030,7 @@ function renderSummary(route: Route) {
       button.setAttribute('aria-controls', 'map');
       button.setAttribute(
         'aria-label',
-        `${t('Show on map')}: ${at === null ? '' : `${milepostLabel(at, state.units, locale)} · `}${full}`,
+        `${t('Show on map')}: ${at === null ? '' : `${milepostLabel(at, distanceUnits(), locale)} · `}${full}`,
       );
       const coord = s.at;
       button.onclick = () => showManeuver(coord);
@@ -1042,7 +1054,7 @@ function renderSummary(route: Route) {
       notes.append(
         text(
           'p',
-          `Check road positions: ${far.map((p) => `${p.index + 1} (${shortDistanceLabel(p.distance, state.units)})`).join(', ')}`,
+          `Check road positions: ${far.map((p) => `${p.index + 1} (${shortDistanceLabel(p.distance, distanceUnits())})`).join(', ')}`,
           'warning',
         ),
       );
@@ -1237,18 +1249,44 @@ $('roundtrip').onclick = () => {
   status('Round trip added. Check stops on divided roads.');
 };
 $('fit').onclick = fit;
-$<HTMLSelectElement>('units').onchange = () => {
-  state.units = $<HTMLSelectElement>('units').value as DistanceUnits;
-  // Switching units keeps the speed on a notch of the new scale.
-  speedKmh = speedToKmh(
-    snapSpeed(speedFromKmh(speedKmh, state.units), state.units),
-    state.units,
+/** Unit selects in Settings; Automatic names what this device resolves to. */
+function unitSelects() {
+  const found = detectedUnits();
+  const label = (id: string, texts: string[]) =>
+    texts.forEach((text, i) => {
+      $<HTMLSelectElement>(id).options[i].textContent = t(text);
+    });
+  label('distance-units', [
+    `Automatic (${found.distance === 'imperial' ? 'mi' : 'km'})`,
+    'Kilometers',
+    'Miles',
+  ]);
+  label('temperature-units', [
+    `Automatic (${found.temperature === 'fahrenheit' ? '°F' : '°C'})`,
+    'Celsius',
+    'Fahrenheit',
+  ]);
+  $<HTMLSelectElement>('distance-units').value = chosenDistanceUnits();
+  $<HTMLSelectElement>('temperature-units').value = chosenTemperatureUnits();
+}
+// Units are device preferences applied at once: no rerouting or new requests.
+$<HTMLSelectElement>('distance-units').onchange = () => {
+  rememberDistanceUnits(
+    $<HTMLSelectElement>('distance-units').value as DistanceChoice,
   );
+  const units = distanceUnits();
+  // Switching units keeps the speed on a notch of the new scale.
+  speedKmh = speedToKmh(snapSpeed(speedFromKmh(speedKmh, units), units), units);
   rememberSpeedKmh(speedKmh);
   settings();
-  syncUrl();
   if (current) renderRoute(current);
   void refreshSavedRoutes();
+};
+$<HTMLSelectElement>('temperature-units').onchange = () => {
+  rememberTemperatureUnits(
+    $<HTMLSelectElement>('temperature-units').value as TemperatureChoice,
+  );
+  if (current) renderRoute(current);
 };
 
 $<HTMLInputElement>('prefer').onchange = () => {
@@ -1464,16 +1502,16 @@ function updateSpeedEstimate() {
 $<HTMLInputElement>('average-speed').oninput = () => {
   const value = snapSpeed(
     Number($<HTMLInputElement>('average-speed').value),
-    state.units,
+    distanceUnits(),
   );
-  speedKmh = speedToKmh(value, state.units);
+  speedKmh = speedToKmh(value, distanceUnits());
   rememberSpeedKmh(speedKmh);
   $('average-speed-value').textContent = String(value);
   const input = $<HTMLInputElement>('average-speed');
   input.setAttribute('aria-valuenow', String(value));
   input.setAttribute(
     'aria-valuetext',
-    `${value} ${state.units === 'imperial' ? 'mph' : 'km/h'}`,
+    `${value} ${distanceUnits() === 'imperial' ? 'mph' : 'km/h'}`,
   );
   updateSpeedEstimate();
 };
@@ -1514,7 +1552,7 @@ async function refreshSavedRoutes() {
         text('strong', record.name),
         text(
           'small',
-          `${distanceLabel(record.route.distance, state.units, state.language === 'pt' ? 'pt-BR' : 'en')} · ${new Date(record.updatedAt).toLocaleDateString(state.language === 'pt' ? 'pt-BR' : 'en')}`,
+          `${distanceLabel(record.route.distance, distanceUnits(), state.language === 'pt' ? 'pt-BR' : 'en')} · ${new Date(record.updatedAt).toLocaleDateString(state.language === 'pt' ? 'pt-BR' : 'en')}`,
         ),
       );
       const actions = document.createElement('div');

@@ -5,6 +5,7 @@ import { icon } from './icons';
 import { distanceLabel } from './units';
 import { indexTrack, pointAtDistance } from './track-position';
 import type { Range } from './route-overlays';
+import { distanceUnits } from './unit-preferences';
 
 /**
  * Route marks: direction arrows, separate parallel lines where the route uses
@@ -279,7 +280,7 @@ export function setupRouteMarks(
         }),
       }).addTo(layer);
       marker.bindTooltip(
-        `Halfway · ${distanceLabel(half, state.units, state.language === 'pt' ? 'pt-BR' : 'en')}`,
+        `Halfway · ${distanceLabel(half, distanceUnits(), state.language === 'pt' ? 'pt-BR' : 'en')}`,
       );
     }
   }

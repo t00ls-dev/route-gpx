@@ -206,13 +206,6 @@
               <p id="speed-range" class="hint">1–200 km/h</p>
             </div>
             <div class="route-options">
-              <label class="unit-control"
-                ><span>Distance units</span
-                ><select id="units">
-                  <option value="metric">km</option>
-                  <option value="imperial">mi</option>
-                </select></label
-              >
               <label class="check"
                 ><input id="prefer" type="checkbox" checked /><span
                   >Prefer main roads</span
@@ -465,6 +458,18 @@
         <button id="close-settings" type="button">Close</button>
       </div>
       <div class="dialog-body">
+        <label for="distance-units">Distance units</label
+        ><select id="distance-units">
+          <option value="auto">Automatic (km)</option>
+          <option value="metric">Kilometers</option>
+          <option value="imperial">Miles</option>
+        </select>
+        <label for="temperature-units">Temperature units</label
+        ><select id="temperature-units">
+          <option value="auto">Automatic (°C)</option>
+          <option value="celsius">Celsius</option>
+          <option value="fahrenheit">Fahrenheit</option>
+        </select>
         <label for="osrm">OSRM server</label><input id="osrm" type="url" />
         <label for="valhalla">Valhalla fallback</label
         ><input id="valhalla" type="url" />

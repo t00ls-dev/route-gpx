@@ -4,6 +4,7 @@ import { byId as $ } from './dom';
 import { icon } from './icons';
 import { distanceLabel } from './units';
 import { routeDaylight, sunTimes } from './daylight';
+import { distanceUnits } from './unit-preferences';
 
 /**
  * Fills the daylight line in the route summary (`#daylight-summary`, created by
@@ -47,7 +48,7 @@ export function renderDaylight(
       minute: '2-digit',
     });
   const distance = (meters: number) =>
-    distanceLabel(meters, state.units, locale);
+    distanceLabel(meters, distanceUnits(), locale);
   const leaving = departureOf(state);
   const departure = leaving ? Date.parse(leaving) : NaN;
   const planned = Number.isFinite(departure);

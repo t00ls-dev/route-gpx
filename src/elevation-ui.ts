@@ -27,6 +27,7 @@ import {
 } from './track-position';
 import { travelTimeSeconds } from './travel-time';
 import { distanceLabel, elevationLabel, milepostLabel } from './units';
+import { distanceUnits } from './unit-preferences';
 
 /**
  * Elevation row in the route summary: profile chart and statistics. Recorded
@@ -73,7 +74,7 @@ export function setupElevation(
     controller: AbortController | undefined;
 
   const locale = () => (deps.state().language === 'pt' ? 'pt-BR' : 'en');
-  const units = () => deps.state().units;
+  const units = () => distanceUnits();
 
   /**
    * Along-track distance of each route point, so samples restart at every
