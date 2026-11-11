@@ -997,6 +997,88 @@ for (const language of ['en', 'pt'])
     );
   });
 
+test('a road used both ways labels outbound and return, with both markers visible', async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date('2026-11-07T10:00:00Z'));
+  await page.addInitScript(() => localStorage.setItem('auto-departure', 'off'));
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  let calls = 0;
+  await page.route('**/v1/forecast?**', (r) => {
+    calls++;
+    return r.fulfill({ json: weatherResponse(new URL(r.request().url())) });
+  });
+  // East along the equator to 1°, then back west on the same road.
+  await page.route('**/route/v1/driving/**', (r) =>
+    r.fulfill({
+      json: {
+        code: 'Ok',
+        waypoints: [
+          { location: [0, 0], distance: 0 },
+          { location: [1, 0], distance: 0 },
+          { location: [0, 0], distance: 0 },
+        ],
+        routes: [
+          {
+            distance: 222390,
+            duration: 14400,
+            geometry: {
+              coordinates: [
+                [0, 0],
+                [1, 0],
+                [0, 0],
+              ],
+            },
+            legs: [],
+          },
+        ],
+      },
+    }),
+  );
+  const state = { ...defaults(), language: 'en' as const };
+  state.points = [
+    { name: 'Start', coord: [0, 0] },
+    { name: 'Turn', coord: [0, 1] },
+    { name: 'Destination', coord: [0, 0] },
+  ];
+  await page.goto(base + encodeState(state));
+  await expect(page.locator('#download')).toBeEnabled();
+  await page.locator('#weather-section > summary').click();
+  await date(page);
+  await fetchWeather(page);
+  const cards = page.locator('.weather-card');
+  const first = cards.first(),
+    last = cards.last();
+  await expect(first.locator('.weather-card-header')).toContainText(
+    '0 km · Outbound',
+  );
+  await expect(last.locator('.weather-card-header')).toContainText('Return');
+  // Wind from the east: against the outbound pass, behind the return.
+  await expect(first.locator('.weather-card-wind')).toContainText('Headwind');
+  await expect(last.locator('.weather-card-wind')).toContainText('Tailwind');
+  await expect(last).toHaveAttribute('aria-label', /Return/);
+  // Start and destination share a place; their markers sit side by side.
+  const markers = page.locator('.weather-marker');
+  const start = markers.first(),
+    end = markers.last();
+  await expect(start).not.toHaveClass(/weather-marker-return/);
+  await expect(end).toHaveClass(/weather-marker-return/);
+  const a = (await start.boundingBox())!,
+    b = (await end.boundingBox())!;
+  // Mirrored around the shared point: at most the 4 px next to it in common.
+  expect(b.x + b.width - a.x).toBeLessThanOrEqual(4);
+  expect(a.x + a.width / 2 - (b.x + b.width / 2)).toBeGreaterThanOrEqual(50);
+  await end.click();
+  await expect(last).toHaveAttribute('aria-current', 'true');
+  await start.click();
+  await expect(first).toHaveAttribute('aria-current', 'true');
+  await page.locator('#language').selectOption('pt');
+  await expect(first.locator('.weather-card-header')).toContainText('Ida');
+  await expect(last.locator('.weather-card-header')).toContainText('Volta');
+  // Labels come from the route itself: no extra weather request.
+  expect(calls).toBe(1);
+});
+
 test('temperature units switch the weather card to °F and inches without another request', async ({
   page,
 }) => {

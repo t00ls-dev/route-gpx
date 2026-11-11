@@ -3,7 +3,7 @@ import { meters, type Coord, type Route, type State } from './core';
 import { byId as $ } from './dom';
 import { icon } from './icons';
 import { distanceLabel } from './units';
-import { indexTrack, pointAtDistance } from './track-position';
+import { indexTrack, pointAtDistance, type TrackIndex } from './track-position';
 import type { Range } from './route-overlays';
 import { distanceUnits } from './unit-preferences';
 
@@ -75,6 +75,62 @@ export function repeatedRanges(segments: Coord[][]): Range[] {
     else ranges.push({ from, to, kind: 'repeated', repeated: true });
   });
   return ranges.filter((r) => r.to - r.from >= MIN_RANGE);
+}
+
+/** How far apart two passes of the same road may be for weather labels. */
+const PASS_NEAR = 50;
+export type Pass = 'outbound' | 'return';
+
+/**
+ * Which pass over a road used both ways a point belongs to: `return` when an
+ * earlier part of the track (at least 200 m before) runs within 50 m of it in
+ * the opposite direction, `outbound` when a later part does, otherwise null.
+ * Uses the same direction rule as the out-and-back lines.
+ */
+export function passOf(
+  index: TrackIndex,
+  distance: number,
+  coord: Coord,
+  bearing: number | null | undefined,
+): Pass | null {
+  if (bearing === null || bearing === undefined || !index.edges.length)
+    return null;
+  let later = false;
+  for (let at = 0; at <= index.total; at += SAMPLE) {
+    if (Math.abs(at - distance) < MIN_APART) continue;
+    const point = pointAtDistance(index, at)!;
+    if (
+      point.bearing !== null &&
+      angleBetween(point.bearing, bearing) > OPPOSITE &&
+      meters(point.coord, coord) <= PASS_NEAR
+    ) {
+      if (at < distance) return 'return';
+      later = true;
+    }
+  }
+  return later ? 'outbound' : null;
+}
+
+const passCache = new WeakMap<Route, Map<string, Pass | null>>();
+/** Passes of weather samples on a route, computed once per route and sample. */
+export function weatherPasses(
+  route: Route,
+  samples: { distance: number; coord: Coord; bearing?: number | null }[],
+): (Pass | null)[] {
+  let known = passCache.get(route);
+  if (!known) {
+    known = new Map();
+    passCache.set(route, known);
+  }
+  let index: TrackIndex | null = null;
+  return samples.map((s) => {
+    const key = `${s.distance}|${s.bearing}`;
+    if (!known.has(key)) {
+      index ??= indexTrack(route.segments);
+      known.set(key, passOf(index, s.distance, s.coord, s.bearing));
+    }
+    return known.get(key)!;
+  });
 }
 
 const cache = new WeakMap<Route, Range[]>();

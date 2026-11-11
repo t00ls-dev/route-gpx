@@ -3,9 +3,11 @@ import type { Coord } from '../src/core';
 import {
   arrowStops,
   offsetPath,
+  passOf,
   repeatedRanges,
   splitByRepeat,
 } from '../src/route-marks';
+import { indexTrack, pointAtDistance } from '../src/track-position';
 
 // About 111.2 m per 0.001°; tracks along the equator or the prime meridian.
 const line = (from: number, to: number, step = 0.0005): Coord[] => {
@@ -110,5 +112,35 @@ describe('drawing helpers', () => {
     expect(arrowStops(1000, 400)).toEqual([200, 600]);
     expect(arrowStops(0, 100)).toEqual([]);
     expect(arrowStops(100, 0)).toEqual([]);
+  });
+});
+
+describe('weather passes on a road used both ways', () => {
+  const passAt = (segments: Coord[][], distance: number) => {
+    const index = indexTrack(segments);
+    const point = pointAtDistance(index, distance)!;
+    return passOf(index, distance, point.coord, point.bearing);
+  };
+  it('names the outbound and the return of an out-and-back', () => {
+    // 2 km east, then back west on the same road.
+    const track = [...line(0, 0.018), ...line(0.018, 0).slice(1)];
+    expect(passAt([track], 0)).toBe('outbound');
+    expect(passAt([track], 500)).toBe('outbound');
+    expect(passAt([track], 3500)).toBe('return');
+    // The destination of the round trip, arriving westward.
+    const end = indexTrack([track]).total;
+    expect(passAt([track], end)).toBe('return');
+  });
+  it('leaves one-way roads and parallel roads unlabelled', () => {
+    expect(passAt([line(0, 0.018)], 900)).toBeNull();
+    // Back on a parallel road about 100 m north.
+    const north = line(0.018, 0).map(([, lon]): Coord => [0.0009, lon]);
+    const track = [...line(0, 0.018), ...north];
+    expect(passAt([track], 500)).toBeNull();
+  });
+  it('ignores a point without a direction', () => {
+    const track = [...line(0, 0.018), ...line(0.018, 0).slice(1)];
+    const index = indexTrack([track]);
+    expect(passOf(index, 500, [0, 0.0045], null)).toBeNull();
   });
 });
