@@ -35,6 +35,13 @@ it('switches existing content and placeholders without overwriting typed place n
   expect(document.querySelector('input')?.placeholder).toBe('My road trip');
 });
 
+it('translates the weather card rain line', () => {
+  setLanguage('pt');
+  expect(t('Rain 13% · 0.2 mm')).toBe('Chuva 13% · 0.2 mm');
+  expect(t('Rain —% · — mm')).toBe('Chuva —% · — mm');
+  setLanguage('en');
+  expect(t('Rain 13% · 0.2 mm')).toBe('Rain 13% · 0.2 mm');
+});
 it('translates the map hint for each kind of point', () => {
   setLanguage('pt');
   expect(t('Set the start on the map')).toBe('Defina o início no mapa');

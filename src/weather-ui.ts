@@ -61,6 +61,9 @@ function restorePosition(element: HTMLElement, before: number) {
     scroller = scroller.parentElement;
   (scroller ?? document.scrollingElement)?.scrollBy(0, delta);
 }
+/** Alerts the UV line itself carries on a weather card. */
+const UV_RISKS = new Set(['Very high UV', 'Extreme UV']);
+
 export function setupWeather(
   map: L.Map,
   getState: () => State,
@@ -269,10 +272,21 @@ export function setupWeather(
       header.append(when, badge);
       const conditions = document.createElement('span');
       conditions.className = 'weather-card-conditions';
-      conditions.append(
-        icon(weather.icon),
-        document.createTextNode(
-          `${t(weather.text)} · ${hour.temperature ?? '—'} °C · ${hour.precipitation ?? '—'} mm · ${hour.probability ?? '—'}%`,
+      conditions.append(icon(weather.icon), t(weather.text));
+      // One topic per line, as wind and UV, in the interface's number format.
+      const number = (value: number | null) =>
+        value === null
+          ? '—'
+          : value.toLocaleString(locale, { maximumFractionDigits: 1 });
+      const temperature = document.createElement('span');
+      temperature.className = 'weather-card-temperature';
+      temperature.append(icon('thermometer'), `${number(hour.temperature)} °C`);
+      const rain = document.createElement('span');
+      rain.className = 'weather-card-rain';
+      rain.append(
+        icon('droplet'),
+        t(
+          `Rain ${hour.probability ?? '—'}% · ${number(hour.precipitation)} mm`,
         ),
       );
       const relation = windRelation(
@@ -294,21 +308,39 @@ export function setupWeather(
           `${t(relation)}${windSpeed === null ? '' : ` · ${windSpeed} ${state.units === 'imperial' ? 'mph' : 'km/h'}`}`,
         ),
       );
-      detail.append(header, conditions, wind);
-      // UV only while the sun counts (rounded index 1 or more).
-      if (hour.uv !== null && Math.round(hour.uv) >= 1) {
+      detail.append(header, conditions, temperature, rain, wind);
+      // UV only while the sun counts (rounded index 1 or more). A UV alert
+      // covers the worst hour of the passage window, so the line then shows
+      // the range from the nearest hour to that worst value and carries the
+      // alert itself, instead of a separate warning that could contradict it.
+      const uvRisk = risks.find((risk) => UV_RISKS.has(risk.text));
+      const windowUv = Math.max(
+        ...weatherWindow(forecast!.hours[i], passage[i]).map(
+          (h) => h.uv ?? -Infinity,
+        ),
+      );
+      const nearUv = hour.uv === null ? null : Math.round(hour.uv);
+      const topUv = uvRisk ? Math.round(windowUv) : nearUv;
+      let uvText = '';
+      if (topUv !== null && topUv >= 1) {
+        const range =
+          nearUv === null || nearUv >= topUv
+            ? `${topUv}`
+            : `${nearUv}–${topUv}`;
+        uvText = t(`UV ${range} · ${uvCategory(topUv)}`);
         const uv = document.createElement('span');
         uv.className = 'weather-card-uv';
-        uv.dataset.category = uvCategory(hour.uv);
+        uv.dataset.category = uvCategory(topUv);
+        if (uvRisk) uv.dataset.alert = '';
         uv.append(
-          icon('weather-sun'),
-          document.createTextNode(
-            t(`UV ${Math.round(hour.uv)} · ${uvCategory(hour.uv)}`),
-          ),
+          icon(uvRisk ? 'alert' : 'weather-sun'),
+          document.createTextNode(uvText),
         );
         detail.append(uv);
       }
-      const extraRisks = risks.filter((risk) => risk.text !== weather.text);
+      const extraRisks = risks.filter(
+        (risk) => risk.text !== weather.text && !UV_RISKS.has(risk.text),
+      );
       if (extraRisks.length) {
         const warnings = document.createElement('span');
         warnings.className = 'weather-card-risks';
@@ -377,7 +409,7 @@ export function setupWeather(
         );
       detail.setAttribute(
         'aria-label',
-        `${t('Show on map')}: ${time(passage[i])} · ${km} · ${conditions.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
+        `${t('Show on map')}: ${time(passage[i])} · ${km} · ${conditions.textContent} · ${temperature.textContent} · ${rain.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${uvRisk ? ` · ${uvText}` : ''}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
       );
       detail.setAttribute('aria-controls', 'map');
       detail.onclick = () => {

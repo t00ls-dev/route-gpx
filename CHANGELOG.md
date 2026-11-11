@@ -17,6 +17,8 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 - Zooming with one finger (tap, then touch again and drag) no longer makes the map disappear for a moment.
 - On phones, the map credits button stays visible above the route panel; only the full-height panel hides it.
 - The English map hint reads as a sentence, for example Set the start on the map.
+- Weather card temperature and precipitation use the language's number format (24,1 °C in Portuguese), and the card shows conditions, temperature and rain on separate lines, with rain labeled (for example Rain 13% · 0.2 mm).
+- A UV alert on a weather card shows on its UV line as a range up to the worst hour around the passage, for example UV 7–8 · Very high, instead of a separate warning next to a lower value.
 
 ## [1.0.0] - 2026-11-11
 

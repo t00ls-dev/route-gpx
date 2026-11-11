@@ -34,6 +34,8 @@ const paths = {
   pause: '<path d="M8 5v14M16 5v14"/>',
   external:
     '<path d="M14 3h7v7m0-7L10 14M10 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6"/>',
+  thermometer: '<path d="M10 4a2 2 0 0 1 4 0v10a4 4 0 1 1-4 0Z M12 9v7"/>',
+  droplet: '<path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11Z"/>',
   wind: '<path d="M3 8h12a3 3 0 1 0-3-3M2 12h17a3 3 0 1 1-3 3M4 17h5a2 2 0 1 1-2 2"/>',
   locate:
     '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>',
