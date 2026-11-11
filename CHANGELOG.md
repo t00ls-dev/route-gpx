@@ -18,6 +18,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Fixed
 
+- On phones, selecting a weather marker on the map no longer scrolls the whole planner up, hiding the top of the map under the address bar and leaving a blank band at the bottom.
 - On phones, the arrival shows the time on one line, with the date below it when it is on another day, and Add stop, Reverse and Round trip stay on one row.
 - On the narrowest phones, Set on map shows only its pin instead of a cut-off label.
 - Zooming with one finger (tap, then touch again and drag) no longer makes the map disappear for a moment.

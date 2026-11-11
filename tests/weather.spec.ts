@@ -997,6 +997,38 @@ for (const language of ['en', 'pt'])
     );
   });
 
+test.describe('phone page height', () => {
+  test.use({
+    viewport: { width: 390, height: 664 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  test('selecting a weather marker never scrolls the page off screen', async ({
+    page,
+  }) => {
+    await setup(page, true);
+    await date(page);
+    await fetchWeather(page);
+    const page_ = () =>
+      page.evaluate(() => ({
+        scrollY: Math.round(scrollY),
+        height: document.documentElement.scrollHeight,
+        screen: innerHeight,
+      }));
+    // Nothing inside the panel (hidden status, screen-reader text) may make
+    // the page taller than the screen; otherwise revealing a card scrolls it.
+    expect(await page_()).toEqual({ scrollY: 0, height: 664, screen: 664 });
+    await page.locator('.weather-marker').nth(3).click();
+    await expect(page.locator('.weather-card').nth(3)).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    await page.waitForTimeout(600); // Smooth scrolling of the panel.
+    expect(await page_()).toEqual({ scrollY: 0, height: 664, screen: 664 });
+    expect((await page.locator('header').boundingBox())!.y).toBeGreaterThan(0);
+  });
+});
+
 test('a road used both ways labels outbound and return, with both markers visible', async ({
   page,
 }) => {
