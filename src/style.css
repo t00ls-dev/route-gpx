@@ -1518,6 +1518,15 @@ dialog.settings::backdrop {
   z-index: 1;
   top: 0;
 }
+.help-page #back {
+  white-space: nowrap;
+}
+/* The narrowest phones keep the logo and drop the brand text. */
+@media (max-width: 359px) {
+  .help-page .brand {
+    font-size: 0;
+  }
+}
 .help-page h1 {
   margin: 12px 0 22px;
   font-size: 28px;

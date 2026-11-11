@@ -38,6 +38,13 @@ Repository documentation, templates, code comments, commit messages, pull reques
 - Do not use emoji as interface icons; use the shared SVG icons in [`src/icons.ts`](src/icons.ts).
 - Tests must mock every external HTTP service.
 
+## Releases
+
+Releases are made by hand by the maintainer, without release tooling. Versions follow [Semantic Versioning](https://semver.org/) for the site as users see it: major for a change that stops something users keep (share links, saved routes, backups, exported GPX) from working, minor for new features, patch for fixes only. The app version is separate from the version numbers inside links and backups.
+
+1. In a pull request, rename `## [Unreleased]` in [`CHANGELOG.md`](CHANGELOG.md) to `## [x.y.z] - YYYY-MM-DD` (the merge date, UTC), add an empty `## [Unreleased]` above it and update the link references at the end. Make the same change in both languages of [`changelog.html`](changelog.html), and set the version with `npm version x.y.z --no-git-tag-version`.
+2. After the squash merge, tag the merge commit and publish the notes: `gh release create vx.y.z --target <merge commit> --title vx.y.z --notes-file <notes>`, with that version's changelog section as notes.
+
 ## AI-assisted contributions
 
 Contributions made with AI tools are welcome when the author has reviewed, understood and tested the change. [`AGENTS.md`](AGENTS.md) holds the detailed instructions used by coding agents and is a useful reference for anyone working on the code.

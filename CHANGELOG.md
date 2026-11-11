@@ -1,51 +1,32 @@
 # Changelog
 
-All notable user-visible changes to [route-gpx](https://route-gpx.t00ls.dev/) are documented in this file.
+All notable user-visible changes to [route-gpx](https://route-gpx.t00ls.dev/) are documented in this file, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/). Internal changes (CI, dependencies, tests and repository documentation) are not listed.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Changes accumulate under **Unreleased** until a release gives them a version and a date. The live site is deployed from `main` after every merge, so Unreleased entries are already live. Internal changes (CI, dependencies, tests and repository documentation) are not listed.
-
-Site users read the same entries, in English and Portuguese, on the [What's new](https://route-gpx.t00ls.dev/changelog.html) page (`changelog.html`). Keep both in sync: a pull request with a user-visible change adds its entry here and in both languages of `changelog.html`, in the same release and section.
+The site is deployed from `main` after every merge, so entries under Unreleased are already live; a release gives them a version. The [What's new](https://route-gpx.t00ls.dev/changelog.html) page (`changelog.html`) shows the same entries in English and Portuguese and must stay in sync with this file.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-11
+
 ### Added
 
-- The route planner: route points from addresses, coordinates or the map, OSRM routing with a Valhalla fallback, complete GPX export, English and Portuguese interface, distance units, average speed, undo, share links, a local library of named routes with backups, map layers including satellite imagery, place suggestions while typing and a separate help page.
-- A What's new page with the user-visible changes, linked from the route panel footer and the help page. ([#83](https://github.com/t00ls-dev/route-gpx/issues/83))
-- Turn directions for imported tracks and for routes saved before turn details existed, requested only when the Itinerary is opened; the track itself never changes. ([#81](https://github.com/t00ls-dev/route-gpx/pull/81))
-- Climbs along the route in Elevation: start, length, gain, average and steepest grade and passage time. ([#79](https://github.com/t00ls-dev/route-gpx/pull/79))
-- Automatic departure at the next half hour, so weather, arrival and daylight are ready without choosing a time. ([#78](https://github.com/t00ls-dev/route-gpx/pull/78))
-- Turn arrows and maneuver text in the Itinerary. ([#77](https://github.com/t00ls-dev/route-gpx/pull/77))
-- FIT and TCX import alongside GPX. ([#75](https://github.com/t00ls-dev/route-gpx/pull/75))
-- An elevation profile with total gain and loss. ([#72](https://github.com/t00ls-dev/route-gpx/pull/72))
-- Direction arrows, out-and-back sections drawn as parallel lines and the halfway point on the route. ([#71](https://github.com/t00ls-dev/route-gpx/pull/71))
-- Route coloring by daylight, chosen in Map layers. ([#70](https://github.com/t00ls-dev/route-gpx/pull/70))
+- Route planning with start, destination and stops from addresses, coordinates, a map click or long press, or your location, with place suggestions while typing and search with Enter.
+- Route editing: move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits. ([#57](https://github.com/t00ls-dev/route-gpx/pull/57))
+- Routing along real roads with OSRM and a Valhalla fallback, with a Prefer main roads option.
+- A route summary with distance, time and arrival from your own average speed, kept on this device, in kilometers or miles. ([#60](https://github.com/t00ls-dev/route-gpx/pull/60), [#67](https://github.com/t00ls-dev/route-gpx/pull/67))
+- An automatic departure at the next half hour, or a departure you choose. ([#78](https://github.com/t00ls-dev/route-gpx/pull/78))
+- An itinerary with turn directions, also for imported tracks and earlier saved routes, requested only when it is opened. ([#77](https://github.com/t00ls-dev/route-gpx/pull/77), [#81](https://github.com/t00ls-dev/route-gpx/pull/81))
+- Weather along the route for the departure: conditions, wind relative to the route, UV index and risk alerts, on routes with any number of points. ([#68](https://github.com/t00ls-dev/route-gpx/pull/68), [#76](https://github.com/t00ls-dev/route-gpx/pull/76))
+- An elevation profile with gain, loss and the climbs along the route. ([#72](https://github.com/t00ls-dev/route-gpx/pull/72), [#79](https://github.com/t00ls-dev/route-gpx/pull/79))
+- Daylight along the route: sunrise, sunset and the distance travelled in the dark, also shown as a route coloring. ([#59](https://github.com/t00ls-dev/route-gpx/pull/59), [#70](https://github.com/t00ls-dev/route-gpx/pull/70))
 - Travel the route: a cursor that plays along the track with distance and passage time. ([#69](https://github.com/t00ls-dev/route-gpx/pull/69))
-- UV index on weather cards, with alerts for very high and extreme UV. ([#68](https://github.com/t00ls-dev/route-gpx/pull/68))
-- One-finger zoom on touch screens: tap, then touch again and drag. ([#63](https://github.com/t00ls-dev/route-gpx/pull/63))
-- Daylight along the route: sunrise, sunset and distance driven in the dark. ([#59](https://github.com/t00ls-dev/route-gpx/pull/59))
-- An edit lock that protects the route from accidental changes. ([#57](https://github.com/t00ls-dev/route-gpx/pull/57))
-- Shorter route links that messaging apps make clickable; older links still open. ([#10](https://github.com/t00ls-dev/route-gpx/pull/10))
-- Weather along the route for the chosen departure.
+- Map layers: standard, topographic and satellite maps, with direction arrows, out-and-back lines and the halfway point on the route. ([#71](https://github.com/t00ls-dev/route-gpx/pull/71))
+- GPX, FIT and TCX import; editing a point of an imported track recalculates only the changed legs. ([#17](https://github.com/t00ls-dev/route-gpx/pull/17), [#75](https://github.com/t00ls-dev/route-gpx/pull/75))
+- GPX 1.1 export with the complete track and named waypoints.
+- Short share links; a link that suggests other routing or search servers opens with the default servers until you choose to use them. ([#10](https://github.com/t00ls-dev/route-gpx/pull/10), [#13](https://github.com/t00ls-dev/route-gpx/pull/13))
+- Named routes saved in this browser, with backup export and import.
+- A side panel on wide screens and a bottom sheet on phones, with one-finger zoom on touch screens. ([#82](https://github.com/t00ls-dev/route-gpx/pull/82), [#63](https://github.com/t00ls-dev/route-gpx/pull/63))
+- English and Portuguese interface, a help page and a What's new page. ([#83](https://github.com/t00ls-dev/route-gpx/issues/83))
 
-### Changed
-
-- New planner layout: a side panel on wide screens and a bottom sheet with three heights on phones, a fixed bar with Download GPX and Copy link, trip options available before a route exists and settings in a dialog. ([#82](https://github.com/t00ls-dev/route-gpx/pull/82))
-- Weather works on routes with more than 20 points, sampling start, destination and evenly spread stops. ([#76](https://github.com/t00ls-dev/route-gpx/pull/76))
-- Time, arrival, weather and daylight always use your average speed, a setting kept on this device. ([#67](https://github.com/t00ls-dev/route-gpx/pull/67))
-- The route summary shows distance, time and arrival first. ([#60](https://github.com/t00ls-dev/route-gpx/pull/60))
-- Editing a point of an imported track recalculates only the changed legs. ([#17](https://github.com/t00ls-dev/route-gpx/pull/17))
-- Links that suggest other routing or search servers open with the default servers until you choose to use them. ([#13](https://github.com/t00ls-dev/route-gpx/pull/13))
-- Remaining interface messages are translated into Portuguese. ([#56](https://github.com/t00ls-dev/route-gpx/pull/56))
-
-### Removed
-
-- The rain radar layer; weather stays along the route. ([#58](https://github.com/t00ls-dev/route-gpx/pull/58))
-
-### Fixed
-
-- A long press on the map no longer opens the browser's copy or image menu on phones. ([#62](https://github.com/t00ls-dev/route-gpx/pull/62))
-- Settings with one invalid server no longer apply the others, and undo restores the right track after two similar imports. ([#12](https://github.com/t00ls-dev/route-gpx/pull/12))
-- The chosen language is kept across the logo link, undo and reload. ([#1](https://github.com/t00ls-dev/route-gpx/pull/1))
-
-[Unreleased]: https://github.com/t00ls-dev/route-gpx/commits/main
+[Unreleased]: https://github.com/t00ls-dev/route-gpx/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/t00ls-dev/route-gpx/releases/tag/v1.0.0
