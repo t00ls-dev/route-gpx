@@ -64,7 +64,8 @@ const paths = {
   'maneuver-uturn': '<path d="M16 21V9a4 4 0 0 0-8 0v9m-4-4 4 4 4-4"/>',
   'maneuver-roundabout':
     '<circle cx="12" cy="9" r="4"/><path d="M12 13v8m3-15 4-3m0 0h-4m4 0v4"/>',
-  summit: '<path d="m3 20 7-13 4 6 2-3 5 10Z"/>',
+  // Vertically centred in the 24-unit box (5.5 to 18.5).
+  summit: '<path d="m3 18.5 7-13 4 6 2-3 5 10Z"/>',
   'slope-down': '<path d="M3 19h18M3 6l18 13"/>',
   'slope-up': '<path d="M3 19h18M3 19 21 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',

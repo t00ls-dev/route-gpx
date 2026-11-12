@@ -408,6 +408,8 @@ const pt: Record<string, string> = {
   'Elevation estimated from terrain.': 'Altitude estimada pelo relevo.',
   'See the help.': 'Veja a ajuda.',
   'Recorded in the imported file.': 'Gravada no arquivo importado.',
+  'Elevation here': 'Elevação aqui',
+  'No elevation data here.': 'Sem dados de elevação aqui.',
   'Elevation data: Copernicus DEM GLO-90 via Open-Meteo':
     'Dados de elevação: Copernicus DEM GLO-90 via Open-Meteo',
   'Route marks': 'Marcas da rota',
@@ -504,6 +506,7 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (time, light) =>
       `${time} · ${({ daylight: 'dia', twilight: 'crepúsculo', dark: 'escuro' } as Record<string, string>)[light]}`,
   ],
+  [/^About (-?[\d.,]+ (?:m|ft))$/, (value) => `Cerca de ${value}`],
   [
     /^Min (.+) · Max (.+) · Avg (.+)$/,
     (min, max, avg) => `Mín ${min} · Máx ${max} · Média ${avg}`,

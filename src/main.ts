@@ -1170,9 +1170,8 @@ function changed(preserveEditor = false, forceRouting = false) {
       });
   }, 900);
 }
-setupPointMenu(
-  map,
-  (kind, coord) => {
+setupPointMenu(map, {
+  choose: (kind, coord) => {
     if (editBlocked()) return;
     if (kind === 'stop') {
       if (state.points.length >= 50) {
@@ -1190,9 +1189,12 @@ setupPointMenu(
       setPoint(state.points[selected], selected, coord, pointLabel(selected));
     }
   },
-  (coord) => setPoint(state.points[selected], selected, coord),
-  () => !editBlocked(),
-);
+  click: (coord) => setPoint(state.points[selected], selected, coord),
+  editable: () => !editBlocked(),
+  locked: () => locked,
+  elevation: (coord) => elevation.queryPoint(coord),
+  dismiss: () => elevation.closePoint(),
+});
 // After the point menu, so its long press exists when a quick zoom cancels it.
 setupQuickZoom(map);
 $('calculate').onclick = () => {

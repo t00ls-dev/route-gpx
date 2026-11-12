@@ -3,6 +3,7 @@ import type { Coord } from '../src/core';
 import { importGpx, meters } from '../src/core';
 import {
   cumulativeClimb,
+  elevationExtremes,
   elevationStats,
   gradeRanges,
   profileFromTrack,
@@ -395,5 +396,30 @@ describe('route coloring by grade', () => {
     expect(
       gradeRanges(profile, 'terrain').some((r) => r.kind === 'steep-up'),
     ).toBe(false);
+  });
+});
+
+describe('highest and lowest points', () => {
+  it('finds the first highest and lowest points, across segment gaps', () => {
+    const profile = [
+      { at: 0, ele: 120 },
+      { at: 100, ele: 80 },
+      { at: 200, ele: 300 },
+      { at: 300, ele: 300, gap: true },
+      { at: 400, ele: 80 },
+    ];
+    expect(elevationExtremes(profile)).toEqual({
+      highest: { at: 200, ele: 300 },
+      lowest: { at: 100, ele: 80 },
+    });
+  });
+  it('has none for an empty or flat profile', () => {
+    expect(elevationExtremes([])).toBeNull();
+    expect(
+      elevationExtremes([
+        { at: 0, ele: 50 },
+        { at: 100, ele: 50 },
+      ]),
+    ).toBeNull();
   });
 });

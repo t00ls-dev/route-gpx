@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { defaults, decodeState, encodeState } from '../src/core';
 import { weatherResponse } from './weather-fixture';
 import { chooseUnits } from './unit-settings';
+import { holdMap } from './map-helpers';
 const base = 'http://127.0.0.1:5173/';
 const gpx =
   '<gpx><trk><name>Weather route</name><trkseg><trkpt lat="0" lon="0"/><trkpt lat="0" lon="1"/></trkseg></trk></gpx>';
@@ -760,7 +761,19 @@ test('climbs are listed, shaded in the chart and shown on the map', async ({
   await expect(climbs.first()).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('rect.elevation-climb.selected')).toHaveCount(1);
   await expect(page.locator('path.climb-line')).toHaveCount(1);
-  await expect(page.locator('.climb-summit svg')).toHaveCount(1);
+  // The climb's summit is the route's highest point: one mark there, the
+  // label below the route, so route point pins above it never cover it.
+  await expect(page.locator('.climb-summit')).toHaveCount(0);
+  const label = page.locator('.elevation-extreme.highest');
+  await expect(label.locator('svg.icon-summit')).toHaveCount(1);
+  // Measured in one frame against its own anchor, the route point, so the
+  // map's zoom animation cannot skew it.
+  const below = await label.evaluate(
+    (chip) =>
+      chip.getBoundingClientRect().top -
+      chip.parentElement!.getBoundingClientRect().top,
+  );
+  expect(below).toBeGreaterThanOrEqual(10);
   // Units and language re-render without a new request.
   await chooseUnits(page, { distance: 'imperial' });
   await expect(climbs.first()).toContainText('mi 2');
@@ -773,6 +786,173 @@ test('climbs are listed, shaded in the chart and shown on the map', async ({
   // Closing Elevation removes the highlight from the map.
   await page.locator('#elevation > summary').click();
   await expect(page.locator('path.climb-line')).toHaveCount(0);
+});
+test('a climb whose summit is not the highest point keeps its summit mark', async ({
+  page,
+}) => {
+  await setup(page, true);
+  // A climb to 400 m near longitude 0.2, back down, then the highest climb to
+  // 900 m near 0.7.
+  await page.route('**/v1/elevation?**', (r) => {
+    const lons = new URL(r.request().url()).searchParams
+      .get('longitude')!
+      .split(',')
+      .map(Number);
+    const ramp = (lon: number, from: number, to: number) =>
+      Math.min(1, Math.max(0, (lon - from) / (to - from)));
+    const ele = (lon: number) =>
+      100 +
+      300 * ramp(lon, 0.15, 0.2) -
+      300 * ramp(lon, 0.3, 0.35) +
+      800 * ramp(lon, 0.6, 0.7);
+    return r.fulfill({ json: { elevation: lons.map(ele) } });
+  });
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('.climbs .climb')).toHaveCount(2);
+  await page.locator('.climbs .climb').first().click();
+  await expect(page.locator('.climb-summit svg')).toHaveCount(1);
+  await page.locator('.climbs .climb').nth(1).click();
+  await expect(page.locator('.climb-summit')).toHaveCount(0);
+  await expect(page.locator('.elevation-extreme.highest')).toHaveCount(1);
+});
+test('the highest and lowest points are marked on the map while Elevation is open', async ({
+  page,
+}) => {
+  await setup(page, true);
+  // Down to 40 m at longitude 0.2, up to 900 m at 0.7, then down to 300 m.
+  await page.route('**/v1/elevation?**', (r) => {
+    const lons = new URL(r.request().url()).searchParams
+      .get('longitude')!
+      .split(',')
+      .map(Number);
+    const ele = (lon: number) =>
+      lon < 0.2
+        ? 200 - 800 * lon
+        : lon < 0.7
+          ? 40 + 1720 * (lon - 0.2)
+          : 900 - 2000 * (lon - 0.7);
+    return r.fulfill({ json: { elevation: lons.map(ele) } });
+  });
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('#elevation-stats')).toContainText(
+    /Min (4\d|5\d) m · Max (8[89]\d|900) m/,
+  );
+  const highest = page.locator('.elevation-extreme.highest');
+  const lowest = page.locator('.elevation-extreme.lowest');
+  await expect(highest).toHaveText(/^(8[89]\d|900) m$/);
+  await expect(lowest).toHaveText(/^(4\d|5\d) m$/);
+  await expect(highest.locator('svg.icon-summit')).toHaveCount(1);
+  await expect(lowest.locator('svg.icon-summit')).toHaveCount(1);
+  // At the right places along the route: the lowest west of the highest.
+  const lowBox = (await lowest.boundingBox())!,
+    highBox = (await highest.boundingBox())!;
+  expect(lowBox.x).toBeLessThan(highBox.x);
+  await chooseUnits(page, { distance: 'imperial' });
+  await expect(highest).toHaveText(/ ft$/);
+  await page.locator('#elevation > summary').click();
+  await expect(page.locator('.elevation-extreme')).toHaveCount(0);
+});
+for (const mobile of [false, true])
+  test(`the point menu asks the elevation of one map point: ${mobile ? 'mobile' : 'desktop'}`, async ({
+    browser,
+  }) => {
+    const context = await browser.newContext(
+      mobile
+        ? {
+            viewport: { width: 320, height: 640 },
+            hasTouch: true,
+            isMobile: true,
+          }
+        : {},
+    );
+    const page = await context.newPage();
+    await setup(page, true);
+    const requests: URL[] = [];
+    await page.route('**/v1/elevation?**', (r) => {
+      const url = new URL(r.request().url());
+      requests.push(url);
+      const count = url.searchParams.get('latitude')!.split(',').length;
+      return r.fulfill({ json: { elevation: Array(count).fill(812.4) } });
+    });
+    await page.locator('#language').selectOption('pt');
+    if (mobile) {
+      // The sheet closed shows the map; a long press opens the menu.
+      if (await page.locator('#route-panel').isVisible())
+        await page.locator('#panel-toggle').click();
+      await holdMap(page, 160, 200);
+    } else
+      await page
+        .locator('#map')
+        .click({ button: 'right', position: { x: 210, y: 140 } });
+    await page
+      .locator('#point-menu')
+      .getByRole('menuitem', { name: 'Elevação aqui' })
+      .click();
+    const popup = page.locator('.elevation-point');
+    await expect(popup.locator('.elevation-point-value')).toHaveText(
+      'Cerca de 812 m',
+    );
+    await expect(popup).toContainText('Altitude estimada pelo relevo.');
+    // Exactly one request, for one point.
+    expect(requests).toHaveLength(1);
+    expect(requests[0].searchParams.get('latitude')!.split(',')).toHaveLength(
+      1,
+    );
+    // The popup stays whole inside the map, its title on one line.
+    const fit = await page.evaluate(() => {
+      const map = document.getElementById('map')!.getBoundingClientRect();
+      const box = document
+        .querySelector('.elevation-point-popup')!
+        .getBoundingClientRect();
+      const title = document.querySelector('.elevation-point-header strong')!;
+      return {
+        inside:
+          box.left >= map.left - 0.5 &&
+          box.right <= map.right + 0.5 &&
+          box.top >= map.top - 0.5,
+        lines: Math.round(
+          title.getBoundingClientRect().height /
+            parseFloat(getComputedStyle(title).lineHeight || '20'),
+        ),
+      };
+    });
+    expect(fit.inside).toBe(true);
+    expect(fit.lines).toBeLessThanOrEqual(1);
+    // Units and language reformat without another request.
+    await chooseUnits(page, { distance: 'imperial' });
+    await expect(popup.locator('.elevation-point-value')).toHaveText(
+      'Cerca de 2.665 ft',
+    );
+    await page.locator('#language').selectOption('en');
+    await expect(popup.locator('.elevation-point-value')).toHaveText(
+      'About 2,665 ft',
+    );
+    expect(requests).toHaveLength(1);
+    // A map tap closes the popup without placing a route point.
+    const before = await page.locator('#location-0').inputValue();
+    const map = (await page.locator('#map').boundingBox())!;
+    if (mobile) await page.touchscreen.tap(map.x + 30, map.y + 330);
+    else await page.mouse.click(map.x + 60, map.y + 300);
+    await expect(popup).toHaveCount(0);
+    expect(await page.locator('#location-0').inputValue()).toBe(before);
+    await context.close();
+  });
+test('the point elevation popup closes by its button and reports missing data', async ({
+  page,
+}) => {
+  await setup(page, true);
+  await page.route('**/v1/elevation?**', (r) =>
+    r.fulfill({ json: { elevation: [null] } }),
+  );
+  await page
+    .locator('#map')
+    .click({ button: 'right', position: { x: 210, y: 140 } });
+  await page.getByRole('menuitem', { name: 'Elevation here' }).click();
+  await expect(page.locator('.elevation-point-value')).toHaveText(
+    'No elevation data here.',
+  );
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.locator('.elevation-point')).toHaveCount(0);
 });
 test('a recalculated route waits to settle and reuses cached elevation', async ({
   page,

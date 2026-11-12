@@ -295,3 +295,21 @@ export function gradeRanges(
   }
   return ranges;
 }
+
+/**
+ * Highest and lowest points of a profile already passed through
+ * `smoothProfile`, so they match the Min and Max statistics. The first one
+ * wins on a tie; null for an empty or flat profile.
+ */
+export function elevationExtremes(
+  profile: ProfilePoint[],
+): { highest: ProfilePoint; lowest: ProfilePoint } | null {
+  if (!profile.length) return null;
+  let highest = profile[0],
+    lowest = profile[0];
+  for (const p of profile) {
+    if (p.ele > highest.ele) highest = p;
+    if (p.ele < lowest.ele) lowest = p;
+  }
+  return highest.ele > lowest.ele ? { highest, lowest } : null;
+}
