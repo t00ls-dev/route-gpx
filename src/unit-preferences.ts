@@ -9,9 +9,27 @@ const TEMPERATURE_KEY = 'temperature-units';
 const MILE_REGIONS = new Set(['US', 'GB', 'LR', 'MM']);
 /** Regions that read weather temperatures in Fahrenheit, after CLDR. */
 const FAHRENHEIT_REGIONS = new Set(['US', 'BS', 'BZ', 'KY', 'PR', 'PW']);
-/** Time zones used only when no preferred language names a region. */
+/** United States time zones, including legacy aliases some systems report. */
 const US_ZONES =
-  /^(America\/(New_York|Detroit|Chicago|Denver|Phoenix|Boise|Los_Angeles|Anchorage|Juneau|Sitka|Nome|Adak|Indiana\/.+|Kentucky\/.+|North_Dakota\/.+|Menominee|Metlakatla|Yakutat)|Pacific\/Honolulu)$/;
+  /^(America\/(New_York|Detroit|Chicago|Denver|Phoenix|Boise|Los_Angeles|Anchorage|Juneau|Sitka|Nome|Adak|Atka|Indiana\/.+|Indianapolis|Fort_Wayne|Knox_IN|Kentucky\/.+|Louisville|North_Dakota\/.+|Menominee|Metlakatla|Yakutat|Shiprock)|Pacific\/Honolulu|US\/.+|Navajo)$/;
+/** Other time zones of the mile and Fahrenheit regions above. */
+const ZONE_REGIONS = new Map([
+  ['Europe/London', 'GB'],
+  ['Europe/Belfast', 'GB'],
+  ['GB', 'GB'],
+  ['GB-Eire', 'GB'],
+  ['Africa/Monrovia', 'LR'],
+  ['Asia/Yangon', 'MM'],
+  ['Asia/Rangoon', 'MM'],
+  ['America/Nassau', 'BS'],
+  ['America/Belize', 'BZ'],
+  ['America/Cayman', 'KY'],
+  ['America/Puerto_Rico', 'PR'],
+  ['Pacific/Palau', 'PW'],
+]);
+/** Time zones that name a place, unlike UTC, Etc/GMT+5 or EST5EDT. */
+const PLACE_ZONES =
+  /^(Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific|Brazil|Canada|Chile|Mexico)\//;
 
 function regionOf(language: string): string | null {
   const region = language
@@ -22,20 +40,28 @@ function regionOf(language: string): string | null {
 }
 
 /**
- * Units inferred locally, without requests: the first preferred language that
- * names a region decides; otherwise the time zone; otherwise metric.
+ * The region a time zone places the device in: a code when it matters for
+ * units, '' for any other place, null when the zone names no place.
+ */
+function zoneRegion(timeZone: string): string | null {
+  if (US_ZONES.test(timeZone)) return 'US';
+  const region = ZONE_REGIONS.get(timeZone);
+  if (region) return region;
+  return PLACE_ZONES.test(timeZone) ? '' : null;
+}
+
+/**
+ * Units inferred locally, without requests. The time zone says where the
+ * device is and decides; a language region often names only a variety of the
+ * language (en-GB in Australia), so it decides only when the time zone names
+ * no place (UTC, often under fingerprinting protection). Otherwise metric.
  */
 export function detectUnits(
   languages: readonly string[],
   timeZone: string,
 ): { distance: DistanceUnits; temperature: TemperatureUnits } {
-  let region = languages.map(regionOf).find(Boolean) ?? null;
-  if (!region)
-    region = US_ZONES.test(timeZone)
-      ? 'US'
-      : timeZone === 'Europe/London'
-        ? 'GB'
-        : null;
+  const region =
+    zoneRegion(timeZone) ?? languages.map(regionOf).find(Boolean) ?? null;
   return {
     distance: region && MILE_REGIONS.has(region) ? 'imperial' : 'metric',
     temperature:
