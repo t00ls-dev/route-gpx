@@ -1335,7 +1335,10 @@ for (const width of [320, 360, 390, 430])
         };
       });
       expect(overflow).toEqual({ page: false, panel: false, escaped: [] });
-      const marker = page.locator('.weather-marker').last();
+      // Clustered markers are hidden at this zoom; take one on the map.
+      const marker = page
+        .locator('.weather-marker:not(.weather-marker-clustered)')
+        .last();
       await marker.focus();
       await expect(marker).toBeFocused();
       await expect(marker).not.toHaveAttribute('aria-label', /BBBBB/);
@@ -1420,8 +1423,13 @@ test.describe('phone page height', () => {
     // Nothing inside the panel (hidden status, screen-reader text) may make
     // the page taller than the screen; otherwise revealing a card scrolls it.
     expect(await page_()).toEqual({ scrollY: 0, height: 664, screen: 664 });
-    await page.locator('.weather-marker').nth(3).click();
-    await expect(page.locator('.weather-card').nth(3)).toHaveAttribute(
+    // A marker on the map (clustered ones are hidden), and the card it opens.
+    const marker = page
+      .locator('.weather-marker:not(.weather-marker-clustered)')
+      .last();
+    const card = await marker.getAttribute('aria-controls');
+    await marker.click();
+    await expect(page.locator(`#${card}`)).toHaveAttribute(
       'aria-current',
       'true',
     );
