@@ -4,6 +4,7 @@ import { importGpx, meters } from '../src/core';
 import {
   cumulativeClimb,
   elevationStats,
+  gradeRanges,
   profileFromTrack,
   samplePlan,
   smoothProfile,
@@ -347,5 +348,52 @@ describe('elevation service', () => {
     vi.advanceTimersByTime(6000);
     expect(done).toBe(true);
     vi.useRealTimers();
+  });
+});
+
+describe('route coloring by grade', () => {
+  // A straight profile at a constant grade, one point every 100 m.
+  const slope = (grade: number, length = 3000, from = 0) =>
+    Array.from({ length: length / 100 + 1 }, (_, i) => ({
+      at: from + i * 100,
+      ele: 100 + (grade / 100) * i * 100,
+    }));
+  const kinds = (grade: number) =>
+    gradeRanges(slope(grade), 'terrain').map((r) => r.kind);
+  it('classes each grade at the documented limits as one merged range', () => {
+    expect(kinds(0)).toEqual(['flat']);
+    expect(kinds(2.9)).toEqual(['flat']);
+    expect(kinds(3)).toEqual(['up']);
+    expect(kinds(7.9)).toEqual(['up']);
+    expect(kinds(8)).toEqual(['steep-up']);
+    expect(kinds(-3)).toEqual(['down']);
+    expect(kinds(-8)).toEqual(['steep-down']);
+    const [range] = gradeRanges(slope(5), 'terrain');
+    expect(range).toEqual({ from: 0, to: 3000, kind: 'up' });
+  });
+  it('splits where the grade changes and never spans a segment gap', () => {
+    // 3 km climbing at 6 %, then 3 km flat after a GPX segment gap.
+    const up = slope(6);
+    const flat = slope(0, 3000, 4000).map((p, i) =>
+      i ? p : { ...p, gap: true },
+    );
+    const ranges = gradeRanges([...up, ...flat], 'recorded');
+    expect(ranges.map((r) => r.kind)).toEqual(['up', 'flat']);
+    expect(ranges[0].to).toBe(3000);
+    expect(ranges[1].from).toBe(4000);
+  });
+  it('measures terrain grades over a longer window than recorded ones', () => {
+    // A 200 m ramp of 10 % inside flat ground.
+    const profile = Array.from({ length: 31 }, (_, i) => ({
+      at: i * 100,
+      ele: i < 15 ? 100 : i < 17 ? 100 + (i - 14) * 10 : 120,
+    }));
+    expect(
+      gradeRanges(profile, 'recorded').some((r) => r.kind === 'steep-up'),
+    ).toBe(true);
+    // Over 500 m the same ramp averages under the steep limit.
+    expect(
+      gradeRanges(profile, 'terrain').some((r) => r.kind === 'steep-up'),
+    ).toBe(false);
   });
 });

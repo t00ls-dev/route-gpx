@@ -11,6 +11,7 @@ import {
   profileFromTrack,
   samplePlan,
   smoothProfile,
+  type ElevationSource,
   type ProfilePoint,
 } from './elevation';
 import {
@@ -51,6 +52,10 @@ export function setupElevation(
     recorded: (route: Route) => (number | null)[][] | undefined;
     /** The device's average speed in km/h, for climb passage times. */
     speed: () => number;
+    /** Another explicit user choice needs the profile (the Grade coloring). */
+    wanted?: () => boolean;
+    /** Called when a profile arrives or is reset, so its users redraw. */
+    onProfile?: () => void;
   },
 ) {
   const details = $<HTMLDetailsElement>('elevation'),
@@ -74,6 +79,8 @@ export function setupElevation(
     controller: AbortController | undefined;
 
   const locale = () => (deps.state().language === 'pt' ? 'pt-BR' : 'en');
+  /** The profile is loaded only while the row is open or a user of it is on. */
+  const needed = () => details.open || !!deps.wanted?.();
   const units = () => distanceUnits();
 
   /**
@@ -95,7 +102,7 @@ export function setupElevation(
   }
 
   async function load() {
-    if (!route || !details.open || profile) return render();
+    if (!route || !needed() || profile) return render();
     const recorded = deps.recorded(route);
     if (recorded) {
       profile = smoothProfile(
@@ -103,6 +110,7 @@ export function setupElevation(
         'recorded',
       );
       fromService = false;
+      deps.onProfile?.();
       return render();
     }
     controller?.abort();
@@ -129,6 +137,7 @@ export function setupElevation(
       );
       fromService = true;
       message('');
+      deps.onProfile?.();
       render();
       retried = false;
     } catch (error) {
@@ -159,14 +168,14 @@ export function setupElevation(
     cancelWait = countdown(
       wait,
       (seconds) => {
-        if (route !== target || !details.open) return cancelWait();
+        if (route !== target || !needed()) return cancelWait();
         message(`Elevation usage limit reached. ${retryIn(seconds * 1000)}`);
         // Announced once, not every second.
         if (!first) status.setAttribute('aria-busy', 'true');
         first = false;
       },
       () => {
-        if (route !== target || !details.open) return;
+        if (route !== target || !needed()) return;
         if (retryAfter) void load();
         else message('Elevation usage limit reached.', true);
       },
@@ -468,8 +477,11 @@ export function setupElevation(
       clearTimeout(settle);
       void load();
     } else {
-      clearTimeout(settle);
-      cancelWait();
+      // The Grade coloring may still be waiting for this profile.
+      if (!needed()) {
+        clearTimeout(settle);
+        cancelWait();
+      }
       cursorLayer.clearLayers();
       climbLayer.clearLayers();
     }
@@ -494,7 +506,8 @@ export function setupElevation(
       // While the route keeps changing (editing points), wait for it to
       // settle so intermediate routes do not spend the Open-Meteo budget.
       clearTimeout(settle);
-      if (route && details.open) {
+      deps.onProfile?.();
+      if (route && needed()) {
         // Recorded elevations need no request: show them at once.
         if (deps.recorded(route)) void load();
         else {
@@ -504,5 +517,20 @@ export function setupElevation(
       }
     },
     refresh: () => render(),
+    /** The smoothed profile of the current route and its source, when loaded. */
+    profile: () =>
+      profile
+        ? {
+            profile,
+            source: (fromService ? 'terrain' : 'recorded') as ElevationSource,
+          }
+        : null,
+    /** A user of the profile was turned on: load it now if still missing. */
+    want() {
+      if (route && !profile && needed()) {
+        clearTimeout(settle);
+        void load();
+      }
+    },
   };
 }

@@ -24,6 +24,15 @@ export interface ElevationStats {
 
 /** Terrain model samples or recorded GPS elevations: they need different filtering. */
 export type ElevationSource = 'terrain' | 'recorded';
+/**
+ * Window for grades, meters (steepest climb grade, route coloring). The 90 m
+ * terrain model inflates short grades (slopes beside the road, viaducts), so
+ * it uses a longer one.
+ */
+export const GRADE_WINDOW: Record<ElevationSource, number> = {
+  terrain: 500,
+  recorded: 100,
+};
 
 const MAX_SAMPLES = 300,
   /**
@@ -222,4 +231,67 @@ export function elevationStats(
     ascent,
     descent,
   };
+}
+
+/** Route coloring by grade: class limits in percent, symmetric. */
+export const GRADE_CLASSES = { gentle: 3, steep: 8 } as const;
+export type GradeClass = 'steep-down' | 'down' | 'flat' | 'up' | 'steep-up';
+const gradeClass = (grade: number): GradeClass =>
+  grade >= GRADE_CLASSES.steep
+    ? 'steep-up'
+    : grade >= GRADE_CLASSES.gentle
+      ? 'up'
+      : grade <= -GRADE_CLASSES.steep
+        ? 'steep-down'
+        : grade <= -GRADE_CLASSES.gentle
+          ? 'down'
+          : 'flat';
+
+/**
+ * Along-track ranges of a smoothed profile classified by grade, measured over
+ * `GRADE_WINDOW` centred on each stretch (the whole part when shorter).
+ * Adjacent stretches of one class merge; nothing spans a GPX segment gap.
+ */
+export function gradeRanges(
+  profile: ProfilePoint[],
+  source: ElevationSource,
+): { from: number; to: number; kind: GradeClass }[] {
+  const ranges: { from: number; to: number; kind: GradeClass }[] = [];
+  const half = GRADE_WINDOW[source] / 2;
+  let start = 0;
+  for (let end = 1; end <= profile.length; end++) {
+    if (end < profile.length && !profile[end].gap) continue;
+    const part = profile.slice(start, end);
+    start = end;
+    if (part.length < 2) continue;
+    const first = part[0].at,
+      last = part.at(-1)!.at;
+    // Linear elevation at a distance inside the part.
+    const eleAt = (x: number) => {
+      let i = 1;
+      while (i < part.length - 1 && part[i].at < x) i++;
+      const a = part[i - 1],
+        b = part[i];
+      return b.at === a.at
+        ? b.ele
+        : a.ele + ((b.ele - a.ele) * (x - a.at)) / (b.at - a.at);
+    };
+    let previous: (typeof ranges)[number] | undefined;
+    for (let i = 1; i < part.length; i++) {
+      const from = part[i - 1].at,
+        to = part[i].at;
+      if (to <= from) continue;
+      const middle = (from + to) / 2;
+      const low = Math.max(first, middle - half),
+        high = Math.min(last, middle + half);
+      // Rounded to 0.1 % so floating-point noise cannot flip a class at a limit.
+      const grade =
+        high > low ? ((eleAt(high) - eleAt(low)) / (high - low)) * 100 : 0;
+      const kind = gradeClass(Math.round(grade * 10) / 10);
+      if (previous && previous.kind === kind && previous.to === from)
+        previous.to = to;
+      else ranges.push((previous = { from, to, kind }));
+    }
+  }
+  return ranges;
 }

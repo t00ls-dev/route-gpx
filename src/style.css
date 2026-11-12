@@ -1130,6 +1130,9 @@ dialog.settings::backdrop {
 }
 .planner .leaflet-top {
   top: env(safe-area-inset-top, 0px);
+  /* Map tools and the Map layers menu open above the bottom controls (the
+     route coloring legend), which come later in the page. */
+  z-index: 1001;
 }
 .planner .leaflet-right {
   right: env(safe-area-inset-right, 0px);
@@ -2208,6 +2211,22 @@ input[type='range'].range-input:disabled {
 .route-coloring-night {
   --route-coloring: #1d2a4d;
 }
+/* Grade: blue descents, gray flat, orange and red climbs (route-overlays). */
+.route-coloring-steep-down {
+  --route-coloring: #1a4f8f;
+}
+.route-coloring-down {
+  --route-coloring: #3d86c6;
+}
+.route-coloring-flat {
+  --route-coloring: #7d8890;
+}
+.route-coloring-up {
+  --route-coloring: #e07b12;
+}
+.route-coloring-steep-up {
+  --route-coloring: #b8261c;
+}
 .leaflet-pane path.route-coloring {
   stroke: var(--route-coloring);
   stroke-linecap: round;
@@ -2254,7 +2273,8 @@ input[type='range'].range-input:disabled {
   font-size: 12px;
   box-shadow: 0 1px 4px #0003;
 }
-.route-legend > span {
+/* Item lists only: the compact scale lays out its own children. */
+.route-legend:not(.route-legend-scale) > span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -2265,6 +2285,59 @@ input[type='range'].range-input:disabled {
   height: 5px;
   border-radius: 3px;
   background: var(--route-coloring);
+}
+/* Compact color scale (grade): a slope icon at each end, one continuous bar
+   and the limits under ticks on the boundaries, placed by percentage and
+   centred on the tick itself. */
+.route-legend-scale-body {
+  display: grid;
+  grid-template-columns: 18px 170px 18px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 6px;
+}
+.route-legend-scale-body > .button-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+.route-legend-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.route-legend-bar .route-legend-swatch {
+  flex: 1 1 0;
+  width: auto;
+  height: 100%;
+  border-radius: 0;
+}
+.route-legend-ticks {
+  position: relative;
+  grid-column: 2;
+  height: 18px;
+}
+.route-legend-tick {
+  position: absolute;
+  top: 0;
+  padding-top: 5px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* The tick mark on the boundary, centred above its label. */
+.route-legend-tick::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 4px;
+  background: currentColor;
+  content: '';
 }
 @media (max-width: 759px) {
   .planner:not(.panel-closed):not(.map-fullscreen) .route-legend {
