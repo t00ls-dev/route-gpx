@@ -278,6 +278,8 @@ test('route marks: arrows by default, parallel lines on a round trip, persisted 
   });
   await setup(page);
   await fillPair(page);
+  // A typed route is not framed on its own; arrows are drawn in view.
+  await page.locator('#fit').click();
   await expect(page.locator('.route-arrow').first()).toBeAttached();
   await expect(page.locator('path.route-line-pass')).toHaveCount(0);
   // Round trip: the mocked router returns the same straight road back.
@@ -346,6 +348,8 @@ test('address searches belong to their own point and do not fire while typing', 
 test('undo restores a moved marker and a removed stop', async ({ page }) => {
   await setup(page);
   await fillPair(page);
+  // A typed route is not framed on its own; bring the marker into view.
+  await page.locator('#fit').click();
   const original = await page.locator('#location-0').inputValue();
   const marker = page.locator('.route-marker').first();
   await marker.scrollIntoViewIfNeeded();
@@ -788,6 +792,55 @@ test('an older route link in miles opens in the units detected on this device', 
   await expect(page.locator('#location-0')).toHaveValue(start);
   // The test browser reads English without a country in UTC: km.
   await expect(page.locator('#summary')).toContainText('42 km');
+});
+
+test('editing points keeps the map view; only loads and Fit route frame the route', async ({
+  page,
+}) => {
+  await setup(page);
+  const state = defaults();
+  state.points = [
+    { name: 'Start', coord: [-22.930929, -43.238286] },
+    { name: 'Destination', coord: [-23.05016, -43.53524] },
+  ];
+  // Opening a link frames the route it loads.
+  await page.goto(base + encodeState(state));
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  const marker = page.locator('.route-marker').first();
+  const framed = (await marker.boundingBox())!;
+  const view = async () => {
+    const box = (await marker.boundingBox())!;
+    return [Math.round(box.x), Math.round(box.y)];
+  };
+  await page.locator('.leaflet-control-zoom-in').click();
+  await page.locator('.leaflet-control-zoom-in').click();
+  await expect
+    .poll(view)
+    .not.toEqual([Math.round(framed.x), Math.round(framed.y)]);
+  // Wait for both zoom animations to settle.
+  let settled: number[] = [];
+  await expect
+    .poll(async () => {
+      const previous = settled;
+      settled = await view();
+      return previous.join() === settled.join();
+    })
+    .toBe(true);
+  const zoomed = await view();
+  // Moving the destination reroutes without moving the map.
+  await page.locator('#location-1').fill('-23.1, -43.6');
+  await page.locator('#location-1').press('Tab');
+  await expect(page.locator('#download')).toBeDisabled();
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  await expect(page.locator('#status')).toHaveText('Route ready.');
+  expect(await view()).toEqual(zoomed);
+  // Undo restores the earlier route in place, too.
+  await page.locator('#undo').click();
+  await expect(page.locator('#download')).toBeEnabled({ timeout: 15000 });
+  expect(await view()).toEqual(zoomed);
+  // Fit route is the user's way back to the whole route.
+  await page.locator('#fit').click();
+  expect(await view()).not.toEqual(zoomed);
 });
 
 test.describe('a browser set to American English', () => {

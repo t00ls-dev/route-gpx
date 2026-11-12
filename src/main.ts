@@ -128,6 +128,8 @@ let state: State = defaults(),
   selected = 0,
   current: Route | null = null,
   revision = 0,
+  // The route a load asked to frame; edits keep the user's view (#117).
+  fitRevision = -1,
   timer: ReturnType<typeof setTimeout>;
 function status(message: string, error = false) {
   $('status').textContent = message;
@@ -1181,7 +1183,7 @@ function changed(preserveEditor = false, forceRouting = false) {
         renderRoute(route);
         status('Route ready.');
         updateSelection();
-        fit();
+        if (version === fitRevision) fit();
       })
       .catch((e) => {
         if (version === revision) updateSelection();
@@ -1258,7 +1260,6 @@ $('undo').onclick = () => {
     clearTimeout(timer);
     current = cached;
     renderRoute(cached);
-    fit();
   }
   status('Change undone.');
 };
@@ -1497,6 +1498,7 @@ window.addEventListener('hashchange', () => {
     $<HTMLSelectElement>('language').value = lang;
     selected = 0;
     changed();
+    fitRevision = revision;
     fit();
   } catch {
     status('Invalid route link. Your current route has been kept.', true);
@@ -1505,6 +1507,7 @@ window.addEventListener('hashchange', () => {
 settings();
 renderPoints();
 if (state.points.every((p) => p.coord)) changed();
+fitRevision = revision;
 fit();
 
 $('export-json').onclick = () => {
@@ -1519,6 +1522,7 @@ $('apply-json').onclick = () => {
     state = validateState(parsed);
     selected = 0;
     changed();
+    fitRevision = revision;
     fit();
     $<HTMLDialogElement>('settings-dialog').close();
   } catch {

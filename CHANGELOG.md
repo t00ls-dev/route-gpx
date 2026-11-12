@@ -16,6 +16,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Changed
 
+- Editing route points keeps the map where it is instead of zooming out to the whole route after each change; Fit route frames the whole route, and opening a link, file or saved route still frames it.
 - Weather is also sampled just past sharp bends of the route, using points left free under the maximum of 20, so the headwind, tailwind or crosswind follows the new direction.
 - Consecutive weather samples with the same conditions share one card and one map marker, with time, distance and value ranges; the start, stops and destination keep their own cards.
 - Distance units (km or mi) and the new temperature units (°C or °F, with rain in mm or in) are chosen in Settings, start as Automatic from the device's time zone or, when it names no place, the browser's language region, and are remembered on the device; route links and saved routes no longer carry units.
