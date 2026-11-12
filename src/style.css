@@ -1877,6 +1877,7 @@ input[type='range'].range-input:disabled {
   pointer-events: none;
 }
 .weather-marker-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1957,6 +1958,49 @@ input[type='range'].range-input:disabled {
   background: #fff0f0;
   color: #9a2227;
   border-color: #d49a9d;
+}
+/* Clustered: another marker stands for this stretch at the current zoom (#119). */
+.leaflet-marker-icon.weather-marker-clustered {
+  display: none;
+}
+/* "+N" on the symbol's top corner away from the route point, inside the
+   marker's area (COUNT_RISE in src/weather-clusters.ts); tapping it zooms in. */
+.weather-marker-count {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 5px;
+  border: 2px solid #536170;
+  border-radius: 11px;
+  background: #fff;
+  color: #1f3a52;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px #0004;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.weather-marker-count[hidden] {
+  display: none;
+}
+.weather-marker-return .weather-marker-count,
+.weather-marker-count.flipped {
+  right: auto;
+  left: 0;
+}
+.weather-marker-return .weather-marker-count.flipped {
+  right: 0;
+  left: auto;
+}
+/* Hidden samples include alerts: an alert-colored border. */
+.weather-marker-count.has-alerts {
+  border-color: #b3261e;
+  color: #9a2227;
 }
 .weather-marker-wind-value {
   flex: none;

@@ -36,6 +36,14 @@ import {
 } from './weather';
 import { distanceUnits, temperatureUnits } from './unit-preferences';
 import { weatherPasses } from './route-marks';
+import {
+  MARKER_SIZE,
+  OUTBOUND_ANCHOR,
+  RETURN_ANCHOR,
+  type ClusterItem,
+  clusterWeather,
+  markerBox,
+} from './weather-clusters';
 const AUTOMATIC = 'automatic-departure';
 /**
  * Runs a change that resizes content above `element` (weather cards, arrival)
@@ -63,6 +71,16 @@ function restorePosition(element: HTMLElement, before: number) {
     scroller = scroller.parentElement;
   (scroller ?? document.scrollingElement)?.scrollBy(0, delta);
 }
+interface Placed {
+  marker: L.Marker;
+  coord: [number, number];
+  /** Cluster description, read after the marker's name. */
+  note: HTMLElement;
+  count: HTMLElement;
+  /** The cluster this marker belongs to at the current zoom. */
+  cluster: number;
+  item: Omit<ClusterItem, 'box'>;
+}
 /** Alerts the UV line itself carries on a weather card. */
 const UV_RISKS = new Set(['Very high UV', 'Extreme UV']);
 
@@ -79,6 +97,9 @@ export function setupWeather(
   // Route editing pins stay above weather, including neighboring samples.
   map.createPane('weather').style.zIndex = '590';
   const markers = L.layerGroup().addTo(map);
+  /** Markers on the map, for clustering those that would overlap (#119). */
+  let placed: Placed[] = [];
+  map.on('zoomend', () => layoutClusters());
   let endpoint = DEFAULT_WEATHER_URL;
   try {
     endpoint = serverUrl(localStorage.getItem('weather-server') ?? endpoint);
@@ -148,7 +169,95 @@ export function setupWeather(
       message('Updating weather…');
     }
     markers.clearLayers();
+    placed = [];
     $('weather-result').hidden = true;
+  }
+  /**
+   * Shows one marker for markers that would overlap at this zoom:
+   * the worst alert, else a route point, else the worst sample, with a count.
+   */
+  function layoutClusters() {
+    if (!placed.length) return;
+    const items = placed.map((p) => {
+      const at = map.latLngToContainerPoint(p.coord);
+      return { ...p.item, box: markerBox(at.x, at.y, p.item.pass) };
+    });
+    clusterWeather(items).forEach((cluster, group) => {
+      for (const i of cluster.members) {
+        placed[i].cluster = group;
+        const { marker, note, count } = placed[i];
+        const element = marker.getElement();
+        if (!element) continue;
+        const shown = i === cluster.shown;
+        element.classList.toggle('weather-marker-clustered', !shown);
+        const more = cluster.members.length - 1;
+        count.hidden = !shown || !more;
+        if (!shown) continue;
+        count.textContent = more ? `+${more}` : '';
+        count.classList.toggle('has-alerts', cluster.hiddenAlerts > 0);
+        // English source text in fresh nodes, so the DOM translator handles it.
+        const parts = more
+          ? [
+              `${more} more ${more === 1 ? 'sample' : 'samples'} here${cluster.noneWorse ? ', none worse' : ''}`,
+              ...(cluster.alerts
+                ? [`${cluster.alerts} of ${cluster.members.length} with alerts`]
+                : []),
+              'Zoom in to see them',
+            ]
+          : [];
+        note.replaceChildren(
+          ...parts.flatMap((part, n) => {
+            const span = document.createElement('span');
+            span.textContent = part;
+            return n ? [document.createTextNode(' · '), span] : [span];
+          }),
+        );
+      }
+    });
+    placeCounts();
+  }
+  /** Moves a count to the other side of its symbol when route pins or other markers cover it. */
+  function placeCounts() {
+    const shown = placed.filter(
+      (p) =>
+        !p.marker.getElement()?.classList.contains('weather-marker-clustered'),
+    );
+    const parts = (p: Placed) =>
+      [
+        ...(p.marker
+          .getElement()
+          ?.querySelectorAll('.weather-marker-symbol, .weather-marker-wind') ??
+          []),
+      ].map((e) => e.getBoundingClientRect());
+    const pins = [...map.getContainer().querySelectorAll('.route-marker')].map(
+      (e) => e.getBoundingClientRect(),
+    );
+    const hits = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right &&
+      a.right > b.left &&
+      a.top < b.bottom &&
+      a.bottom > b.top;
+    for (const p of shown) {
+      if (p.count.hidden) continue;
+      p.count.classList.remove('flipped');
+      const others = [...pins, ...shown.filter((o) => o !== p).flatMap(parts)];
+      const covered = () =>
+        others.some((r) => hits(p.count.getBoundingClientRect(), r));
+      if (!covered()) continue;
+      p.count.classList.add('flipped');
+      if (covered()) p.count.classList.remove('flipped');
+    }
+  }
+  /** Zooms in until a clustered marker shows on its own. */
+  function revealMarker(marker: L.Marker) {
+    const element = marker.getElement();
+    // Stops when the zoom no longer grows (the map's or the layers' limit).
+    for (let step = 0; step < 20; step++) {
+      if (!element?.classList.contains('weather-marker-clustered')) return;
+      const zoom = map.getZoom();
+      map.setView(marker.getLatLng(), zoom + 1, { animate: false });
+      if (map.getZoom() <= zoom) return;
+    }
   }
   function times(samples: WeatherPoint[]) {
     const date = departureOf(getState()) ?? '';
@@ -182,6 +291,7 @@ export function setupWeather(
   }
   function render() {
     markers.clearLayers();
+    placed = [];
     showDeparture();
     if (!departureOf(getState())) {
       $('weather-result').hidden = true;
@@ -488,7 +598,16 @@ export function setupWeather(
       windUnit.className = 'weather-marker-wind-unit';
       windUnit.textContent = speedUnit();
       windBadge.append(arrow, windValue, windUnit);
-      markerBody.append(markerIcon, windBadge);
+      // "+N" when this marker stands for others; tapping it zooms in.
+      const count = document.createElement('span');
+      count.className = 'weather-marker-count';
+      count.setAttribute('aria-hidden', 'true');
+      count.hidden = true;
+      // Read after the marker's name while it stands for others.
+      const note = document.createElement('span');
+      note.className = 'sr-only';
+      note.id = `weather-cluster-${first}`;
+      markerBody.append(markerIcon, windBadge, count, note);
       const marker = L.marker(m.point.coord, {
         pane: 'weather',
         icon: L.divIcon({
@@ -498,19 +617,48 @@ export function setupWeather(
               ? 'weather-marker weather-marker-return'
               : 'weather-marker',
           html: markerBody,
-          iconSize: [68, 52],
-          iconAnchor: pass === 'return' ? [66, 40] : [2, 40],
+          iconSize: MARKER_SIZE,
+          iconAnchor: pass === 'return' ? RETURN_ANCHOR : OUTBOUND_ANCHOR,
         }),
         keyboard: true,
       }).addTo(markers);
       centerIcon(mapSymbol);
       const markerSpeed = speedLabel(hour.wind);
-      marker
-        .getElement()
-        ?.setAttribute(
-          'aria-label',
-          `${t('View weather')}: ${when} · ${km}${passText} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${markerSpeed === null ? '' : ` · ${markerSpeed}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`,
+      const markerLabel = `${t('View weather')}: ${when} · ${km}${passText} · ${t(weather.text)} · ${t(strength.text)}${relation === strength.text ? '' : ` · ${t(relation)}`}${markerSpeed === null ? '' : ` · ${markerSpeed}`}${flow ? ` · ${t('Wind toward')} ${t(flow.compass)}` : ''}`;
+      marker.getElement()?.setAttribute('aria-label', markerLabel);
+      marker.getElement()?.setAttribute('aria-describedby', note.id);
+      const members = group.map((i) => facts[i].point);
+      L.DomEvent.on(count, 'click', (event) => {
+        L.DomEvent.stop(event);
+        // Zoom in on this cluster until its samples separate.
+        const together = placed
+          .filter((p) => p.cluster === placed[index].cluster)
+          .map((p) => p.coord);
+        const bounds = L.latLngBounds(
+          together.length ? together : [m.point.coord],
         );
+        const zoom = Math.min(
+          map.getMaxZoom(),
+          Math.max(map.getZoom() + 1, map.getBoundsZoom(bounds.pad(0.2))),
+        );
+        map.setView(bounds.getCenter(), zoom, { animate: false });
+      });
+      const index = placed.length;
+      placed.push({
+        marker,
+        coord: m.point.coord,
+        note,
+        count,
+        cluster: 0,
+        item: {
+          severity,
+          condition: weather.icon,
+          headwind: relation === 'Headwind',
+          wind: hour.wind,
+          point: members.some((point) => !!point.stop),
+          pass: pass ?? undefined,
+        },
+      });
       detail.setAttribute(
         'aria-label',
         `${t('Show on map')}: ${when} · ${km}${passText} · ${conditions.textContent} · ${temperature.textContent} · ${rain.textContent} · ${wind.textContent} · ${t(severity ? `Alert ${severity}` : 'No alert')}${uvRisk ? ` · ${uvText}` : ''}${extraRisks.length ? ` · ${extraRisks.map((risk) => t(risk.text)).join(' · ')}` : ''}`,
@@ -526,6 +674,7 @@ export function setupWeather(
         map.setView(m.point.coord, Math.max(map.getZoom(), 12), {
           animate: false,
         });
+        revealMarker(marker);
         marker.getElement()?.focus({ preventScroll: true });
       };
       marker.getElement()?.setAttribute('aria-controls', detail.id);
@@ -540,6 +689,7 @@ export function setupWeather(
         void revealCard(detail);
       });
     });
+    layoutClusters();
     $('weather-result').hidden = false;
     retry.hidden = true;
     // More stops than the sample cap: say how many have their own card.

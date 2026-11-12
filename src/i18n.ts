@@ -49,6 +49,7 @@ const pt: Record<string, string> = {
   'Strong wind': 'Vento forte',
   'Very strong wind': 'Vento muito forte',
   'Wind toward': 'Vento em direção a',
+  'Zoom in to see them': 'Aproxime para ver',
   North: 'Norte',
   'North-east': 'Nordeste',
   East: 'Leste',
@@ -558,6 +559,12 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (a, b) => `Clima amostrado em ${a} de ${b} paradas.`,
   ],
   [/^Point (\d+)$/, (n) => `Ponto ${n}`],
+  [
+    /^(\d+) more samples? here(, none worse)?$/,
+    (n, none) =>
+      `${n} ${n === '1' ? 'amostra' : 'amostras'} a mais aqui${none ? ', nenhuma pior' : ''}`,
+  ],
+  [/^(\d+) of (\d+) with alerts$/, (a, b) => `${a} de ${b} com alerta`],
   [/^Check road positions: (.*?)$/, (p) => `Confira os pontos nas vias: ${p}`],
 
   [
