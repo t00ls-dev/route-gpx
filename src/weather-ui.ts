@@ -498,8 +498,8 @@ export function setupWeather(
               ? 'weather-marker weather-marker-return'
               : 'weather-marker',
           html: markerBody,
-          iconSize: [60, 52],
-          iconAnchor: pass === 'return' ? [58, 40] : [2, 40],
+          iconSize: [68, 52],
+          iconAnchor: pass === 'return' ? [66, 40] : [2, 40],
         }),
         keyboard: true,
       }).addTo(markers);

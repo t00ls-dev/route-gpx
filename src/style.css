@@ -1880,7 +1880,7 @@ input[type='range'].range-input:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 60px;
+  width: 68px;
   height: 52px;
   line-height: 1;
 }
@@ -1929,7 +1929,8 @@ input[type='range'].range-input:disabled {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  width: 56px;
+  /* Fits the longest speed, 99,9 km/h, in DejaVu Sans. */
+  width: 68px;
   height: 18px;
   flex: 0 0 18px;
   margin-top: -2px;
@@ -1958,11 +1959,12 @@ input[type='range'].range-input:disabled {
   border-color: #d49a9d;
 }
 .weather-marker-wind-value {
-  min-width: 0;
+  flex: none;
   font-size: 10px;
   font-weight: 700;
 }
 .weather-marker-wind-unit {
+  flex: none;
   font-size: 7px;
 }
 
