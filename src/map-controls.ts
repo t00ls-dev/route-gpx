@@ -7,7 +7,6 @@ export function setupMapControls(map: L.Map, zoom: L.Control.Zoom) {
   iconControl(get('fullscreen'), 'maximize', 'Full screen');
   get('fullscreen').prepend(icon('minimize'));
   iconControl(get('fit'), 'route', 'Fit route');
-  iconControl(get('help'), 'help', 'Help');
   iconControl(get('undo'), 'undo', 'Undo');
   iconControl(get('lock'), 'unlock', 'Lock editing');
   get('lock').prepend(icon('lock'));

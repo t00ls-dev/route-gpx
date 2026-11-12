@@ -247,7 +247,6 @@ const pt: Record<string, string> = {
   'Prefer main roads': 'Preferir vias principais',
   Settings: 'Configurações',
   'Advanced: JSON': 'Avançado: JSON',
-  'Public, shared servers.': 'Servidores públicos e compartilhados.',
   'Fit route': 'Ver rota',
   'Set your start and destination.': 'Defina a origem e o destino.',
   'Updating…': 'Atualizando…',
