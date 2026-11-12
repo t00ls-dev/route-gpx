@@ -82,6 +82,8 @@ import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
 import { setupElevation } from './elevation-ui';
+import { setupSurface } from './surface-ui';
+import { SURFACE_KINDS } from './surface';
 import { gradeRanges } from './elevation';
 import { setupRouteOverlays, sliceByRanges } from './route-overlays';
 import {
@@ -256,6 +258,12 @@ const elevation = setupElevation(map, {
   wanted: () => overlays.active() === 'grade',
   onProfile: () => overlays.refresh(),
 });
+const surface = setupSurface(map, {
+  state: () => state,
+  // The Surface coloring is an explicit choice that needs it too.
+  wanted: () => overlays.active() === 'surface',
+  onSurface: () => overlays.refresh(),
+});
 const playback = setupPlayback(map, {
   state: () => state,
   speedKmh: () => speedKmh,
@@ -296,6 +304,21 @@ overlays.register({
     return loaded ? gradeRanges(loaded.profile, loaded.source) : [];
   },
   activate: () => elevation.want(),
+});
+overlays.register({
+  id: 'surface',
+  label: 'Surface',
+  // Paved and unpaved; Unknown only when the route has unmatched stretches.
+  get legend() {
+    const present = new Set(surface.ranges()?.map((r) => r.kind));
+    return SURFACE_KINDS.filter(
+      ({ kind }) => kind !== 'unknown' || present.has(kind),
+    );
+  },
+  unavailable: () => null,
+  // Drawn once the road attributes arrive (requested on this choice).
+  ranges: () => surface.ranges() ?? [],
+  activate: () => surface.want(),
 });
 overlays.register({
   id: 'daylight',
@@ -785,6 +808,7 @@ function clearSummary() {
   maneuverLayer.clearLayers();
   playback.setRoute(null);
   elevation.setRoute(null);
+  surface.setRoute(null);
   overlays.refresh();
   marks.refresh();
 }
@@ -937,6 +961,7 @@ function renderSummary(route: Route) {
   renderDaylight(state, route, speedKmh);
   playback.setRoute(route);
   elevation.setRoute(route);
+  surface.setRoute(route);
   overlays.refresh();
   marks.refresh();
   const chips = document.createElement('div');

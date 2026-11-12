@@ -8,11 +8,11 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 
 - **Plan:** set start, destination and stops with addresses, coordinates, map clicks or your location.
 - **Edit:** move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits.
-- **Review:** distance, estimated duration, road references and an itinerary with turn directions, in kilometers or miles (detected from the browser, changeable in Settings), estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics and the climbs along the route, and a virtual playback that travels the route.
+- **Review:** distance, estimated duration, road references and an itinerary with turn directions, in kilometers or miles (detected from the browser, changeable in Settings), estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics and the climbs along the route, the road surface, paved or unpaved, with its unpaved stretches, and a virtual playback that travels the route.
 - **GPX, FIT and TCX:** import GPX, FIT and TCX files up to 10 MB, also as `.gz` or `.zip` (only geometry, names, course points and recorded elevation are read, locally) and export GPX 1.1 with complete track segments and named waypoints.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates, in Celsius or Fahrenheit.
 
-- **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight or grade and route marks (direction arrows, separate out-and-back lines, weather icons on or off).
+- **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight, grade or surface and route marks (direction arrows, separate out-and-back lines, weather icons on or off).
 - **Save and share:** route links, named routes saved in this browser and JSON backup import/export.
 - **Interface:** available in English and Portuguese.
 
@@ -38,6 +38,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 - Map, routing, search and weather providers receive the locations each request needs and your IP address.
 - Weather is requested only for the route and its departure. Without a chosen departure, the route leaves at the next half hour automatically, so weather is requested from Open-Meteo once the route is ready and at each new half hour; uncheck Automatic departure below the Departure field to turn this off on the device. Elevation is requested only when you open Elevation or choose the Grade coloring (points along the route go to Open-Meteo), or for one map point when you choose Elevation here; GPX files that record elevation need no request.
 - Opening the Itinerary of an imported track sends that track, reduced to points about every 300 m, to the configured OSRM server for map matching; a route saved before turn directions existed gets them with one routing request. Neither changes the route's geometry.
+- Surface is requested only when you open Surface or choose the Surface coloring: the route geometry, in pieces of up to 190 km, goes to the configured Valhalla server for its OpenStreetMap road attributes.
 - Exact GPS coordinates stay in memory; using your location as a route point creates a coordinate rounded to about 100 m.
 - Approximate region detection by IP can be turned off in **Settings**.
 - Every service URL is configurable in **Settings**. Route links that suggest other routing or search servers open with the defaults until you choose **Use link servers**.

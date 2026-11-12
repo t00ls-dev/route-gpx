@@ -2219,6 +2219,16 @@ input[type='range'].range-input:disabled {
 .route-coloring-night {
   --route-coloring: #1d2a4d;
 }
+/* Surface: gray paved, brown unpaved, pale gray unknown (surface-ui.ts). */
+.route-coloring-paved {
+  --route-coloring: #5b6670;
+}
+.route-coloring-unpaved {
+  --route-coloring: #a0521d;
+}
+.route-coloring-unknown {
+  --route-coloring: #b9c0c7;
+}
 /* Grade: blue descents, gray flat, orange and red climbs (route-overlays). */
 .route-coloring-steep-down {
   --route-coloring: #1a4f8f;
@@ -2653,4 +2663,40 @@ input[type='range'].range-input:disabled {
   border: 0;
   border-radius: 16px;
   box-shadow: var(--shadow-raised);
+}
+
+/* Surface row: totals with a swatch, the stretches to check (climb rows). */
+.surface-totals {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.surface-totals li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  column-gap: 6px;
+  align-items: center;
+  min-height: 22px;
+}
+.surface-value {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.surface-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--route-coloring);
+}
+.surface-section .climb-grid {
+  grid-template-columns: 12px minmax(0, 1fr);
+}
+/* A selected stretch looks like a selected climb. */
+.leaflet-pane .surface-line {
+  stroke: #be812b;
+  stroke-width: 7;
+  stroke-opacity: 0.85;
+  stroke-linecap: round;
+  fill: none;
 }

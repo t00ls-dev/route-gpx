@@ -91,6 +91,7 @@ for (const mobile of [false, true]) {
         'itinerary',
         'weather-section',
         'elevation',
+        'surface',
         'daylight-details',
         'playback',
       ]);
