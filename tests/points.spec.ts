@@ -821,6 +821,25 @@ test.describe('a browser set to American English', () => {
   });
 });
 
+test.describe('a browser set to British English in Australia', () => {
+  test.use({ locale: 'en-GB', timezoneId: 'Australia/Sydney' });
+  test('Automatic units follow the time zone over the language region', async ({
+    page,
+  }) => {
+    await setup(page);
+    await fillPair(page);
+    await expect(page.locator('#summary')).toContainText('42 km');
+    await expect(page.locator('#speed-unit')).toHaveText('km/h');
+    await page.locator('#open-settings').click();
+    await expect(page.locator('#distance-units option[value=auto]')).toHaveText(
+      'Automatic (km)',
+    );
+    await expect(
+      page.locator('#temperature-units option[value=auto]'),
+    ).toHaveText('Automatic (°C)');
+  });
+});
+
 test('an invalid settings URL leaves every server unchanged', async ({
   page,
 }) => {
