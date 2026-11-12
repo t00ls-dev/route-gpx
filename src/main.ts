@@ -123,7 +123,10 @@ const text = (tag: string, value: string, className = '') => {
   e.className = className;
   return e;
 };
-$('github').append(icon('external'));
+// Footer links: Help, What's new and the repository, each with its icon.
+$('help').prepend(icon('help'));
+$('changelog').prepend(icon('news'));
+$('github').prepend(icon('github'));
 let state: State = defaults(),
   selected = 0,
   current: Route | null = null,

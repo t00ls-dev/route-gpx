@@ -368,7 +368,6 @@ header .icon-control {
   border-radius: var(--radius);
   color: var(--color-text);
 }
-header a.icon-control .button-label,
 header .icon-only .button-label {
   display: none;
 }
@@ -940,6 +939,7 @@ div.step-item {
 .planner footer {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 16px;
   margin-top: auto;
   padding-top: 4px;
@@ -949,10 +949,19 @@ div.step-item {
 .planner footer a {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   min-height: var(--control);
 }
-.planner footer span {
-  margin-right: auto;
+.planner footer .button-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+/* Phones center the links under the sheet's sections. */
+@media (max-width: 759px) {
+  .planner footer {
+    justify-content: center;
+  }
 }
 
 /* Export actions, always in view below the scrolling panel. */

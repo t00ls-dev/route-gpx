@@ -264,3 +264,60 @@ test.describe('narrow phone', () => {
     );
   });
 });
+
+for (const [width, language] of [
+  [320, 'en'],
+  [320, 'pt'],
+  [390, 'pt'],
+  [1280, 'en'],
+  [1280, 'pt'],
+] as const)
+  test(`footer links sit on one line with icons at ${width}px in ${language}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(base);
+    await page.locator('#language').selectOption(language);
+    // Help left the header for the footer; Settings is a gear.
+    await expect(page.locator('header #help')).toHaveCount(0);
+    await expect(
+      page.locator('#open-settings .icon-settings circle'),
+    ).toHaveCount(1);
+    const footer = page.locator('#route-panel footer');
+    await expect(footer.locator('a')).toHaveText(
+      language === 'pt'
+        ? ['Ajuda', 'Novidades', 'GitHub']
+        : ['Help', "What's new", 'GitHub'],
+    );
+    await expect(footer).not.toContainText(/servers|servidores/i);
+    for (const [id, name] of [
+      ['help', 'help'],
+      ['changelog', 'news'],
+      ['github', 'github'],
+    ])
+      await expect(footer.locator(`#${id} .icon-${name}`)).toHaveCount(1);
+    await expect(footer.locator('.icon-external')).toHaveCount(0);
+    const box = (await footer.boundingBox())!;
+    const links = await footer
+      .locator('a')
+      .evaluateAll((els) =>
+        els.map((e) => [
+          e.getBoundingClientRect().left,
+          e.getBoundingClientRect().right,
+          e.getBoundingClientRect().top,
+          e.getBoundingClientRect().height,
+        ]),
+      );
+    // One line, inside the footer, each link on a single line.
+    for (const [left, right, top, height] of links) {
+      expect(top).toBeCloseTo(links[0][2], 0);
+      expect(height).toBeLessThanOrEqual(48);
+      expect(left).toBeGreaterThanOrEqual(box.x);
+      expect(right).toBeLessThanOrEqual(box.x + box.width + 0.5);
+    }
+    const before = links[0][0] - box.x,
+      after = box.x + box.width - links.at(-1)![1];
+    // Phones center the links; the desktop panel keeps them to the right.
+    if (width < 760) expect(Math.abs(before - after)).toBeLessThan(2);
+    else expect(after).toBeLessThan(2);
+  });
