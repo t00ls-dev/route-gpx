@@ -508,6 +508,228 @@ test('routes with more than 20 stops still get weather', async ({ page }) => {
     'Clima amostrado em 20 de 25 paradas.',
   );
 });
+// Rolling terrain: ±500 m every 22 km, grades up to about 14 % both ways.
+const rolling = (lon: number) => 600 + 500 * Math.sin(lon * Math.PI * 10);
+test('the Grade coloring requests elevation on its own choice and draws every class with a legend', async ({
+  page,
+}) => {
+  await setup(page, true);
+  const requests: URL[] = [];
+  await page.route('**/v1/elevation?**', (r) => {
+    const url = new URL(r.request().url());
+    requests.push(url);
+    const lons = url.searchParams.get('longitude')!.split(',').map(Number);
+    return r.fulfill({ json: { elevation: lons.map(rolling) } });
+  });
+  await page.waitForTimeout(300);
+  expect(requests).toHaveLength(0);
+  // Elevation row closed: choosing the coloring is the explicit request.
+  await page.locator('#layers-toggle').click();
+  await page.locator('[data-coloring="grade"]').click();
+  for (const kind of ['steep-down', 'down', 'flat', 'up', 'steep-up'])
+    await expect(
+      page.locator(`path.route-coloring-${kind}`).first(),
+    ).toBeAttached();
+  // A continuous color scale with a slope icon at each end and the signed
+  // limits centred on the boundaries; the five ranges for screen readers.
+  await expect(page.locator('.route-legend .icon-slope-down')).toHaveCount(1);
+  await expect(page.locator('.route-legend .icon-slope-up')).toHaveCount(1);
+  await expect(
+    page.locator('.route-legend-bar .route-legend-swatch'),
+  ).toHaveCount(5);
+  await expect(page.locator('.route-legend-tick')).toHaveText([
+    '−8%',
+    '−3%',
+    '+3%',
+    '+8%',
+  ]);
+  const centring = await page.locator('.route-legend').evaluate((box) => {
+    const bar = box.querySelector('.route-legend-bar')!.getBoundingClientRect();
+    return [...box.querySelectorAll('.route-legend-tick')].map((tick, i) => {
+      const text = document.createRange();
+      text.selectNodeContents(tick);
+      const r = text.getBoundingClientRect();
+      // Distance between the text's centre and its boundary on the bar.
+      return Math.abs(
+        r.left + r.width / 2 - (bar.left + ((i + 1) * bar.width) / 5),
+      );
+    });
+  });
+  for (const offset of centring) expect(offset).toBeLessThan(1.5);
+  await expect(page.locator('.route-legend .sr-only')).toHaveText([
+    'Steep descent (8%+)',
+    'Descent (3–8%)',
+    'Flat (under 3%)',
+    'Climb (3–8%)',
+    'Steep climb (8%+)',
+  ]);
+  // The open Map layers menu stays above the legend where they meet.
+  const menu = (await page.locator('#layers-menu').boundingBox())!;
+  const legendBox = (await page.locator('.route-legend').boundingBox())!;
+  const x = Math.max(menu.x, legendBox.x) + 5,
+    y = Math.max(menu.y, legendBox.y) + 5;
+  if (
+    x < Math.min(menu.x + menu.width, legendBox.x + legendBox.width) &&
+    y < Math.min(menu.y + menu.height, legendBox.y + legendBox.height)
+  )
+    expect(
+      await page.evaluate(
+        ([px, py]) =>
+          !!document.elementFromPoint(px, py)?.closest('#layers-menu'),
+        [x, y],
+      ),
+    ).toBe(true);
+  expect(requests.length).toBeGreaterThan(0);
+  expect(requests.length).toBeLessThanOrEqual(4);
+  const count = requests.length;
+  // Other colorings and coming back reuse the profile: no new request.
+  await page.locator('[data-coloring="none"]').click();
+  await expect(page.locator('path.route-coloring-up')).toHaveCount(0);
+  await page.locator('[data-coloring="grade"]').click();
+  await expect(page.locator('path.route-coloring-up').first()).toBeAttached();
+  await page.keyboard.press('Escape');
+  await page.locator('#language').selectOption('pt');
+  await expect(page.locator('.route-legend .sr-only').last()).toHaveText(
+    'Subida íngreme (8%+)',
+  );
+  expect(requests).toHaveLength(count);
+});
+
+test('the Grade coloring uses recorded GPX elevation without any request', async ({
+  page,
+}) => {
+  await setup(page);
+  let requests = 0;
+  await page.route('**/v1/elevation?**', (r) => {
+    requests++;
+    return r.fulfill({ status: 500 });
+  });
+  const points = Array.from({ length: 401 }, (_, i) => {
+    const lon = (i / 400) * 0.5;
+    return `<trkpt lat="0" lon="${lon}"><ele>${rolling(lon).toFixed(1)}</ele></trkpt>`;
+  }).join('');
+  await page.locator('#import').setInputFiles({
+    name: 'hills.gpx',
+    mimeType: 'application/gpx+xml',
+    buffer: Buffer.from(
+      `<gpx><trk><name>Hills</name><trkseg>${points}</trkseg></trk></gpx>`,
+    ),
+  });
+  await expect(page.locator('#route-name')).toHaveValue('Hills');
+  await page.locator('#layers-toggle').click();
+  await page.locator('[data-coloring="grade"]').click();
+  await expect(
+    page.locator('path.route-coloring-steep-up').first(),
+  ).toBeAttached();
+  expect(requests).toBe(0);
+});
+
+for (const width of [320, 360, 390, 430, 1280])
+  for (const language of ['en', 'pt'] as const)
+    test(`grade legend items stay whole inside the map at ${width}px in ${language}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await setup(page, true);
+      await page.route('**/v1/elevation?**', (r) => {
+        const lons = new URL(r.request().url()).searchParams
+          .get('longitude')!
+          .split(',')
+          .map(Number);
+        return r.fulfill({ json: { elevation: lons.map(rolling) } });
+      });
+      await page.locator('#language').selectOption(language);
+      await page.locator('#layers-toggle').click();
+      await page.locator('[data-coloring="grade"]').click();
+      await page.keyboard.press('Escape');
+      // Phones show the legend with the sheet closed; wide screens collapse
+      // the side panel, the widest map and so the longest legend.
+      await page.locator('#panel-toggle').click();
+      const legend = page.locator('.route-legend');
+      await expect(legend).toBeVisible();
+      const layout = await legend.evaluate((box) => {
+        const map = document.getElementById('map')!.getBoundingClientRect();
+        // Map tools and the credits button must stay uncovered.
+        const tools = [
+          ...document.querySelectorAll(
+            '.leaflet-right .leaflet-control, .map-credits',
+          ),
+        ].map((c) => c.getBoundingClientRect());
+        const b = box.getBoundingClientRect();
+        const overlaps = (r: DOMRect) =>
+          r.width > 0 &&
+          !(
+            r.right <= b.left ||
+            r.left >= b.right ||
+            r.bottom <= b.top ||
+            r.top >= b.bottom
+          );
+        return {
+          inside: b.left >= map.left && b.right <= map.right,
+          clearOfTools: !tools.some(overlaps),
+          compact: b.height < 56,
+          // Each limit on one line, centred on its boundary, clear of the next.
+          ticks: (() => {
+            const bar = box
+              .querySelector('.route-legend-bar')!
+              .getBoundingClientRect();
+            const texts = [
+              ...box.querySelectorAll<HTMLElement>('.route-legend-tick'),
+            ].map((tick) => {
+              const probe = document.createRange();
+              probe.selectNodeContents(tick);
+              return {
+                rect: probe.getBoundingClientRect(),
+                line: parseFloat(getComputedStyle(tick).lineHeight),
+              };
+            });
+            return (
+              texts.length === 4 &&
+              texts.every(
+                ({ rect, line }, i) =>
+                  rect.height < 1.5 * line &&
+                  Math.abs(
+                    rect.left +
+                      rect.width / 2 -
+                      (bar.left + ((i + 1) * bar.width) / 5),
+                  ) < 1.5 &&
+                  (i === 0 || rect.left - texts[i - 1].rect.right >= 4),
+              )
+            );
+          })(),
+        };
+      });
+      expect(layout).toEqual({
+        inside: true,
+        clearOfTools: true,
+        compact: true,
+        ticks: true,
+      });
+      if (width < 760) {
+        // Opened over the legend, the Map layers menu stays on top of it.
+        await page.locator('#layers-toggle').click();
+        const top = await page.evaluate(() => {
+          const menu = document
+            .getElementById('layers-menu')!
+            .getBoundingClientRect();
+          const box = document
+            .querySelector('.route-legend')!
+            .getBoundingClientRect();
+          const left = Math.max(menu.left, box.left),
+            right = Math.min(menu.right, box.right),
+            top = Math.max(menu.top, box.top),
+            bottom = Math.min(menu.bottom, box.bottom);
+          if (right <= left || bottom <= top) return 'apart';
+          const hit = document.elementFromPoint(
+            (left + right) / 2,
+            (top + bottom) / 2,
+          );
+          return hit?.closest('#layers-menu') ? 'menu' : 'legend';
+        });
+        expect(['menu', 'apart']).toContain(top);
+      }
+    });
+
 test('climbs are listed, shaded in the chart and shown on the map', async ({
   page,
 }) => {

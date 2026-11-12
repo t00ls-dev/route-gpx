@@ -1,4 +1,8 @@
-import type { ElevationSource, ProfilePoint } from './elevation';
+import {
+  GRADE_WINDOW,
+  type ElevationSource,
+  type ProfilePoint,
+} from './elevation';
 
 /**
  * Climb detection on an elevation profile already passed through
@@ -41,14 +45,6 @@ const PLATEAU = 1500;
 const MIN_GAIN = 40;
 const MIN_LENGTH = 400;
 const MIN_GRADE = 2.5;
-/**
- * Window for the steepest grade, meters. The 90 m terrain model inflates
- * short grades (slopes beside the road, viaducts), so it uses a longer one.
- */
-const GRADE_WINDOW: Record<ElevationSource, number> = {
-  terrain: 500,
-  recorded: 100,
-};
 
 /** Steeper than this over the terrain window flags a likely tunnel or bridge. */
 const SUSPECT_GRADE = 15;

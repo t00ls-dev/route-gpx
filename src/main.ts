@@ -82,6 +82,7 @@ import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
 import { setupElevation } from './elevation-ui';
+import { gradeRanges } from './elevation';
 import { setupRouteOverlays, sliceByRanges } from './route-overlays';
 import {
   offsetSlices,
@@ -251,6 +252,9 @@ const elevation = setupElevation(map, {
   endpoint: () => weather.endpoint(),
   recorded: (route) => recordedElevation.get(route),
   speed: () => speedKmh,
+  // The Grade coloring is an explicit choice that needs the profile too.
+  wanted: () => overlays.active() === 'grade',
+  onProfile: () => overlays.refresh(),
 });
 const playback = setupPlayback(map, {
   state: () => state,
@@ -269,6 +273,30 @@ const marks = setupRouteMarks(map, {
 });
 const departureTime = () =>
   departureOf(state) ? Date.parse(departureOf(state)!) : NaN;
+overlays.register({
+  id: 'grade',
+  label: 'Grade',
+  legend: [
+    { kind: 'steep-down', label: 'Steep descent (8%+)' },
+    { kind: 'down', label: 'Descent (3–8%)' },
+    { kind: 'flat', label: 'Flat (under 3%)' },
+    { kind: 'up', label: 'Climb (3–8%)' },
+    { kind: 'steep-up', label: 'Steep climb (8%+)' },
+  ],
+  unavailable: () => null,
+  // A compact color scale on the map; the ranges above are read out in full.
+  scale: {
+    start: 'slope-down',
+    end: 'slope-up',
+    limits: ['−8%', '−3%', '+3%', '+8%'],
+  },
+  // Drawn once the elevation profile arrives (requested on this choice).
+  ranges: () => {
+    const loaded = elevation.profile();
+    return loaded ? gradeRanges(loaded.profile, loaded.source) : [];
+  },
+  activate: () => elevation.want(),
+});
 overlays.register({
   id: 'daylight',
   label: 'Daylight',

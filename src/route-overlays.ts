@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { meters, type Coord, type Route } from './core';
 import { byId as $ } from './dom';
 import { simplifyTrack } from './simplify';
+import { icon, type IconName } from './icons';
 
 /**
  * Route coloring: one active coloring of the route line at a time, chosen in
@@ -25,6 +26,15 @@ export interface Coloring {
   /** Why the coloring cannot be drawn now, or null when it can. */
   unavailable(): string | null;
   ranges(route: Route): Range[];
+  /** Called when the coloring is chosen, or already chosen on load. */
+  activate?(): void;
+  /**
+   * A compact color scale instead of the item list: icons at both ends, one
+   * continuous bar with a swatch per kind (same order as `legend`) and the
+   * limits between them, each centred on its boundary. The full labels are
+   * still read out to screen readers.
+   */
+  scale?: { start: IconName; end: IconName; limits: string[] };
 }
 
 const longitudeDelta = (from: number, to: number) =>
@@ -133,6 +143,13 @@ export function setupRouteOverlays(
   legendBox.hidden = true;
   legend.onAdd = () => legendBox;
   legend.addTo(map);
+  // The legend wraps its items before reaching the credits button at the
+  // bottom right (44 px plus margins), on every map width.
+  const fitLegend = () => {
+    legendBox.style.maxWidth = `${Math.max(120, map.getSize().x - 84)}px`;
+  };
+  fitLegend();
+  map.on('resize', fitLegend);
 
   function option(id: string, label: string) {
     const button = document.createElement('button');
@@ -153,6 +170,7 @@ export function setupRouteOverlays(
         /* Optional device preference. */
       }
       refresh();
+      colorings.find((c) => c.id === id)?.activate?.();
     };
     group.append(button);
   }
@@ -182,18 +200,51 @@ export function setupRouteOverlays(
         smoothFactor: 0,
       }).addTo(layer);
     });
-    legendBox.replaceChildren(
-      ...coloring.legend.map(({ kind, label }) => {
-        const item = document.createElement('span');
-        const swatch = document.createElement('i');
-        swatch.className = `route-legend-swatch route-coloring-${kind}`;
-        swatch.setAttribute('aria-hidden', 'true');
-        const text = document.createElement('span');
-        text.textContent = label;
-        item.append(swatch, text);
-        return item;
-      }),
-    );
+    const swatch = (kind: string) => {
+      const mark = document.createElement('i');
+      mark.className = `route-legend-swatch route-coloring-${kind}`;
+      mark.setAttribute('aria-hidden', 'true');
+      return mark;
+    };
+    const text = (value: string, className = '') => {
+      const span = document.createElement('span');
+      if (className) span.className = className;
+      span.textContent = value;
+      return span;
+    };
+    legendBox.classList.toggle('route-legend-scale', !!coloring.scale);
+    if (coloring.scale) {
+      const { start, end, limits } = coloring.scale;
+      const bar = document.createElement('span');
+      bar.className = 'route-legend-bar';
+      bar.append(...coloring.legend.map(({ kind }) => swatch(kind)));
+      // Limits sit on the boundaries between swatches, by percentage of the
+      // bar, each centred on its own tick.
+      const ticks = document.createElement('span');
+      ticks.className = 'route-legend-ticks';
+      limits.forEach((limit, i) => {
+        const tick = text(limit, 'route-legend-tick');
+        tick.style.left = `${((i + 1) * 100) / coloring.legend.length}%`;
+        ticks.append(tick);
+      });
+      const scale = document.createElement('span');
+      scale.className = 'route-legend-scale-body';
+      scale.setAttribute('aria-hidden', 'true');
+      scale.append(icon(start), bar, icon(end), ticks);
+      // The full labels, one per class, for screen readers (translated like
+      // any other text); the drawn scale is hidden from them.
+      legendBox.replaceChildren(
+        scale,
+        ...coloring.legend.map(({ label }) => text(label, 'sr-only')),
+      );
+    } else
+      legendBox.replaceChildren(
+        ...coloring.legend.map(({ kind, label }) => {
+          const item = document.createElement('span');
+          item.append(swatch(kind), text(label));
+          return item;
+        }),
+      );
     legendBox.setAttribute('aria-label', coloring.label);
     legendBox.hidden = false;
   }
@@ -222,7 +273,10 @@ export function setupRouteOverlays(
       colorings.push(coloring);
       option(coloring.id, coloring.label);
       refresh();
+      if (coloring.id === active) coloring.activate?.();
     },
     refresh,
+    /** The id of the chosen coloring ('none' when off). */
+    active: () => active,
   };
 }

@@ -65,6 +65,8 @@ const paths = {
   'maneuver-roundabout':
     '<circle cx="12" cy="9" r="4"/><path d="M12 13v8m3-15 4-3m0 0h-4m4 0v4"/>',
   summit: '<path d="m3 20 7-13 4 6 2-3 5 10Z"/>',
+  'slope-down': '<path d="M3 19h18M3 6l18 13"/>',
+  'slope-up': '<path d="M3 19h18M3 19 21 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   swap: '<path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/>',
   roundtrip:
