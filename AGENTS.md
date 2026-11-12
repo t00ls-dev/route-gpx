@@ -95,6 +95,8 @@ When editing the README, check local links, documented paths, commands and npm s
 
 For public-description changes, review `index.html` and `help.html` title/description, Open Graph and Twitter tags, JSON-LD, `src/seo.ts`, manifest, social card, README openings and related tests. Keep initial HTML and runtime metadata consistent.
 
+Keep the GitHub repository About section (description, website and topics) current without being asked: after a change that adds, removes or renames a main feature, service or file format reaches `main`, review it and update it with `gh repo edit`. The description starts with the README tagline, stays neutral about transport mode and languages, and names only shipped features; the website is `https://route-gpx.t00ls.dev/`; topics name real technologies, services and formats used by the project.
+
 Edit SVG brand sources, then run `node scripts/generate-brand.mjs` to regenerate PNGs (requires Playwright Chromium). Review the diff: the script also regenerates icons. Do not hand-edit generated images or `dist/`.
 
 ## Local validation
