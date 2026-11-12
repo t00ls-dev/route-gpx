@@ -21,6 +21,14 @@ import {
   validRoute,
 } from './core';
 import { indexTrack, pointAtDistance } from './track-position';
+import {
+  EDGE_ATTRIBUTES,
+  encodePolyline,
+  parseTraceAttributes,
+  validPiece,
+  type AttributePiece,
+  type TraceAttributes,
+} from './road-attributes';
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export class RequestQueue {
   private tail: Promise<unknown> = Promise.resolve();
@@ -57,11 +65,20 @@ function request(
     signal?: AbortSignal;
     sendOrigin?: boolean;
     noStore?: boolean;
+    /** A JSON body sent with POST (as text/plain, so no preflight is needed). */
+    body?: string;
   } = {},
 ): Promise<Response> {
   const deadline = AbortSignal.timeout(timeoutMs);
   return fetch(url, {
     credentials: 'omit',
+    ...(options.body !== undefined
+      ? {
+          method: 'POST',
+          body: options.body,
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        }
+      : {}),
     referrerPolicy: options.sendOrigin
       ? 'strict-origin-when-cross-origin'
       : 'no-referrer',
@@ -1082,4 +1099,77 @@ export async function fetchElevations(
       elevationCache.delete(elevationCache.keys().next().value!);
   }
   return coords.map((c) => fresh(elevationKey(c))?.value ?? null);
+}
+
+/**
+ * Road attributes along the route (Valhalla `/trace_attributes`), asked only
+ * on an explicit choice: one POST per piece (`attributePlan`), serialized on
+ * the routing queue, without retries. A piece the server cannot match is null
+ * (no data); a failed piece is 'failed' and does not stop the others; a usage
+ * limit (HTTP 429) stops the rest. Answers stay in a bounded page-memory cache.
+ */
+const ATTRIBUTE_CACHE = 100,
+  ATTRIBUTE_FRESH = 15 * 60_000;
+const attributeCache = new Map<
+  string,
+  { value: TraceAttributes | null; at: number }
+>();
+export class AttributeLimitError extends Error {
+  constructor() {
+    super('Valhalla usage limit reached. Try again later.');
+    this.name = 'AttributeLimitError';
+  }
+}
+export async function valhallaAttributes(
+  base: string,
+  pieces: AttributePiece[],
+  isCurrent: () => boolean = () => true,
+): Promise<(TraceAttributes | null | 'failed')[]> {
+  const out: (TraceAttributes | null | 'failed')[] = [];
+  for (const piece of pieces) {
+    const shape = encodePolyline(piece.coords);
+    const key = `${serverUrl(base)}|${shape}`;
+    const hit = attributeCache.get(key);
+    if (hit && Date.now() - hit.at < ATTRIBUTE_FRESH) {
+      out.push(hit.value);
+      continue;
+    }
+    if (!validPiece(piece)) {
+      out.push(null);
+      continue;
+    }
+    const body = JSON.stringify({
+      encoded_polyline: shape,
+      costing: 'auto',
+      shape_match: 'map_snap',
+      filters: { attributes: EDGE_ATTRIBUTES, action: 'include' },
+    });
+    const value = await routing.run(async () => {
+      let r: Response;
+      try {
+        r = await request(`${serverUrl(base)}/trace_attributes`, 30000, {
+          sendOrigin: true,
+          body,
+        });
+      } catch {
+        return undefined;
+      }
+      if (r.status === 429) throw new AttributeLimitError();
+      // A trace the server cannot match is a valid answer: no data there.
+      if (!r.ok) return r.status === 400 ? null : undefined;
+      try {
+        return parseTraceAttributes(await r.json(), piece.coords.length);
+      } catch {
+        return undefined;
+      }
+    }, isCurrent);
+    // Network or server failures are not cached, so asking again can work.
+    if (value !== undefined) {
+      attributeCache.set(key, { value, at: Date.now() });
+      while (attributeCache.size > ATTRIBUTE_CACHE)
+        attributeCache.delete(attributeCache.keys().next().value!);
+    }
+    out.push(value === undefined ? 'failed' : value);
+  }
+  return out;
 }

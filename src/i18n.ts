@@ -409,6 +409,21 @@ const pt: Record<string, string> = {
   'See the help.': 'Veja a ajuda.',
   'Recorded in the imported file.': 'Gravada no arquivo importado.',
   'Elevation here': 'Elevação aqui',
+  Surface: 'Pavimento',
+  'Valhalla returned an invalid response.':
+    'O Valhalla retornou uma resposta inválida.',
+  'Loading surface…': 'Buscando pavimento…',
+  'Surface unavailable. Try again.': 'Pavimento indisponível. Tente novamente.',
+  'Surface unavailable for part of the route.':
+    'Pavimento indisponível em parte da rota.',
+  'No unpaved stretches.': 'Nenhum trecho sem asfalto.',
+  'From OpenStreetMap via Valhalla. Roads without a mapped surface count as paved; unpaved stretches are the mapped ones. Check before you leave.':
+    'Do OpenStreetMap via Valhalla. Vias sem pavimento mapeado contam como pavimentadas; os trechos sem asfalto são os mapeados. Confira antes de sair.',
+  'Valhalla usage limit reached. Try again later.':
+    'Limite de uso do Valhalla atingido. Tente mais tarde.',
+  Paved: 'Pavimentada',
+  Unpaved: 'Sem asfalto',
+  Unknown: 'Desconhecido',
   'No elevation data here.': 'Sem dados de elevação aqui.',
   'Elevation data: Copernicus DEM GLO-90 via Open-Meteo':
     'Dados de elevação: Copernicus DEM GLO-90 via Open-Meteo',
@@ -531,6 +546,12 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
       `Limite de uso ${kind === 'Weather' ? 'do clima' : 'da elevação'} atingido. Tente em ${n}${unit}.`,
   ],
   [/^Climbs \((\d+)\)$/, (n) => `Subidas (${n})`],
+  [/^Unpaved stretches \((\d+)\)$/, (n) => `Trechos sem asfalto (${n})`],
+  [
+    /^Surface is not available for this route: it would need more than (\d+) requests\.$/,
+    (n) =>
+      `Pavimento indisponível para esta rota: seriam necessários mais de ${n} pedidos.`,
+  ],
   [/^Roundabout, exit (\d+)$/, (n) => `Rotatória, ${n}ª saída`],
   [
     /^Weather sampled at (\d+) of (\d+) stops\.$/,
