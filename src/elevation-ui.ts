@@ -3,10 +3,11 @@ import { detectClimbs, hardestClimb, type Climb } from './climbs';
 import type { Coord, Route, State } from './core';
 import { departureOf } from './departure';
 import { byId as $ } from './dom';
-import { icon } from './icons';
+import { icon, iconControl } from './icons';
 import { t } from './i18n';
 import {
   cumulativeClimb,
+  elevationExtremes,
   elevationStats,
   profileFromTrack,
   samplePlan,
@@ -33,7 +34,9 @@ import { distanceUnits } from './unit-preferences';
 /**
  * Elevation row in the route summary: profile chart and statistics. Recorded
  * GPX elevations are used locally; otherwise elevation is requested only when
- * the row is opened. The chart cursor shows the point on the map.
+ * the row is opened. The chart cursor shows the point on the map; the
+ * highest and lowest points are marked while the row is open. The map point
+ * menu asks for the elevation of one point, one request per explicit choice.
  */
 
 const WIDTH = 300,
@@ -42,6 +45,11 @@ const WIDTH = 300,
 const SVG = 'http://www.w3.org/2000/svg';
 /** Quiet time before fetching elevation for a new route while the row is open. */
 const SETTLE_MS = 2000;
+/**
+ * A climb's summit this close (along the route, meters) to the highest point
+ * is that point: its label stands for both, so the map shows one mark.
+ */
+const SAME_SUMMIT = 500;
 
 export function setupElevation(
   map: L.Map,
@@ -68,6 +76,10 @@ export function setupElevation(
   // The climb chosen in the list, highlighted on the map and in the chart.
   map.createPane('climb').style.zIndex = '585';
   const climbLayer = L.layerGroup().addTo(map);
+  // Highest and lowest points of the profile, while the row is open: labels
+  // below the route (route point pins stand above it), over the chosen climb.
+  map.createPane('elevation-extremes').style.zIndex = '588';
+  const extremesLayer = L.layerGroup().addTo(map);
   let selected = -1,
     settle: ReturnType<typeof setTimeout> | undefined,
     cancelWait = () => {},
@@ -183,6 +195,8 @@ export function setupElevation(
   }
 
   function render() {
+    // The point popup shows units and number formats too.
+    renderPoint();
     chart.replaceChildren();
     stats.replaceChildren();
     if (!route || !profile) return;
@@ -337,7 +351,175 @@ export function setupElevation(
       note,
     );
     showClimb(climbs[selected] ?? null, index);
+    showExtremes(index);
   }
+
+  /**
+   * Highest and lowest points on the map, labeled with their elevation. The
+   * same values are in the statistics as text, so the markers are hidden
+   * from assistive technology.
+   */
+  function showExtremes(index: ReturnType<typeof indexTrack>) {
+    extremesLayer.clearLayers();
+    const extremes = profile && details.open && elevationExtremes(profile);
+    if (!extremes) return;
+    for (const [kind, point] of [
+      ['highest', extremes.highest],
+      ['lowest', extremes.lowest],
+    ] as const) {
+      const at = pointAtDistance(index, point.at);
+      if (!at) continue;
+      const chip = document.createElement('span');
+      chip.className = `elevation-extreme ${kind}`;
+      const text = document.createElement('span');
+      text.textContent = elevationLabel(point.ele, units(), locale());
+      chip.append(icon('summit'), text);
+      L.marker(at.coord, {
+        pane: 'elevation-extremes',
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: 'elevation-extreme-marker',
+          html: chip.outerHTML,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0],
+        }),
+      }).addTo(extremesLayer);
+    }
+  }
+
+  /**
+   * Elevation of one map point, asked from the point menu: one request (or a
+   * cache hit) per choice, shown in a popup at the point. A usage limit
+   * counts down and asks once more by itself; refused again, it says so.
+   */
+  type PointResult =
+    | { kind: 'loading' }
+    | { kind: 'value'; value: number }
+    | { kind: 'none' }
+    | { kind: 'message'; text: string };
+  const popup = L.popup({
+    className: 'elevation-point-popup',
+    closeButton: false,
+    closeOnClick: false,
+    autoPanPadding: [16, 16],
+    maxWidth: 260,
+  });
+  let pointController: AbortController | undefined,
+    pointResult: PointResult = { kind: 'loading' },
+    cancelPointWait = () => {};
+  const pointOpen = () => map.hasLayer(popup);
+
+  function renderPoint() {
+    if (!pointOpen()) return;
+    const box = document.createElement('div');
+    box.className = 'elevation-point';
+    const header = document.createElement('div');
+    header.className = 'elevation-point-header';
+    const title = document.createElement('strong');
+    title.textContent = 'Elevation here';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'elevation-point-close';
+    iconControl(close, 'close', 'Close', true);
+    close.onclick = () => {
+      map.closePopup(popup);
+      map.getContainer().focus();
+    };
+    header.append(title, close);
+    const value = document.createElement('p');
+    value.className = 'elevation-point-value';
+    value.setAttribute('role', 'status');
+    const result = pointResult;
+    value.textContent =
+      result.kind === 'loading'
+        ? 'Loading elevation…'
+        : result.kind === 'value'
+          ? `About ${elevationLabel(result.value, units(), locale())}`
+          : result.kind === 'none'
+            ? 'No elevation data here.'
+            : result.text;
+    box.append(header, value);
+    if (result.kind === 'value') {
+      const note = document.createElement('p');
+      note.className = 'hint';
+      note.textContent = 'Elevation estimated from terrain.';
+      box.append(note);
+    }
+    popup.setContent(box);
+  }
+
+  async function askPoint(coord: Coord, retryAfterLimit: boolean) {
+    pointController?.abort();
+    const controller = new AbortController();
+    pointController = controller;
+    const current = () => pointController === controller && pointOpen();
+    pointResult = { kind: 'loading' };
+    renderPoint();
+    try {
+      const [value] = await fetchElevations(
+        deps.endpoint(),
+        [coord],
+        controller.signal,
+        current,
+      );
+      if (!current()) return;
+      pointResult =
+        value === null || value === undefined
+          ? { kind: 'none' }
+          : { kind: 'value', value };
+    } catch (error) {
+      if (!current() || (error as Error).name === 'AbortError') return;
+      if (error instanceof UsageLimitError) {
+        let first = true;
+        cancelPointWait = countdown(
+          error.wait,
+          (seconds) => {
+            if (!current()) return cancelPointWait();
+            pointResult = {
+              kind: 'message',
+              text: `Elevation usage limit reached. ${retryIn(seconds * 1000)}`,
+            };
+            renderPoint();
+            // Announced once, not every second.
+            if (!first)
+              popup
+                .getElement()
+                ?.querySelector('[role=status]')
+                ?.setAttribute('aria-busy', 'true');
+            first = false;
+          },
+          () => {
+            if (!current()) return;
+            if (retryAfterLimit) void askPoint(coord, false);
+            else {
+              pointResult = {
+                kind: 'message',
+                text: 'Elevation usage limit reached.',
+              };
+              renderPoint();
+            }
+          },
+        );
+        return;
+      }
+      pointResult = {
+        kind: 'message',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Elevation unavailable. Try again.',
+      };
+    }
+    renderPoint();
+  }
+
+  map.on('popupclose', (event) => {
+    if (event.popup !== popup) return;
+    pointController?.abort();
+    pointController = undefined;
+    cancelPointWait();
+  });
 
   /** Climbs in route order; one is marked as the hardest by score. */
   function climbList(climbs: Climb[]): HTMLElement {
@@ -442,7 +624,11 @@ export function setupElevation(
         className: 'climb-start',
         interactive: false,
       }).addTo(climbLayer);
-    if (summit) {
+    // The highest point's label already marks a summit there: one mark only.
+    const highest = profile && elevationExtremes(profile)?.highest;
+    const labeled =
+      !!highest && Math.abs(highest.at - climb.end) <= SAME_SUMMIT;
+    if (summit && !labeled) {
       const svg = icon('summit');
       L.marker(summit.coord, {
         pane: 'climb',
@@ -484,6 +670,7 @@ export function setupElevation(
       }
       cursorLayer.clearLayers();
       climbLayer.clearLayers();
+      extremesLayer.clearLayers();
     }
   });
   retry.onclick = () => void load();
@@ -499,6 +686,7 @@ export function setupElevation(
       message('');
       cursorLayer.clearLayers();
       climbLayer.clearLayers();
+      extremesLayer.clearLayers();
       chart.replaceChildren();
       stats.replaceChildren();
       cancelWait();
@@ -517,6 +705,18 @@ export function setupElevation(
       }
     },
     refresh: () => render(),
+    /** Elevation of one map point, from the point menu. */
+    queryPoint(coord: Coord) {
+      cancelPointWait();
+      popup.setLatLng(coord).openOn(map);
+      void askPoint(coord, true);
+    },
+    /** Closes the point elevation popup; true when it was open. */
+    closePoint(): boolean {
+      if (!pointOpen()) return false;
+      map.closePopup(popup);
+      return true;
+    },
     /** The smoothed profile of the current route and its source, when loaded. */
     profile: () =>
       profile

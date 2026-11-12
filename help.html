@@ -161,7 +161,8 @@
           about half a second, without dragging, then choose Set as start, Add
           as stop or Set as destination. Desktop clicks still place the selected
           point; right-click or Shift+F10 opens the same menu. Arrow keys
-          navigate the menu; Escape closes it.
+          navigate the menu; Escape closes it. The menu also offers Elevation
+          here, also while editing is locked.
         </p>
         <p>
           After 3 address characters, Photon offers up to five suggestions.
@@ -421,6 +422,15 @@
           climb steeper than 15% over 500 m is marked Check: tunnel or bridge?
           and is never the hardest.
         </p>
+        <p>
+          While Elevation is open, the map marks the highest and lowest points
+          of the route with their altitude. To check any point on the map,
+          choose Elevation here in the point menu: that one point is sent to
+          Open-Meteo, only on that choice, and its approximate altitude from the
+          same terrain model appears at the point. Values near cliffs, buildings
+          or water can be off. A tap on the map or the close button dismisses
+          it.
+        </p>
         <h2>Travel the route</h2>
         <p>
           Open Travel the route in the route summary to follow the route before
@@ -577,6 +587,7 @@
           documentation permits keyless commercial use, but general terms also
           contain account and redistribution clauses whose applicability should
           be confirmed before scaling. Weather and, when Elevation is opened,
+          the Grade coloring is chosen or Elevation here is asked for a point,
           elevation use https://api.open-meteo.com. Map images use
           https://tile.openstreetmap.org, https://a.tile.opentopomap.org or
           https://tiles.maps.eox.at, including the EOX label overlay. Only the
@@ -697,6 +708,7 @@
           início, Adicionar como parada ou Definir como destino. Cliques no
           desktop continuam posicionando o ponto selecionado; clique direito ou
           Shift+F10 abre o mesmo menu. Setas navegam pelo menu; Escape o fecha.
+          O menu também oferece Elevação aqui, mesmo com a edição bloqueada.
         </p>
         <p>
           Após 3 caracteres de endereço, Photon oferece até cinco sugestões.
@@ -971,6 +983,14 @@
           relevo: uma subida mais íngreme que 15% em 500 m é marcada Confira:
           túnel ou ponte? e nunca é a mais difícil.
         </p>
+        <p>
+          Com Elevação aberta, o mapa marca os pontos mais alto e mais baixo da
+          rota com a altitude. Para conferir qualquer ponto do mapa, escolha
+          Elevação aqui no menu de pontos: só esse ponto é enviado ao
+          Open-Meteo, só nessa escolha, e a altitude aproximada do mesmo modelo
+          de relevo aparece no ponto. Valores perto de penhascos, prédios ou
+          água podem errar. Um toque no mapa ou o botão de fechar a dispensa.
+        </p>
         <h2>Percorrer a rota</h2>
         <p>
           Abra Percorrer a rota no resumo para acompanhar a rota antes de sair.
@@ -1133,15 +1153,17 @@
           endpoint gratuito permite uso comercial sem chave, mas os termos
           gerais também contêm cláusulas de conta e redistribuição cuja
           aplicação deve ser confirmada antes de ampliar o uso. O clima e,
-          quando Elevação é aberta, a elevação usam https://api.open-meteo.com.
-          Imagens do mapa usam https://tile.openstreetmap.org,
-          https://a.tile.opentopomap.org ou https://tiles.maps.eox.at, incluindo
-          a sobreposição de rótulos EOX. Só a camada ativa solicita imagens. O
-          GitHub Pages recebe pedidos dos arquivos do site. Provedores externos
-          recebem o IP da requisição e metadados normais do navegador e podem
-          manter logs próprios. Fragmentos de URL não são enviados nas
-          requisições HTTP. O cache HTTP comum dos tiles segue os cabeçalhos dos
-          provedores; não há armazenamento offline adicional.
+          quando Elevação é aberta, a coloração por Inclinação é escolhida ou
+          Elevação aqui é pedida para um ponto, a elevação usam
+          https://api.open-meteo.com. Imagens do mapa usam
+          https://tile.openstreetmap.org, https://a.tile.opentopomap.org ou
+          https://tiles.maps.eox.at, incluindo a sobreposição de rótulos EOX. Só
+          a camada ativa solicita imagens. O GitHub Pages recebe pedidos dos
+          arquivos do site. Provedores externos recebem o IP da requisição e
+          metadados normais do navegador e podem manter logs próprios.
+          Fragmentos de URL não são enviados nas requisições HTTP. O cache HTTP
+          comum dos tiles segue os cabeçalhos dos provedores; não há
+          armazenamento offline adicional.
         </p>
         <h2>Código aberto</h2>
         <p>

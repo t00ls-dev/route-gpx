@@ -1128,6 +1128,14 @@ dialog.settings::backdrop {
   justify-content: flex-start;
   border-color: transparent;
 }
+.point-menu-separator {
+  height: 1px;
+  margin: 0 4px;
+  background: var(--color-border);
+}
+.point-menu-separator[hidden] {
+  display: none;
+}
 .planner .leaflet-top {
   top: env(safe-area-inset-top, 0px);
   /* Map tools and the Map layers menu open above the bottom controls (the
@@ -2497,6 +2505,88 @@ input[type='range'].range-input:disabled {
 .climb-summit svg {
   width: 16px;
   height: 16px;
+}
+/* Highest and lowest points: a label below the route point, pointing at it;
+   route point pins stand above the route, so they never cover it. */
+.elevation-extreme-marker {
+  overflow: visible;
+}
+.elevation-extreme {
+  --extreme: #74420b;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  box-sizing: border-box;
+  height: 24px;
+  padding: 0 6px 0 4px;
+  border: 2px solid var(--extreme);
+  border-radius: 999px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+  transform: translate(-50%, 12px);
+}
+/* Trimmed to the digits' cap height, so they centre on the icon and the
+   border whatever the font's ascent and descent. */
+.elevation-extreme > span {
+  text-box: trim-both cap alphabetic;
+}
+/* The pointer: a small triangle from the label up to the route point. */
+.elevation-extreme::before {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-bottom-color: var(--extreme);
+  content: '';
+  transform: translateX(-50%);
+}
+.elevation-extreme svg {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.elevation-extreme svg {
+  color: var(--extreme);
+}
+.elevation-extreme.lowest {
+  --extreme: #0b5ea8;
+}
+/* Elevation of one map point, asked from the point menu. */
+.elevation-point-popup .leaflet-popup-content {
+  margin: 8px 10px 10px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.elevation-point-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.elevation-point-header strong {
+  white-space: nowrap;
+}
+.elevation-point-close {
+  flex: none;
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-color: transparent;
+}
+.elevation-point p {
+  margin: 2px 0 0;
+}
+.elevation-point-value {
+  font-size: 16px;
+  font-weight: 700;
 }
 #elevation-status:empty {
   display: none;

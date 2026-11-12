@@ -218,19 +218,26 @@ for (const mobile of [false, true]) {
       await expect(page.locator('#apply-json')).toBeDisabled();
       await expect(page.locator('.leaflet-marker-draggable')).toHaveCount(0);
 
-      // Map gestures that would place points report the lock instead.
+      // The point menu keeps only the elevation query, which is not an edit.
       if (mobile) await holdMap(page);
-      else {
-        await page.locator('#map').click({ position: { x: 130, y: 95 } });
+      else
         await page
           .locator('#map')
           .click({ button: 'right', position: { x: 210, y: 140 } });
+      const menu = page.locator('#point-menu');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('menuitem')).toHaveText(['Elevation here']);
+      await page.keyboard.press('Escape');
+      await expect(menu).toBeHidden();
+      // Map gestures that would place points report the lock instead.
+      if (!mobile) {
+        await page.locator('#map').click({ position: { x: 130, y: 95 } });
         await page.locator('body').press('Control+z');
+        await expect(page.locator('#status')).toHaveText(
+          'Route locked. Unlock editing to change it.',
+        );
       }
       await expect(page.locator('#point-menu')).toBeHidden();
-      await expect(page.locator('#status')).toHaveText(
-        'Route locked. Unlock editing to change it.',
-      );
       await expect(page.locator('#location-0')).toHaveValue(start);
       await expect(page.locator('#location-1')).toHaveValue(end);
 

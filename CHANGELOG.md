@@ -8,6 +8,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Added
 
+- Elevation marks the highest and lowest points of the route on the map with their altitude while it is open, and Elevation here in the map point menu shows the approximate altitude of any point, requested only on that choice.
 - Grade route coloring, in Map layers: descents in blue, flat stretches in gray and climbs in orange and red, with a color scale marking −8%, −3%, +3% and +8% in the legend; it requests the route's elevation only when chosen, and none for files with recorded elevation.
 - Weather on the map, in Map layers › Route marks, hides or shows the weather icons and wind arrows on the map, remembered on the device; the weather cards stay in the panel.
 - On roads the route uses both ways, weather cards say Outbound or Return, and the return markers sit beside the outbound ones instead of on top of them.

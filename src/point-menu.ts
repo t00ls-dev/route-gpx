@@ -3,13 +3,34 @@ import { LongPress } from './long-press';
 import { t } from './i18n';
 import type { Coord } from './core';
 import { compactLayout } from './panel';
+/**
+ * Map point menu (right click, long press, ContextMenu key): choose a route
+ * point there, or ask for its elevation. While editing is locked only the
+ * elevation query stays, since viewing is not an edit.
+ */
 export function setupPointMenu(
   map: L.Map,
-  choose: (kind: 'start' | 'stop' | 'destination', coord: Coord) => void,
-  click: (coord: Coord) => void,
-  /** False while route editing is locked; it reports why to the user. */
-  editable: () => boolean = () => true,
+  options: {
+    choose: (kind: 'start' | 'stop' | 'destination', coord: Coord) => void;
+    click: (coord: Coord) => void;
+    /** False while route editing is locked; it reports why to the user. */
+    editable?: () => boolean;
+    /** The same check without the report, to choose the menu items. */
+    locked?: () => boolean;
+    /** Elevation of the chosen point, on this explicit action only. */
+    elevation?: (coord: Coord) => void;
+    /** Closes what a map tap should dismiss first; true when it did. */
+    dismiss?: () => boolean;
+  },
 ) {
+  const {
+    choose,
+    click,
+    editable = () => true,
+    locked = () => false,
+    elevation,
+    dismiss = () => false,
+  } = options;
   const container = map.getContainer();
   const menu = document.createElement('div');
   menu.id = 'point-menu';
@@ -45,24 +66,45 @@ export function setupPointMenu(
   const close = () => {
     menu.hidden = true;
   };
-  for (const [kind, label] of [
-    ['start', 'Set as start'],
-    ['stop', 'Add as stop'],
-    ['destination', 'Set as destination'],
-  ] as const) {
+  const routeItems: HTMLButtonElement[] = [];
+  const item = (label: string, action: () => void) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = label;
     button.setAttribute('role', 'menuitem');
     button.onclick = () => {
-      choose(kind, coord);
       close();
       container.focus();
+      action();
     };
     menu.append(button);
+    return button;
+  };
+  for (const [kind, label] of [
+    ['start', 'Set as start'],
+    ['stop', 'Add as stop'],
+    ['destination', 'Set as destination'],
+  ] as const)
+    routeItems.push(item(label, () => choose(kind, coord)));
+  let separator: HTMLElement | undefined;
+  if (elevation) {
+    separator = document.createElement('div');
+    separator.className = 'point-menu-separator';
+    separator.setAttribute('role', 'separator');
+    menu.append(separator);
+    item('Elevation here', () => elevation(coord));
   }
+  const items = () =>
+    [...menu.querySelectorAll<HTMLButtonElement>('button')].filter(
+      (b) => !b.hidden,
+    );
+  /** The menu has something to offer: route items, or the elevation query. */
+  const available = () => !locked() || !!elevation;
   const open = (point: L.Point, position: L.LatLng, focus: boolean) => {
     coord = [position.lat, position.lng];
+    const only = locked();
+    for (const button of routeItems) button.hidden = only;
+    if (separator) separator.hidden = only;
     menu.hidden = false;
     const bounds = container.getBoundingClientRect();
     // On phones the bottom sheet covers the lower part of the map.
@@ -72,10 +114,10 @@ export function setupPointMenu(
       : bounds.height;
     menu.style.left = `${Math.max(8, Math.min(point.x, bounds.width - menu.offsetWidth - 8))}px`;
     menu.style.top = `${Math.max(8, Math.min(point.y, bottom - menu.offsetHeight - 8))}px`;
-    if (focus) (menu.firstElementChild as HTMLElement).focus();
+    if (focus) items()[0]?.focus();
   };
   const press = new LongPress(() => {
-    if (!openingEvent || !editable()) return;
+    if (!openingEvent || (!available() && !editable())) return;
     suppressClick = true;
     const point = map.mouseEventToContainerPoint(openingEvent);
     open(point, map.containerPointToLatLng(point), false);
@@ -138,11 +180,14 @@ export function setupPointMenu(
       return;
     }
     close();
+    // A tap that closes the elevation popup only closes it.
+    if (dismiss()) return;
     if (!matchMedia('(pointer: coarse)').matches && editable())
       click([event.latlng.lat, event.latlng.lng]);
   });
   map.on('contextmenu', (event: L.LeafletMouseEvent) => {
-    if (matchMedia('(pointer: coarse)').matches || !editable()) return;
+    if (matchMedia('(pointer: coarse)').matches) return;
+    if (!available() && !editable()) return;
     open(event.containerPoint, event.latlng, true);
   });
   container.addEventListener('keydown', (event) => {
@@ -151,7 +196,8 @@ export function setupPointMenu(
       (event.shiftKey && event.key === 'F10')
     ) {
       event.preventDefault();
-      if (editable()) open(map.getSize().divideBy(2), map.getCenter(), true);
+      if (available() || editable())
+        open(map.getSize().divideBy(2), map.getCenter(), true);
     }
   });
   document.addEventListener('pointerdown', (event) => {
@@ -165,7 +211,7 @@ export function setupPointMenu(
     }
   });
   menu.addEventListener('keydown', (event) => {
-    const buttons = [...menu.querySelectorAll('button')];
+    const buttons = items();
     const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
