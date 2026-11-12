@@ -2349,6 +2349,69 @@ for (const [speed, direction, strength, angle] of [
     await expect(page.locator('.weather-card').first()).toBeFocused();
   });
 
+// The longest badge texts: 99.9 km/h (62.1 mph) and, without decimals from
+// 100 km/h, 161 km/h (100 mph).
+for (const speed of [99.9, 160.7])
+  test(`the map wind badge keeps a long speed beside its unit: ${speed} km/h`, async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.route('**/v1/forecast?**', (r) =>
+      r.fulfill({
+        json: weatherResponse(new URL(r.request().url())).map((row) => ({
+          ...row,
+          hourly: {
+            ...row.hourly,
+            wind_speed_10m: row.hourly.time.map(() => speed),
+            wind_direction_10m: row.hourly.time.map(() => 90),
+          },
+        })),
+      }),
+    );
+    await date(page);
+    await fetchWeather(page);
+    const badge = page.locator('.weather-marker-wind').first();
+    const check = async (value: string, unit: string) => {
+      await expect(badge.locator('.weather-marker-wind-value')).toHaveText(
+        value,
+      );
+      await expect(badge.locator('.weather-marker-wind-unit')).toHaveText(unit);
+      const box = await badge.evaluate((el) => {
+        const outer = el.getBoundingClientRect();
+        const [arrow, text, label] = [...el.children].map((child) =>
+          child.getBoundingClientRect(),
+        );
+        const value = el.children[1] as HTMLElement;
+        return {
+          left: outer.left + 4,
+          right: outer.right - 4,
+          arrow: arrow.right,
+          textLeft: text.left,
+          textRight: text.right,
+          overflow: value.scrollWidth - value.clientWidth,
+          unitLeft: label.left,
+          unitRight: label.right,
+          lines: Math.round(outer.height),
+        };
+      });
+      expect(box.overflow, `${value} ${unit}`).toBeLessThanOrEqual(0);
+      expect(box.arrow).toBeLessThanOrEqual(box.textLeft);
+      expect(box.textRight, `${value} ${unit}`).toBeLessThanOrEqual(
+        box.unitLeft,
+      );
+      expect(box.unitRight, `${value} ${unit}`).toBeLessThanOrEqual(box.right);
+      expect(box.lines).toBe(18);
+    };
+    const [kmh, mph] = speed < 100 ? ['99.9', '62.1'] : ['161', '100'];
+    await check(kmh, 'km/h');
+    await chooseUnits(page, { distance: 'imperial' });
+    await check(mph, 'mph');
+    await page.locator('#language').selectOption('pt');
+    await check(mph.replace('.', ','), 'mph');
+    await chooseUnits(page, { distance: 'metric' });
+    await check(kmh.replace('.', ','), 'km/h');
+  });
+
 test('automatic routing reuses recent geometry while Calculate route requests a fresh result', async ({
   page,
 }) => {

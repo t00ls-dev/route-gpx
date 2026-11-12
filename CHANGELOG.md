@@ -28,6 +28,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Fixed
 
+- The wind badge on map weather markers shows the whole speed beside its unit, for example 99.9 km/h; longer speeds overlapped the unit.
 - Weather samples are spaced evenly between route points, so a sample no longer lands a few hundred metres from a stop or the destination and repeats its card; a weather card keeps its date and time on one line, even on the narrowest phones (a range ending the next day shows +1), with the distance on the next line and the alert level as a tab on its top border.
 - The weather note "Weather sampled at N of M stops" no longer appears when every route point has a card; it counted the samples between stops as stops.
 - On phones, selecting a weather marker on the map no longer scrolls the whole planner up, hiding the top of the map under the address bar and leaving a blank band at the bottom.
