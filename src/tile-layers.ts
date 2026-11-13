@@ -38,12 +38,12 @@ export interface MapCredit {
   text: string;
   url: string;
 }
-const osm: MapCredit = {
+export const osmCredit: MapCredit = {
   text: '© OpenStreetMap contributors',
   url: 'https://www.openstreetmap.org/copyright',
 };
 const labelCredits: MapCredit[] = [
-  osm,
+  osmCredit,
   { text: 'Rendering © EOX::Maps', url: 'https://maps.eox.at/' },
   { text: 'MapServer', url: 'https://github.com/mapserver/basemaps' },
 ];
@@ -52,7 +52,7 @@ export function mapCredits(
   vintage: SatelliteVintage = '2025',
   labels = false,
 ): MapCredit[] {
-  const credits = [osm];
+  const credits = [osmCredit];
   if (layer === 'topographic')
     credits.push(
       { text: 'SRTM', url: 'https://opentopomap.org/about' },

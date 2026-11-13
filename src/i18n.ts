@@ -79,6 +79,8 @@ const pt: Record<string, string> = {
   'North up': 'Norte para cima',
   'Compass imprecise. Move the phone in a figure 8.':
     'Bússola imprecisa. Movimente o celular em forma de 8.',
+  'This browser cannot draw the map. Follow the directions.':
+    'Este navegador não consegue desenhar o mapa. Siga as indicações.',
   'No map. The route and your position still show.':
     'Sem mapa. A rota e sua posição continuam na tela.',
   'Navigation needs location, which this browser does not offer here.':

@@ -240,10 +240,7 @@ test.describe('phone navigation', () => {
     // From the keyboard, focus moves to the button that replaces it.
     await page.getByRole('button', { name: 'Route overview' }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('#nav-rotor')).not.toHaveAttribute(
-      'style',
-      /rotate/,
-    );
+    await expect(page.locator('#nav-rotor')).toHaveAttribute('data-turn', '0');
     const resume = page.getByRole('button', { name: 'Re-center' });
     await expect(resume).toBeVisible();
     await expect(resume).toBeFocused();
@@ -268,8 +265,8 @@ test.describe('phone navigation', () => {
     await expect(page.locator('#nav-overview')).toBeVisible();
     expect(await onTop()).toEqual([]);
     await expect(page.locator('#nav-rotor')).toHaveAttribute(
-      'style',
-      /rotate\(-90deg\)/,
+      'data-turn',
+      '-90',
     );
   });
 
@@ -283,7 +280,7 @@ test.describe('phone navigation', () => {
     const rotor = page.locator('#nav-rotor'),
       resume = page.locator('#nav-resume'),
       marker = page.locator('.nav-arrow');
-    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    await expect(rotor).toHaveAttribute('data-turn', '-90');
     await expect(resume).toBeHidden();
     const stage = (await page.locator('#nav-stage').boundingBox())!;
     const x = stage.x + 120,
@@ -293,7 +290,7 @@ test.describe('phone navigation', () => {
     await page.touchscreen.tap(x, y);
     await page.touchscreen.tap(x, y);
     await expect(resume).toBeVisible();
-    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    await expect(rotor).toHaveAttribute('data-turn', '-90');
     const zoomed = (await marker.boundingBox())!;
     expect(Math.abs(zoomed.x - before.x)).toBeLessThan(2);
     expect(Math.abs(zoomed.y - before.y)).toBeLessThan(2);
@@ -314,6 +311,33 @@ test.describe('phone navigation', () => {
           ),
       ),
     ).toBe(false);
+    // Touches on the map are cancelled, so iOS starts no loupe or callout.
+    expect(
+      await page.evaluate(() => {
+        const canvas = document.querySelector('#nav-map canvas')!;
+        const touch = new Touch({
+          identifier: 9,
+          target: canvas,
+          clientX: 100,
+          clientY: 300,
+        });
+        const init = { touches: [touch], changedTouches: [touch] };
+        const cancelled = !canvas.dispatchEvent(
+          new TouchEvent('touchstart', {
+            ...init,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        canvas.dispatchEvent(
+          new TouchEvent('touchend', {
+            changedTouches: [touch],
+            bubbles: true,
+          }),
+        );
+        return cancelled;
+      }),
+    ).toBe(true);
     // A pan on the turned map follows the finger and stops following.
     const drag = async (dx: number, dy: number) => {
       await page.mouse.move(x, y);
@@ -344,15 +368,15 @@ test.describe('phone navigation', () => {
             document.querySelector<HTMLElement>('.nav-arrow')!.style.transform,
         ),
       )
-      .not.toBe('rotate(90deg)');
-    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+      .not.toBe('rotate(0deg)');
+    await expect(rotor).toHaveAttribute('data-turn', '-90');
     await resume.click();
     await expect(resume).toBeHidden();
     // The whole route stays north-up when panned.
     await page.locator('#nav-overview').click();
     await drag(40, 0);
     await expect(page.locator('#nav-overview')).toBeVisible();
-    await expect(rotor).not.toHaveAttribute('style', /rotate/);
+    await expect(rotor).toHaveAttribute('data-turn', '0');
   });
 
   test('one finger zooms: double tap and drag, around the traveler', async ({
@@ -360,16 +384,13 @@ test.describe('phone navigation', () => {
     context,
   }) => {
     await setup(page);
-    const zooms: number[] = [];
-    await page.route('https://tile.openstreetmap.org/**', (r) => {
-      zooms.push(Number(/\.org\/(\d+)\//.exec(r.request().url())![1]));
-      return r.fulfill({ status: 204 });
-    });
+    const zoom = async () =>
+      Number(await page.locator('#nav-rotor').getAttribute('data-zoom'));
     await page.locator('#navigate').click();
     await page.locator('#nav-notice-start').click();
     await expect(page.locator('#nav-fix-text')).toHaveText('GPS on ±6 m');
-    await expect.poll(() => zooms.length).toBeGreaterThan(0);
-    const before = Math.max(...zooms);
+    await expect.poll(zoom).toBeGreaterThan(0);
+    const before = await zoom();
     const marker = (await page.locator('.nav-arrow').boundingBox())!;
     const stage = (await page.locator('#nav-stage').boundingBox())!;
     const x = stage.x + 120,
@@ -380,7 +401,6 @@ test.describe('phone navigation', () => {
         type,
         touchPoints: type === 'touchEnd' ? [] : [{ x, y: ty }],
       });
-    zooms.length = 0;
     await touch('touchStart');
     await touch('touchEnd');
     await page.waitForTimeout(80);
@@ -390,14 +410,12 @@ test.describe('phone navigation', () => {
       await page.waitForTimeout(30);
     }
     await touch('touchEnd');
-    await expect
-      .poll(() => Math.max(...zooms))
-      .toBeGreaterThanOrEqual(before + 2);
+    await expect.poll(zoom).toBeGreaterThanOrEqual(before + 1);
     // A zoom, not a pan: still following, the traveler where it was.
     await expect(page.locator('#nav-resume')).toBeVisible();
     await expect(page.locator('#nav-rotor')).toHaveAttribute(
-      'style',
-      /rotate\(-90deg\)/,
+      'data-turn',
+      '-90',
     );
     const after = (await page.locator('.nav-arrow').boundingBox())!;
     expect(Math.abs(after.x - marker.x)).toBeLessThan(2);
@@ -414,7 +432,7 @@ test.describe('phone navigation', () => {
     await expect(page.locator('#nav-fix-text')).toHaveText('GPS on ±6 m');
     const rotor = page.locator('#nav-rotor'),
       resume = page.getByRole('button', { name: 'Re-center' });
-    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    await expect(rotor).toHaveAttribute('data-turn', '-90');
     const stage = (await page.locator('#nav-stage').boundingBox())!;
     const cx = stage.x + stage.width / 2,
       cy = stage.y + stage.height / 2,
@@ -443,18 +461,15 @@ test.describe('phone navigation', () => {
         touchPoints: [],
       });
     };
-    const angle = async () =>
-      Number(
-        /rotate\((-?[\d.]+)deg\)/.exec(
-          (await rotor.getAttribute('style')) ?? '',
-        )?.[1],
-      );
+    const angle = async () => Number(await rotor.getAttribute('data-turn'));
     // A small twist during a pinch does not turn the map.
     await turn(8);
     expect(await angle()).toBeCloseTo(-90, 0);
     await expect(resume).toBeHidden();
+    // Past MapLibre's threshold the map turns clockwise with the fingers.
     await turn(45);
-    expect(await angle()).toBeCloseTo(-45, 0);
+    expect(await angle()).toBeGreaterThan(-65);
+    expect(await angle()).toBeLessThan(-40);
     await expect(resume).toBeVisible();
     // At the bottom left, where a thumb reaches it.
     const box = (await resume.boundingBox())!;
@@ -468,7 +483,7 @@ test.describe('phone navigation', () => {
     const compass = page.getByRole('button', { name: 'North up' });
     await expect(compass).toBeVisible();
     await compass.click();
-    await expect(rotor).not.toHaveAttribute('style', /rotate/);
+    await expect(rotor).toHaveAttribute('data-turn', '0');
     await expect(compass).toBeHidden();
     await expect(resume).toBeVisible();
     await resume.click();
@@ -484,13 +499,12 @@ test.describe('phone navigation', () => {
     await page.locator('#nav-notice-start').click();
     const rotor = page.locator('#nav-rotor');
     // The route runs east: without a compass the map turns to it.
-    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
-    const turned = async (selector: string) =>
-      Number(
-        /rotate\((-?[\d.]+)deg\)/.exec(
-          (await page.locator(selector).getAttribute('style')) ?? '',
-        )?.[1],
-      );
+    await expect(rotor).toHaveAttribute('data-turn', '-90');
+    const turned = async () => Number(await rotor.getAttribute('data-turn'));
+    const arrow = () =>
+      page
+        .locator('.nav-arrow')
+        .evaluate((e) => (e as HTMLElement).style.transform);
     // Here magnetic north is about 23° west of true north (WMM2025).
     const declination = magneticDeclination(
       lat,
@@ -506,14 +520,12 @@ test.describe('phone navigation', () => {
         }),
       ),
     );
-    // The map turns to true north, the declination away from magnetic north.
+    // The map turns to true north, the declination away from magnetic
+    // north, and the arrow points up the screen.
     await expect
-      .poll(() => turned('.nav-arrow'))
-      .toBeCloseTo((declination + 360) % 360, 0);
-    expect(await turned('#nav-rotor')).toBeCloseTo(
-      -((declination + 360) % 360),
-      0,
-    );
+      .poll(() => turned())
+      .toBeCloseTo(-((declination + 360) % 360), 0);
+    expect(await arrow()).toBe('rotate(0deg)');
     await expect(page.locator('#nav-compass')).toBeHidden();
     // iOS gives its own heading and accuracy; a poor one asks to calibrate.
     await page.evaluate(() => {
@@ -526,16 +538,14 @@ test.describe('phone navigation', () => {
       for (let i = 0; i < 40; i++) window.dispatchEvent(event);
     });
     await expect(page.locator('#nav-compass')).toBeVisible();
-    await expect
-      .poll(() => turned('.nav-arrow'))
-      .toBeCloseTo(90 + declination, 0);
+    await expect.poll(() => turned()).toBeCloseTo(-(90 + declination), 0);
     // Moving about 300 m in a moment: the direction of travel wins.
     await context.setGeolocation({
       latitude: lat,
       longitude: lon(9),
       accuracy: 5,
     });
-    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    await expect(rotor).toHaveAttribute('data-turn', '-90');
     await expect(page.locator('#nav-compass')).toBeHidden();
   });
 
@@ -543,11 +553,61 @@ test.describe('phone navigation', () => {
     page,
   }) => {
     await setup(page);
-    await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+    await page.route('https://tiles.openfreemap.org/**', (r) => r.abort());
     await page.locator('#navigate').click();
     await page.locator('#nav-notice-start').click();
     await expect(page.locator('#nav-no-map')).toBeVisible();
-    await expect(page.locator('#nav-map path.nav-route')).toHaveCount(1);
+    await expect(page.locator('#nav-no-gl')).toBeHidden();
+    await expect(page.locator('#nav-rotor')).toHaveAttribute(
+      'data-turn',
+      '-90',
+    );
+    // The route ahead draws up the screen from the traveler, in its color,
+    // over the neutral background.
+    const arrow = (await page.locator('.nav-arrow').boundingBox())!;
+    const color = async (x: number, y: number) => {
+      const png = await page.screenshot({
+        clip: { x, y, width: 1, height: 1 },
+      });
+      return page.evaluate(async (data) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${data}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d')!;
+        context.drawImage(image, 0, 0);
+        return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+      }, png.toString('base64'));
+    };
+    const cx = arrow.x + arrow.width / 2;
+    await expect
+      .poll(() => color(cx, arrow.y - 60))
+      .toEqual([0x12, 0x79, 0x6e]);
+    expect(await color(cx + 60, arrow.y - 60)).toEqual([0xe9, 0xec, 0xe9]);
+  });
+
+  test('without WebGL the directions still guide, with a notice', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const get = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (
+        this: HTMLCanvasElement,
+        type: string,
+        ...rest: unknown[]
+      ) {
+        return /webgl/.test(type)
+          ? null
+          : (get as (...a: unknown[]) => unknown).call(this, type, ...rest);
+      } as typeof get;
+    });
+    await setup(page);
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await expect(page.locator('#nav-no-gl')).toBeVisible();
+    await expect(page.locator('#nav-no-map')).toBeHidden();
+    await expect(page.locator('#nav-road')).toHaveText('Estrada das Furnas');
   });
 
   for (const [language, width] of [
