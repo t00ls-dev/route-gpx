@@ -35,8 +35,17 @@ interface PinchMap {
   _limitZoom(zoom: number): number;
 }
 
-export function setupQuickZoom(map: L.Map): void {
+/**
+ * `center` zooms around the map's center instead of the finger: the
+ * navigation map turns with the traveler, so finger points do not map to it,
+ * and its center is the traveler anyway.
+ */
+export function setupQuickZoom(
+  map: L.Map,
+  { center = false }: { center?: boolean } = {},
+): void {
   const container = map.getContainer();
+  let dragging = false;
   let down: { id: number; x: number; y: number; time: number } | null = null,
     lastTap: { x: number; y: number; time: number } | null = null,
     gesture: {
@@ -85,7 +94,9 @@ export function setupQuickZoom(map: L.Map): void {
       Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) <
         TAP_DISTANCE
     ) {
-      const point = map.mouseEventToContainerPoint(event);
+      const point = center
+        ? map.getSize().divideBy(2)
+        : map.mouseEventToContainerPoint(event);
       gesture = {
         id: event.pointerId,
         y: event.clientY,
@@ -97,6 +108,7 @@ export function setupQuickZoom(map: L.Map): void {
         frame: 0,
       };
       lastTap = null;
+      dragging = map.dragging.enabled();
       map.dragging.disable();
       // As in common map apps, tap then hold is zoom, never the point menu.
       map.fire('quickzoomstart');
@@ -145,7 +157,7 @@ export function setupQuickZoom(map: L.Map): void {
     const { moved, point, anchor, target, frame } = gesture;
     gesture = null;
     cancelAnimationFrame(frame);
-    map.dragging.enable();
+    if (dragging) map.dragging.enable();
     if (moved) {
       // Settle on the nearest level as a pinch does: animated, keeping the
       // current tiles until the new level loads.

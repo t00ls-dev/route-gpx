@@ -366,6 +366,14 @@
               <button id="share-gpx" type="button" hidden disabled>
                 Share GPX
               </button>
+              <button
+                id="add-home"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="home-dialog"
+              >
+                Add to home screen
+              </button>
             </div>
           </div>
           <div class="export-actions">
@@ -586,7 +594,56 @@
         Start navigation
       </button>
     </dialog>
-    <dialog id="nav-screen" class="nav-screen" aria-label="Navigation">
+    <dialog
+      id="home-dialog"
+      class="home-dialog"
+      aria-labelledby="home-dialog-title"
+    >
+      <h2 id="home-dialog-title">Add to home screen</h2>
+      <p>
+        Open route-gpx from an icon, like an app. It opens in your browser, and
+        saved routes open even without a connection.
+      </p>
+      <section data-platform="ios">
+        <h3>iPhone and iPad</h3>
+        <ol>
+          <li>
+            Tap Share: in Safari, at the bottom of the screen or in the ⋯ menu;
+            in Chrome, in the address bar.
+          </li>
+          <li>Choose Add to Home Screen. Scroll down if you don't see it.</li>
+          <li>Tap Add.</li>
+        </ol>
+      </section>
+      <section data-platform="android">
+        <h3>Android</h3>
+        <ol>
+          <li>Open the browser menu ⋮, at the top right in Chrome.</li>
+          <li>
+            Choose Add to home screen. In Samsung Internet: Add page to, then
+            Home screen.
+          </li>
+          <li>
+            Confirm with Add. The phone may ask once more where to put it.
+          </li>
+        </ol>
+      </section>
+      <div class="home-dialog-actions">
+        <a
+          id="home-help"
+          href="./help.html?section=home-screen"
+          target="_blank"
+          rel="noopener noreferrer"
+          >More in Help</a
+        ><button id="close-home" class="primary" type="button">Close</button>
+      </div>
+    </dialog>
+    <dialog
+      id="nav-screen"
+      class="nav-screen"
+      aria-label="Navigation"
+      tabindex="-1"
+    >
       <div class="nav-banner">
         <div class="nav-banner-main">
           <span id="nav-turn" class="nav-turn"></span>
@@ -614,10 +671,22 @@
             <span>No map. The route and your position still show.</span>
           </p>
         </div>
-        <button id="nav-overview" class="nav-map-button" type="button"></button>
+        <div class="nav-map-tools">
+          <button
+            id="nav-overview"
+            class="nav-map-button"
+            type="button"
+          ></button
+          ><button
+            id="nav-compass-button"
+            class="nav-map-button"
+            type="button"
+            hidden
+          ></button>
+        </div>
         <button
           id="nav-resume"
-          class="primary nav-resume"
+          class="nav-resume"
           type="button"
           hidden
         ></button>
@@ -636,13 +705,13 @@
             <div id="nav-time" class="nav-time"></div>
             <div id="nav-rest" class="nav-rest"></div>
           </div>
-          <button id="nav-stop" class="nav-stop" type="button">Stop</button>
+          <button id="nav-stop" class="nav-stop" type="button">End</button>
         </div>
         <div class="nav-status">
           <span id="nav-fix"
             ><i id="nav-dot" class="nav-dot"></i
             ><span id="nav-fix-text">Waiting for GPS</span></span
-          ><span id="nav-screen-on" hidden>Screen on</span>
+          >
         </div>
       </div>
     </dialog>

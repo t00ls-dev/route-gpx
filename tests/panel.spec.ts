@@ -376,3 +376,79 @@ for (const mobile of [false, true])
       ).toEqual(before);
     }
   });
+
+test.describe('add to home screen', () => {
+  test.use({
+    isMobile: true,
+    hasTouch: true,
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  });
+  for (const [width, lang] of [
+    [320, 'pt'],
+    [320, 'en'],
+    [430, 'pt'],
+  ] as const)
+    test(`More actions shows the steps for this phone at ${width} px in ${lang}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 700 });
+      await page.goto(`${base}?lang=${lang}`);
+      await page.locator('#more-actions').click();
+      const button = page.locator('#add-home');
+      await expect(button).toBeVisible();
+      // The label stays on one line inside the button.
+      expect(
+        await button.evaluate((e) => {
+          const label = e.querySelector('.button-label')!;
+          return (
+            e.scrollWidth <= e.clientWidth + 1 &&
+            label.getBoundingClientRect().height < 24
+          );
+        }),
+      ).toBe(true);
+      await button.click();
+      const dialog = page.locator('#home-dialog');
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator('[data-platform="ios"]')).toBeVisible();
+      await expect(dialog.locator('[data-platform="android"]')).toBeHidden();
+      await expect(dialog).toContainText(
+        lang === 'pt' ? 'Adicionar à Tela de Início' : 'Add to Home Screen',
+      );
+      // Help opens at its section, in the same language.
+      await expect(page.locator('#home-help')).toHaveAttribute(
+        'href',
+        new RegExp(`help\\.html\\?lang=${lang}&section=home-screen`),
+      );
+      expect(
+        await dialog.evaluate((e) => e.scrollWidth <= e.clientWidth + 1),
+      ).toBe(true);
+      await page.locator('#close-home').click();
+      await expect(dialog).toBeHidden();
+      await expect(button).toBeFocused();
+    });
+
+  test('only the map zooms: the planner page blocks page zoom, Help keeps pinch', async ({
+    page,
+  }) => {
+    await page.goto(base);
+    const touch = (selector: string) =>
+      page.locator(selector).evaluate((e) => getComputedStyle(e).touchAction);
+    expect(await touch('html')).toBe('manipulation');
+    expect(await touch('body')).toBe('pan-x pan-y');
+    expect(await touch('#map')).toBe('none');
+    // The viewport stays zoomable for accessibility settings.
+    expect(
+      await page.locator('meta[name="viewport"]').getAttribute('content'),
+    ).not.toMatch(/user-scalable|maximum-scale/);
+    await page.goto(`${base}help.html`);
+    expect(await touch('html')).toBe('manipulation');
+    expect(await touch('body')).toBe('auto');
+  });
+});
+
+test('Add to home screen is a phone action only', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(base);
+  await expect(page.locator('#add-home')).toBeHidden();
+});

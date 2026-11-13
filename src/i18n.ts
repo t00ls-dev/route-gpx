@@ -38,9 +38,26 @@ export function preferredLanguage(): Language {
   return storedLanguage() ?? detectLanguage();
 }
 const pt: Record<string, string> = {
+  'Add to home screen': 'Adicionar à tela inicial',
+  'Open route-gpx from an icon, like an app. It opens in your browser, and saved routes open even without a connection.':
+    'Abra o route-gpx por um ícone, como um app. Ele abre no navegador, e as rotas salvas abrem mesmo sem conexão.',
+  'iPhone and iPad': 'iPhone e iPad',
+  'Tap Share: in Safari, at the bottom of the screen or in the ⋯ menu; in Chrome, in the address bar.':
+    'Toque em Compartilhar: no Safari, na parte de baixo da tela ou no menu ⋯; no Chrome, na barra de endereço.',
+  "Choose Add to Home Screen. Scroll down if you don't see it.":
+    'Escolha Adicionar à Tela de Início. Role a lista se não aparecer.',
+  'Tap Add.': 'Toque em Adicionar.',
+  'Open the browser menu ⋮, at the top right in Chrome.':
+    'Abra o menu do navegador ⋮, no canto superior direito no Chrome.',
+  'Choose Add to home screen. In Samsung Internet: Add page to, then Home screen.':
+    'Escolha Adicionar à tela inicial. No Samsung Internet: Adicionar página a, depois Tela inicial.',
+  'Confirm with Add. The phone may ask once more where to put it.':
+    'Confirme em Adicionar. O celular pode perguntar mais uma vez onde colocar o ícone.',
+  'More in Help': 'Mais na Ajuda',
   Navigate: 'Navegar',
   'Start navigation': 'Iniciar navegação',
-  'Stop navigation': 'Encerrar navegação',
+  'End navigation': 'Sair da navegação',
+  End: 'Sair',
   Stop: 'Parar',
   Navigation: 'Navegação',
   'Before you go': 'Antes de sair',
@@ -57,9 +74,9 @@ const pt: Record<string, string> = {
   'Weak GPS': 'GPS fraco',
   'GPS on': 'GPS ativo',
   'Waiting for GPS': 'Aguardando o GPS',
-  'Screen on': 'Tela acesa',
   'Route overview': 'Ver a rota toda',
-  'Resume navigation': 'Retomar navegação',
+  'Re-center': 'Centralizar',
+  'North up': 'Norte para cima',
   'Compass imprecise. Move the phone in a figure 8.':
     'Bússola imprecisa. Movimente o celular em forma de 8.',
   'No map. The route and your position still show.':

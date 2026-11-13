@@ -85,6 +85,7 @@ import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
 import { setupNavigation } from './navigation-ui';
+import { setupHomeScreen } from './home-screen';
 import { setupElevation } from './elevation-ui';
 import { setupSurface } from './surface-ui';
 import { SURFACE_KINDS } from './surface';
@@ -1789,6 +1790,7 @@ void refreshSavedRoutes();
 updateSaveButton();
 
 setupPanel(map);
+setupHomeScreen();
 const navigation = setupNavigation({
   route: () => current,
   speedKmh: () => speedKmh,
