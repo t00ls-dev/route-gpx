@@ -10,7 +10,7 @@
     <title>route-gpx — Route Planner &amp; GPX Export</title>
     <meta
       name="description"
-      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account."
+      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and surface, navigate on your phone and download complete GPX tracks. No account."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="route-gpx" />
@@ -38,7 +38,7 @@
     />
     <meta
       property="og:description"
-      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account."
+      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and surface, navigate on your phone and download complete GPX tracks. No account."
     />
     <meta property="og:url" content="https://route-gpx.t00ls.dev/" />
     <meta property="og:locale" content="en_US" />
@@ -59,7 +59,7 @@
     />
     <meta
       name="twitter:description"
-      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account."
+      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and surface, navigate on your phone and download complete GPX tracks. No account."
     />
     <meta
       name="twitter:image"
@@ -75,7 +75,7 @@
         "@type": "WebApplication",
         "name": "route-gpx",
         "url": "https://route-gpx.t00ls.dev/",
-        "description": "Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account.",
+        "description": "Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and surface, navigate on your phone and download complete GPX tracks. No account.",
         "applicationCategory": "TravelApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript and an internet connection.",
@@ -369,7 +369,9 @@
             </div>
           </div>
           <div class="export-actions">
-            <button id="download" class="primary" disabled type="button">
+            <button id="navigate" class="primary" disabled type="button">
+              Navigate</button
+            ><button id="download" class="primary" disabled type="button">
               Download GPX</button
             ><button id="share" type="button" title="Copy route link">
               Copy link</button
@@ -507,6 +509,11 @@
           <option value="celsius">Celsius</option>
           <option value="fahrenheit">Fahrenheit</option>
         </select>
+        <label class="check"
+          ><input id="nav-notice-setting" type="checkbox" checked /><span
+            >Show the notice when navigation starts</span
+          ></label
+        >
         <label for="osrm">OSRM server</label><input id="osrm" type="url" />
         <label for="valhalla">Valhalla fallback</label
         ><input id="valhalla" type="url" />
@@ -548,6 +555,95 @@
         <button id="save-settings" class="primary" type="button">
           Apply settings
         </button>
+      </div>
+    </dialog>
+    <dialog
+      id="nav-notice"
+      class="nav-notice"
+      aria-labelledby="nav-notice-title"
+    >
+      <h2 id="nav-notice-title">Before you go</h2>
+      <ul>
+        <li class="nav-notice-warning">
+          <span
+            >Avoid handling the phone while moving. Put it in a mount you can
+            see and check the route before you leave.</span
+          >
+        </li>
+        <li>
+          <span
+            >Keep this tab open and the screen on. With the screen off or in
+            another tab, the browser stops following you.</span
+          >
+        </li>
+      </ul>
+      <label class="check nav-notice-hide"
+        ><input id="nav-notice-hide" type="checkbox" /><span
+          >Don't show this notice again</span
+        ></label
+      >
+      <button id="nav-notice-start" class="primary" type="button">
+        Start navigation
+      </button>
+    </dialog>
+    <dialog id="nav-screen" class="nav-screen" aria-label="Navigation">
+      <div class="nav-banner">
+        <div class="nav-banner-main">
+          <span id="nav-turn" class="nav-turn"></span>
+          <div class="nav-banner-text">
+            <div id="nav-distance" class="nav-distance"></div>
+            <div id="nav-road" class="nav-road"></div>
+          </div>
+        </div>
+        <div id="nav-then" class="nav-then" hidden>
+          <span>Then</span><span id="nav-then-icon" class="nav-then-icon"></span
+          ><span id="nav-then-distance"></span>
+        </div>
+        <p id="nav-announce" class="sr-only" aria-live="polite"></p>
+      </div>
+      <div id="nav-stage" class="nav-stage">
+        <div id="nav-rotor" class="nav-rotor"><div id="nav-map"></div></div>
+        <div class="nav-chips">
+          <p id="nav-gps" class="nav-chip" hidden>
+            <span>Weak GPS signal</span>
+          </p>
+          <p id="nav-compass" class="nav-chip" hidden>
+            <span>Compass imprecise. Move the phone in a figure 8.</span>
+          </p>
+          <p id="nav-no-map" class="nav-chip" hidden>
+            <span>No map. The route and your position still show.</span>
+          </p>
+        </div>
+        <button id="nav-overview" class="nav-map-button" type="button"></button>
+        <button
+          id="nav-resume"
+          class="primary nav-resume"
+          type="button"
+          hidden
+        ></button>
+        <p class="nav-credit">
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noreferrer"
+            >© OpenStreetMap</a
+          >
+        </p>
+      </div>
+      <div class="nav-bar">
+        <div class="nav-bar-row">
+          <div class="nav-eta">
+            <div id="nav-time" class="nav-time"></div>
+            <div id="nav-rest" class="nav-rest"></div>
+          </div>
+          <button id="nav-stop" class="nav-stop" type="button">Stop</button>
+        </div>
+        <div class="nav-status">
+          <span id="nav-fix"
+            ><i id="nav-dot" class="nav-dot"></i
+            ><span id="nav-fix-text">Waiting for GPS</span></span
+          ><span id="nav-screen-on" hidden>Screen on</span>
+        </div>
       </div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>

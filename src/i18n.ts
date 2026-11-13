@@ -38,6 +38,34 @@ export function preferredLanguage(): Language {
   return storedLanguage() ?? detectLanguage();
 }
 const pt: Record<string, string> = {
+  Navigate: 'Navegar',
+  'Start navigation': 'Iniciar navegação',
+  'Stop navigation': 'Encerrar navegação',
+  Stop: 'Parar',
+  Navigation: 'Navegação',
+  'Before you go': 'Antes de sair',
+  'Avoid handling the phone while moving. Put it in a mount you can see and check the route before you leave.':
+    'Evite mexer no celular em movimento. Prenda-o num suporte à vista e confira a rota antes de sair.',
+  'Keep this tab open and the screen on. With the screen off or in another tab, the browser stops following you.':
+    'Deixe esta aba aberta e a tela acesa. Com a tela apagada ou em outra aba, o navegador para de acompanhar você.',
+  "Don't show this notice again": 'Não exibir mais este aviso',
+  'Show the notice when navigation starts':
+    'Mostrar o aviso ao iniciar a navegação',
+  Then: 'Depois',
+  'You have arrived': 'Você chegou',
+  'Weak GPS signal': 'Sinal de GPS fraco',
+  'Weak GPS': 'GPS fraco',
+  'GPS on': 'GPS ativo',
+  'Waiting for GPS': 'Aguardando o GPS',
+  'Screen on': 'Tela acesa',
+  'Route overview': 'Ver a rota toda',
+  'Resume navigation': 'Retomar navegação',
+  'Compass imprecise. Move the phone in a figure 8.':
+    'Bússola imprecisa. Movimente o celular em forma de 8.',
+  'No map. The route and your position still show.':
+    'Sem mapa. A rota e sua posição continuam na tela.',
+  'Navigation needs location, which this browser does not offer here.':
+    'A navegação precisa da localização, que este navegador não oferece aqui.',
   'No connection. The route on screen is kept; calculate it again when you are back online.':
     'Sem conexão. A rota na tela foi mantida; calcule de novo quando a conexão voltar.',
   'No connection. The route will be calculated when the connection returns.':

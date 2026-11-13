@@ -44,6 +44,7 @@ const paths = {
   minimize: '<path d="M3 8h5V3m13 5h-5V3M8 21v-5H3m13 5v-5h5"/>',
   route:
     '<circle cx="5" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 5h9a4 4 0 0 1 0 8H8a3 3 0 0 0 0 6h9"/>',
+  navigate: '<path d="M12 2 19 21l-7-4-7 4Z"/>',
   pin: '<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2"/>',
   up: '<path d="m5 10 7-7 7 7M12 3v18"/>',
   down: '<path d="m5 14 7 7 7-7M12 21V3"/>',

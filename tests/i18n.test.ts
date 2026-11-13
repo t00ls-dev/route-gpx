@@ -117,6 +117,8 @@ describe('translation coverage', () => {
     'route',
     '-gpx',
     'route-gpx',
+    // Required map attribution, kept as written.
+    '© OpenStreetMap',
     'Language / Idioma',
     'EN',
     'PT',
