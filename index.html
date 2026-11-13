@@ -10,11 +10,22 @@
     <title>route-gpx — Route Planner &amp; GPX Export</title>
     <meta
       name="description"
-      content="Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
+      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="route-gpx" />
-    <link rel="canonical" href="https://route-gpx.t00ls.dev/" />
+    <!-- The canonical is set per language by src/seo.ts. -->
+    <link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/" />
+    <link
+      rel="alternate"
+      hreflang="pt-BR"
+      href="https://route-gpx.t00ls.dev/?lang=pt"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://route-gpx.t00ls.dev/"
+    />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
@@ -27,7 +38,7 @@
     />
     <meta
       property="og:description"
-      content="Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
+      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account."
     />
     <meta property="og:url" content="https://route-gpx.t00ls.dev/" />
     <meta property="og:locale" content="en_US" />
@@ -48,26 +59,41 @@
     />
     <meta
       name="twitter:description"
-      content="Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed."
+      content="Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account."
     />
     <meta
       name="twitter:image"
       content="https://route-gpx.t00ls.dev/social-card.png"
     />
-    <meta name="twitter:image:alt" content="route-gpx route planner" />
+    <meta
+      name="twitter:image:alt"
+      content="route-gpx — Choose your roads. Download every turn."
+    />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "route-gpx",
         "url": "https://route-gpx.t00ls.dev/",
-        "description": "Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed.",
+        "description": "Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account.",
         "applicationCategory": "TravelApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript and an internet connection.",
         "isAccessibleForFree": true,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "featureList": [
+          "Route planning with addresses, coordinates and map points",
+          "GPX, FIT and TCX import",
+          "GPX 1.1 export with the complete track and named waypoints",
+          "Itinerary with turn directions",
+          "Weather along the route for a departure time",
+          "Elevation profile and climbs",
+          "Road surface along the route",
+          "Sunrise, sunset and daylight along the route",
+          "Route links, saved routes and backups"
+        ],
         "license": "https://github.com/t00ls-dev/route-gpx/blob/main/LICENSE",
+        "sameAs": "https://github.com/t00ls-dev/route-gpx",
         "image": "https://route-gpx.t00ls.dev/social-card.png",
         "softwareHelp": {
           "@type": "WebPage",

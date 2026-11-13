@@ -1,2 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://route-gpx.t00ls.dev/</loc></url><url><loc>https://route-gpx.t00ls.dev/help.html</loc></url><url><loc>https://route-gpx.t00ls.dev/changelog.html</loc></url></urlset>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://route-gpx.t00ls.dev/</loc>
+    <lastmod>2026-11-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://route-gpx.t00ls.dev/?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://route-gpx.t00ls.dev/" />
+  </url>
+  <url>
+    <loc>https://route-gpx.t00ls.dev/?lang=pt</loc>
+    <lastmod>2026-11-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://route-gpx.t00ls.dev/?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://route-gpx.t00ls.dev/" />
+  </url>
+  <url>
+    <loc>https://route-gpx.t00ls.dev/help.html</loc>
+    <lastmod>2026-11-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/help.html" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://route-gpx.t00ls.dev/help.html?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://route-gpx.t00ls.dev/help.html" />
+  </url>
+  <url>
+    <loc>https://route-gpx.t00ls.dev/help.html?lang=pt</loc>
+    <lastmod>2026-11-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/help.html" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://route-gpx.t00ls.dev/help.html?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://route-gpx.t00ls.dev/help.html" />
+  </url>
+  <url>
+    <loc>https://route-gpx.t00ls.dev/changelog.html</loc>
+    <lastmod>2026-11-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/changelog.html" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://route-gpx.t00ls.dev/changelog.html?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://route-gpx.t00ls.dev/changelog.html" />
+  </url>
+  <url>
+    <loc>https://route-gpx.t00ls.dev/changelog.html?lang=pt</loc>
+    <lastmod>2026-11-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://route-gpx.t00ls.dev/changelog.html" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://route-gpx.t00ls.dev/changelog.html?lang=pt" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://route-gpx.t00ls.dev/changelog.html" />
+  </url>
+</urlset>

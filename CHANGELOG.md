@@ -16,6 +16,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Changed
 
+- In Portuguese, the address of the app, Help and What's new ends in ?lang=pt, so a shared address opens in that language.
 - Help moved from the header to the bottom of the route panel, beside What's new and GitHub, each with its icon; Settings has a gear icon, and the line about public servers left the panel (Help describes them).
 
 - Editing route points keeps the map where it is instead of zooming out to the whole route after each change; Fit route frames the whole route, and opening a link, file or saved route still frames it.
