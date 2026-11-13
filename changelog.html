@@ -11,7 +11,22 @@
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="route-gpx" />
-    <link rel="canonical" href="https://route-gpx.t00ls.dev/changelog.html" />
+    <!-- The canonical is set per language by src/seo.ts. -->
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://route-gpx.t00ls.dev/changelog.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="pt-BR"
+      href="https://route-gpx.t00ls.dev/changelog.html?lang=pt"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://route-gpx.t00ls.dev/changelog.html"
+    />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
@@ -48,7 +63,10 @@
       name="twitter:image"
       content="https://route-gpx.t00ls.dev/social-card.png"
     />
-    <meta name="twitter:image:alt" content="route-gpx route planner" />
+    <meta
+      name="twitter:image:alt"
+      content="route-gpx — Choose your roads. Download every turn."
+    />
   </head>
   <body class="help-page changelog-page">
     <header>
@@ -115,6 +133,10 @@
           </ul>
           <h3 data-kind="Changed">Changed</h3>
           <ul>
+            <li>
+              In Portuguese, the address of the app, Help and What's new ends in
+              ?lang=pt, so a shared address opens in that language.
+            </li>
             <li>
               Help moved from the header to the bottom of the route panel,
               beside What's new and GitHub, each with its icon; Settings has a
@@ -369,6 +391,10 @@
           </ul>
           <h3 data-kind="Changed">Alterado</h3>
           <ul>
+            <li>
+              Em português, o endereço do app, da Ajuda e das Novidades termina
+              em ?lang=pt, então um endereço compartilhado abre nesse idioma.
+            </li>
             <li>
               A Ajuda saiu do cabeçalho e foi para o fim do painel da rota, ao
               lado de Novidades e GitHub, cada um com seu ícone; Configurações

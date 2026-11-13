@@ -34,6 +34,7 @@ import {
 import { UndoHistory } from './history';
 import {
   getLanguage,
+  isLanguage,
   observeTranslations,
   preferredLanguage,
   rememberLanguage,
@@ -41,6 +42,7 @@ import {
   t,
   type Language,
 } from './i18n';
+import { languageQuery } from './seo';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './style.css';
@@ -171,6 +173,9 @@ function fromLink(next: State): State {
     nominatim: initial.nominatim,
   };
 }
+// `?lang=` names the page's language (one indexable URL per language); it
+// wins over the language in a route link and the device preference.
+const linkedLanguage = new URLSearchParams(location.search).get('lang');
 try {
   state = fromLink(decodeState(location.hash));
 } catch {
@@ -380,7 +385,11 @@ function syncUrl() {
   const hash = encodeState(state);
   $<HTMLButtonElement>('undo').disabled =
     locked || (!undoHistory.canUndo && !dirty.size);
-  history.replaceState(null, '', hash);
+  history.replaceState(
+    null,
+    '',
+    location.pathname + languageQuery(getLanguage()) + hash,
+  );
   pageLinks(getLanguage(), hash);
 }
 function settings() {
@@ -1536,10 +1545,17 @@ $('apply-json').onclick = () => {
   }
 };
 
-const initialLanguage: Language = state.language ?? preferredLanguage();
+const initialLanguage: Language = isLanguage(linkedLanguage)
+  ? linkedLanguage
+  : (state.language ?? preferredLanguage());
 state.language = initialLanguage;
 $<HTMLSelectElement>('language').value = initialLanguage;
 setLanguage(initialLanguage);
+history.replaceState(
+  null,
+  '',
+  location.pathname + languageQuery(initialLanguage) + location.hash,
+);
 pageLinks(initialLanguage, encodeState(state));
 renderPoints();
 observeTranslations();

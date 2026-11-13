@@ -2,21 +2,21 @@ const texts = {
   app: {
     en: [
       'route-gpx — Route Planner & GPX Export',
-      'Plan routes along real roads, choose stops and download complete GPX tracks. Free, open source, no API key or account needed.',
+      'Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account.',
     ],
     pt: [
       'route-gpx — Planejador de rotas e exportação GPX',
-      'Crie rotas pelas ruas, escolha pontos de passagem e baixe o traçado completo em GPX. Grátis, código aberto e sem cadastro.',
+      'Crie rotas pelas ruas, importe GPX, FIT ou TCX, veja clima, elevação e pavimento no caminho e baixe o traçado completo em GPX. Grátis e sem cadastro.',
     ],
   },
   help: {
     en: [
       'route-gpx — Route Planning & GPX Help',
-      'Learn to set route points, use the map, import and export GPX, estimate travel time, switch units and share routes with route-gpx.',
+      'Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, set speed and units, and save or share routes.',
     ],
     pt: [
       'route-gpx — Ajuda para criar e exportar rotas',
-      'Aprenda a definir pontos, usar o mapa, importar e exportar GPX, ajustar a velocidade média e compartilhar rotas no route-gpx.',
+      'Aprenda a criar e editar rotas, importar GPX, FIT e TCX, ver itinerário, clima, elevação e pavimento, ajustar velocidade e unidades e salvar ou compartilhar.',
     ],
   },
   changelog: {
@@ -30,6 +30,31 @@ const texts = {
     ],
   },
 } as const;
+
+const SITE = 'https://route-gpx.t00ls.dev/';
+/**
+ * Every page has one indexable URL per language: English at the bare path
+ * (also x-default) and Portuguese with `?lang=pt`, matching the hreflang
+ * alternates in the HTML and the sitemap. The canonical is set only here, so
+ * the raw HTML never names the English URL as canonical of the Portuguese one.
+ */
+const PATHS = {
+  app: '',
+  help: 'help.html',
+  changelog: 'changelog.html',
+} as const;
+
+/** `?lang=pt` for Portuguese, nothing for English (the bare URL). */
+export function languageQuery(language: 'en' | 'pt'): string {
+  return language === 'pt' ? '?lang=pt' : '';
+}
+
+export function canonicalUrl(
+  language: 'en' | 'pt',
+  page: keyof typeof texts = 'app',
+): string {
+  return SITE + PATHS[page] + languageQuery(language);
+}
 
 export function updateSeo(
   language: 'en' | 'pt',
@@ -52,4 +77,17 @@ export function updateSeo(
   document
     .querySelector('meta[property="og:locale"]')
     ?.setAttribute('content', pt ? 'pt_BR' : 'en_US');
+  const url = canonicalUrl(language, page);
+  let canonical = document.querySelector<HTMLLinkElement>(
+    'link[rel=canonical]',
+  );
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    document.head.append(canonical);
+  }
+  canonical.href = url;
+  document
+    .querySelector('meta[property="og:url"]')
+    ?.setAttribute('content', url);
 }

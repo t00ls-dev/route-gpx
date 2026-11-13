@@ -25,22 +25,45 @@ test('SEO metadata stays localized and excludes private route state', async ({
   );
   await page.locator('#location-0').fill('-22.930929, -43.238286');
   await page.locator('#location-0').press('Tab');
-  await expect(page).toHaveURL(/#v2=/);
+  // Portuguese has its own URL and canonical, never with the route hash.
+  await expect(page).toHaveURL(/\/\?lang=pt#v2=/);
+  await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+    'href',
+    canonical + '?lang=pt',
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    canonical + '?lang=pt',
+  );
+  await page.locator('#language').selectOption('en');
+  await expect(page).toHaveTitle(/Route Planner/);
+  expect(new URL(page.url()).search).toBe('');
+  expect(new URL(page.url()).hash).toMatch(/^#v2=/);
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
     'href',
     canonical,
   );
-  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
-    'content',
-    canonical,
-  );
-  await page.locator('#language').selectOption('en');
-  await expect(page).toHaveTitle(/Route Planner/);
   const schema = JSON.parse(
     await page.locator('script[type="application/ld+json"]').innerText(),
   );
   expect(schema.name).toBe('route-gpx');
   expect(schema.url).toBe(canonical);
+});
+test('?lang=pt opens the app in Portuguese over the saved preference and keeps the route', async ({
+  page,
+}) => {
+  await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
+  await page.addInitScript(() => localStorage.setItem('language', 'en'));
+  const hash = encodeState({ ...defaults(), language: 'en' });
+  await page.goto(base + '?lang=pt' + hash);
+  await expect(page.locator('#language')).toHaveValue('pt');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+    'href',
+    'https://route-gpx.t00ls.dev/?lang=pt',
+  );
+  expect(new URL(page.url()).search).toBe('?lang=pt');
+  expect(new URL(page.url()).hash).toMatch(/^#v2=/);
 });
 test('manifest and icon files resolve at the custom-domain root', async ({
   page,
@@ -143,7 +166,7 @@ test("What's new switches language and metadata and keeps the route for Back to 
   await expect(page).toHaveTitle('route-gpx — Novidades');
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
     'href',
-    'https://route-gpx.t00ls.dev/changelog.html',
+    'https://route-gpx.t00ls.dev/changelog.html?lang=pt',
   );
   await expect(page.locator('#back')).toHaveAttribute(
     'href',
@@ -155,6 +178,15 @@ test("What's new switches language and metadata and keeps the route for Back to 
   await expect(page.locator('meta[name=description]')).toHaveAttribute(
     'content',
     /See what changed/,
+  );
+  // Each language has its own canonical URL, never with the route hash.
+  await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+    'href',
+    'https://route-gpx.t00ls.dev/changelog.html',
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    'https://route-gpx.t00ls.dev/changelog.html',
   );
   // The help link keeps the language and the route.
   await expect(page.locator('#changelog-en a[data-page-link]')).toHaveAttribute(
