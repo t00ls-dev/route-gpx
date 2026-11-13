@@ -29,9 +29,9 @@ function load(file: string) {
 }
 
 describe('SEO metadata', () => {
-  it('every built page is covered here, and so in the sitemap', () => {
-    // The last test below compares these pages with the sitemap: a new Vite
-    // entry must be added to `pages`.
+  it('every built page is covered here, and so in the sitemap and Lighthouse', () => {
+    // scripts/lighthouse.mjs audits the sitemap, which the last test below
+    // compares with these pages: a new Vite entry must be added to `pages`.
     const input = config.build?.rollupOptions?.input as Record<string, string>;
     expect(Object.values(input).sort()).toEqual(
       pages.map(([, file]) => file).sort(),

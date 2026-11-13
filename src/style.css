@@ -497,6 +497,11 @@ header button.icon-control {
   padding: 0;
   list-style: none;
 }
+/* Reserve the start and destination rows rendered by the script, so the panel
+   below does not shift on load (tests/panel.spec.ts measures it). */
+#points:empty {
+  min-height: 204px;
+}
 #points li {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
@@ -1525,19 +1530,19 @@ dialog.settings::backdrop {
   }
   #layers-menu {
     width: min(230px, calc(100vw - 76px));
-    max-height: calc(100dvh - var(--sheet-height, 55dvh) - 76px);
+    max-height: calc(100dvh - var(--sheet-height, var(--sheet-half)) - 76px);
   }
   .map-fullscreen #layers-menu {
     max-height: calc(100dvh - 90px);
   }
   .planner .leaflet-bottom {
-    bottom: var(--sheet-height, 0px);
+    bottom: var(--sheet-height, var(--sheet-half));
   }
   .planner.map-fullscreen .leaflet-bottom {
     bottom: env(safe-area-inset-bottom, 0px);
   }
   .planner .map-credits {
-    bottom: calc(var(--sheet-height, 120px) + 10px);
+    bottom: calc(var(--sheet-height, var(--sheet-half)) + 10px);
   }
   /* Above the open sheet too, as the map's attribution, beside the tool
      column it would meet on short screens; only the full sheet, which leaves

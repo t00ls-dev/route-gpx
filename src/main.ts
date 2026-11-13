@@ -534,6 +534,8 @@ function renderPoints() {
     const results = document.createElement('div');
     results.id = `point-results-${i}`;
     results.className = 'point-results';
+    // A named group: aria-label is not allowed on a plain div.
+    results.setAttribute('role', 'group');
     results.setAttribute('aria-label', `Results for point ${i + 1}`);
     const suggestions = document.createElement('div');
     suggestions.id = `suggestions-${i}`;

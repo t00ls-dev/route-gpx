@@ -65,11 +65,11 @@ npm run test:browser              # Playwright browser workflows
 npm run build                     # TypeScript check and production build
 ```
 
-The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser-check.mjs` runs live acceptance checks against a local server (or a deployed site through `SITE_URL`), writing only to the ignored `.browser-check.local/` folder.
+The opt-in `npm run test:integration` calls real OSRM, and `node scripts/browser-check.mjs` runs live acceptance checks against a local server (or a deployed site through `SITE_URL`), writing only to the ignored `.browser-check.local/` folder. `npm run lighthouse` audits every sitemap page on the local preview (or `SITE_URL`) with Lighthouse, the engine behind PageSpeed Insights, writing reports to the ignored `.lighthouse.local/` folder.
 
 ## Deployment
 
-GitHub Actions runs checks on pull requests and pushes to `main`, and successful builds of the current `main` commit deploy to GitHub Pages at `https://route-gpx.t00ls.dev/`. Changes reach `main` only through pull requests that pass CI. Vite uses `/` as its base path; see the [brand and hosting notes](docs/BRAND.md) before changing the hosting path.
+GitHub Actions runs checks on pull requests and pushes to `main`, and successful builds of the current `main` commit deploy to GitHub Pages at `https://route-gpx.t00ls.dev/`. A weekly Lighthouse workflow, also run on demand, audits the live site. Changes reach `main` only through pull requests that pass CI. Vite uses `/` as its base path; see the [brand and hosting notes](docs/BRAND.md) before changing the hosting path.
 
 ## Contributing
 

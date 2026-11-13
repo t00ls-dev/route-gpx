@@ -32,6 +32,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Fixed
 
+- Screen readers announce each point's search results as a named group, and on phones the route panel no longer jumps down while the page loads.
 - Weather icons no longer pile up when the map is zoomed out: icons that would cover each other show as one (the worst alert among them, otherwise a start, stop or destination, otherwise the worst weather) with a +N count of the others, bordered in red when they include alerts; tapping the count or zooming in shows them all.
 - The wind badge on map weather markers shows the whole speed beside its unit, for example 99.9 km/h; longer speeds overlapped the unit.
 - Weather samples are spaced evenly between route points, so a sample no longer lands a few hundred metres from a stop or the destination and repeats its card; a weather card keeps its date and time on one line, even on the narrowest phones (a range ending the next day shows +1), with the distance on the next line and the alert level as a tab on its top border.
