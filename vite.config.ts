@@ -56,6 +56,11 @@ export default defineConfig({
   base: '/',
   plugins: [serviceWorkerManifest()],
   build: {
+    // MapLibre GL JS (about 1,090 kB minified, 296 kB gzipped) is one
+    // lazy chunk loaded only when navigation starts; the default 500 kB
+    // limit warned about it on every build. The app's own entry stays far
+    // below this, so a new warning still means a chunk worth reviewing.
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       input: {
         main: 'index.html',
