@@ -19,6 +19,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Changed
 
+- On the navigation map, street names stay upright whatever your direction: the map is now drawn by your browser from OpenFreeMap vector map data, with wider streets that hold their names, in the local language, and its credits sit behind an i button, as on the planner map.
 - On phones, only the map zooms: a double tap or a stray pinch no longer enlarges the planner page, and buttons respond without the double-tap delay. Help and What's new still zoom with a pinch, and the browser's text size and zoom settings keep working.
 - In Portuguese, the address of the app, Help and What's new ends in ?lang=pt, so a shared address opens in that language.
 - Help moved from the header to the bottom of the route panel, beside What's new and GitHub, each with its icon; Settings has a gear icon, and the line about public servers left the panel (Help describes them).

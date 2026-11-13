@@ -1,12 +1,20 @@
 import L from 'leaflet';
-import { setupQuickZoom } from './quick-zoom';
+import type {
+  GeoJSONSource,
+  Map as VectorMap,
+  Marker as VectorMarker,
+  StyleSpecification,
+} from 'maplibre-gl';
 import type { Coord, Route, Step } from './core';
 import { decimalYear, magneticDeclination } from './declination';
 import { byId as $ } from './dom';
 import { t } from './i18n';
 import { icon, iconControl, type IconName } from './icons';
 import { locationError } from './location';
+import { creditsDialog } from './map-credits';
+import { osmCredit } from './tile-layers';
 import { maneuverIcon, maneuverText } from './maneuvers';
+import { navigationStyle } from './navigation-style';
 import {
   compassHeading,
   createNavigationTracker,
@@ -17,7 +25,6 @@ import {
   type NavigationManeuver,
   type NavigationReadout,
 } from './navigation';
-import { tileConfig } from './tile-layers';
 import { travelTimeSeconds } from './travel-time';
 import { distanceLabel, shortDistanceLabel } from './units';
 import { distanceUnits } from './unit-preferences';
@@ -34,16 +41,57 @@ import { distanceUnits } from './unit-preferences';
 
 /** Device preference: 'off' after "Don't show this notice again". */
 const NOTICE_KEY = 'navigation-notice';
-const ZOOM = 17;
+/** Vector tiles are 512 px: zoom 16 shows what raster zoom 17 did. */
+const ZOOM = 16;
+/** OpenFreeMap's public vector style (#140). */
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+/** Without the style, the route and position draw on this background. */
+const NEUTRAL_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {},
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      paint: { 'background-color': '#e9ece9' },
+    },
+  ],
+};
+type Line = Coord[][];
+const lines = (segments: Line) => ({
+  type: 'Feature' as const,
+  properties: {},
+  geometry: {
+    type: 'MultiLineString' as const,
+    coordinates: segments.map((part) => part.map(([lat, lon]) => [lon, lat])),
+  },
+});
+/** A circle of `radius` meters around `center`, for the accuracy ring. */
+function circleAround(center: Coord, radius: number) {
+  const [lat, lon] = center,
+    dLat = radius / 111320,
+    dLon = radius / (111320 * Math.cos((lat * Math.PI) / 180) || 1);
+  const ring = Array.from({ length: 49 }, (_, i) => {
+    const a = (i / 48) * 2 * Math.PI;
+    return [lon + dLon * Math.cos(a), lat + dLat * Math.sin(a)];
+  });
+  return {
+    type: 'Feature' as const,
+    properties: {},
+    geometry: { type: 'Polygon' as const, coordinates: [ring] },
+  };
+}
+async function loadStyle(): Promise<StyleSpecification | null> {
+  try {
+    const response = await fetch(STYLE_URL, { credentials: 'omit' });
+    if (!response.ok) return null;
+    return navigationStyle((await response.json()) as StyleSpecification);
+  } catch {
+    return null;
+  }
+}
 /** Where the traveler sits on the map while following, as a share of its height. */
 const PIVOT = 0.7;
-/** Finger travel, in pixels, before a touch on the map becomes a pan. */
-const PAN_START = 8;
-/**
- * Degrees two fingers must turn before the map turns with them, so a pinch
- * that twists a little only zooms.
- */
-const TWIST_START = 12;
 /**
  * The map view: following the traveler (heading-up, any zoom the traveler
  * chooses), the whole route (north-up), or free after the traveler moved or
@@ -128,18 +176,32 @@ export function setupNavigation(deps: {
     .prepend(icon('weather-sun'));
   $('nav-gps').prepend(icon('alert'));
   $('nav-no-map').prepend(icon('info'));
+  $('nav-no-gl').prepend(icon('info'));
   $('nav-compass').prepend(icon('alert'));
+  // Credits behind an info button, as on the planner map.
+  const credits = creditsDialog({
+    id: 'nav-credits-dialog',
+    name: 'nav-credits',
+  });
+  stage.append(...credits.elements);
+  credits.setCredits([
+    { text: 'MapLibre GL JS', url: 'https://maplibre.org/' },
+    { text: 'OpenFreeMap', url: 'https://openfreemap.org/' },
+    { text: '© OpenMapTiles', url: 'https://www.openmaptiles.org/' },
+    osmCredit,
+  ]);
   setting.checked = noticeWanted();
   setting.onchange = () => rememberNotice(setting.checked);
 
   let route: Route | null = null,
     tracker: ReturnType<typeof createNavigationTracker> | null = null,
-    map: L.Map | null = null,
-    tiles: L.TileLayer | null = null,
-    ahead: L.Polyline | null = null,
-    behind: L.Polyline | null = null,
-    marker: L.Marker | null = null,
-    circle: L.Circle | null = null,
+    map: VectorMap | null = null,
+    mapReady: Promise<void> | null = null,
+    noStyle = false,
+    /** The browser could not draw the map (no WebGL). */
+    mapFailed = false,
+    marker: VectorMarker | null = null,
+    MarkerClass: typeof VectorMarker | null = null,
     watch: number | null = null,
     lock: WakeLockSentinel | null = null,
     view: MapView = 'follow',
@@ -151,12 +213,8 @@ export function setupNavigation(deps: {
     rotorAngle = 0,
     /** Following north-up instead of heading-up, chosen with the compass. */
     northUp = false,
-    /** A one-finger zoom (double tap and hold) is under way: no panning. */
-    quickZooming = false,
-    /** Set while the code itself moves the map, to tell it from gestures. */
-    placing = false,
-    /** The zoom the code last set; any other one came from a gesture. */
-    placedZoom = ZOOM,
+    /** A zoom gesture is under way. */
+    gestureZoom = false,
     heading = 0,
     /** Direction of travel: the route ahead, or the GPS course off the route. */
     travelHeading = 0,
@@ -174,8 +232,7 @@ export function setupNavigation(deps: {
     announced: NavigationManeuver | null | undefined,
     tileErrors = 0,
     tileLoads = 0,
-    pivot = { x: 0, y: 0 },
-    size = 0;
+    pivot = { x: 0, y: 0 };
 
   const units = () => distanceUnits();
 
@@ -186,23 +243,30 @@ export function setupNavigation(deps: {
     resume.hidden = view === 'follow' && followZoom === ZOOM && !northUp;
   }
   /** Turns the map to `angle` and the compass needle with it. */
-  function setRotor(angle: number) {
+  function setRotor(angle: number, fromGesture = false) {
     rotorAngle = angle;
     const shown = Math.round(angle * 10) / 10 || 0;
-    rotor.style.transform = shown ? `rotate(${shown}deg)` : '';
+    // The vector map turns itself, so its labels stay upright.
+    report();
+    if (map && !fromGesture && Math.abs(map.getBearing() + shown) > 0.05)
+      map.setBearing(-shown);
     // The compass shows only on a turned map and points to its north.
     compassButton.hidden = !shown;
     needle.style.transform = shown ? `rotate(${shown}deg)` : '';
+    turnArrow();
   }
-  /** Programmatic moves are not gestures. */
-  function quietly(move: () => void) {
-    placing = true;
-    try {
-      move();
-    } finally {
-      placing = false;
-      if (map) placedZoom = map.getZoom();
-    }
+  /** The map's turn and zoom, readable on the page (and by tests). */
+  function report() {
+    rotor.dataset.turn = String(Math.round(rotorAngle * 10) / 10 || 0);
+    if (map) rotor.dataset.zoom = map.getZoom().toFixed(2);
+  }
+  /** The position arrow points along the heading on the turned map. */
+  function turnArrow() {
+    const arrow = marker
+      ?.getElement()
+      ?.querySelector<HTMLElement>('.nav-arrow');
+    const angle = Math.round((heading + rotorAngle) * 10) / 10 || 0;
+    if (arrow) arrow.style.transform = `rotate(${angle}deg)`;
   }
   /** A pinch or double tap: following keeps following, at that zoom. */
   function userZoom() {
@@ -211,28 +275,11 @@ export function setupNavigation(deps: {
     else view = 'free';
     setViewButtons();
   }
-  /** Two fingers turning: the map turns with them and stops following. */
-  function turnBy(degrees: number) {
-    if (view !== 'free') {
-      view = 'free';
-      setViewButtons();
-    }
-    setRotor(((rotorAngle + degrees + 540) % 360) - 180);
-  }
-  /** A pan stops following and leaves the map where the finger put it. */
-  function panBy(dx: number, dy: number) {
-    if (!map) return;
-    if (view !== 'free') {
-      view = 'free';
-      setViewButtons();
-    }
-    // The map turns by `rotorAngle`; turn the finger's motion back into it.
-    const a = (rotorAngle * Math.PI) / 180,
-      cos = Math.cos(a),
-      sin = Math.sin(a);
-    map.panBy([-(cos * dx + sin * dy), -(cos * dy - sin * dx)], {
-      animate: false,
-    });
+  /** A pan or a turn stops following. */
+  function goFree() {
+    if (view === 'free') return;
+    view = 'free';
+    setViewButtons();
   }
 
   /**
@@ -254,10 +301,7 @@ export function setupNavigation(deps: {
     // A tenth of a degree is finer than the eye sees; it keeps styles short.
     const angle = Math.round(heading * 10) / 10 || 0;
     if (view === 'follow') setRotor(northUp ? 0 : -angle);
-    const arrow = marker
-      ?.getElement()
-      ?.querySelector<HTMLElement>('.nav-arrow');
-    if (arrow) arrow.style.transform = `rotate(${angle}deg)`;
+    else turnArrow();
   }
   /** Magnetic declination at a place now, from the local WMM2025 model. */
   function declinationAt(coord: Coord | undefined) {
@@ -325,96 +369,128 @@ export function setupNavigation(deps: {
     else listen();
   }
 
-  /** The rotating map is a square around the traveler, big enough for any angle. */
+  /** The traveler sits at `pivotRatio` of the height through the map's padding. */
   function layout() {
     const w = stage.clientWidth,
       h = stage.clientHeight;
     pivot = { x: w / 2, y: h * pivotRatio };
-    size = Math.ceil(
-      2 *
-        Math.hypot(
-          Math.max(pivot.x, w - pivot.x),
-          Math.max(pivot.y, h - pivot.y),
-        ),
-    );
-    Object.assign(rotor.style, {
-      width: `${size}px`,
-      height: `${size}px`,
-      left: `${pivot.x - size / 2}px`,
-      top: `${pivot.y - size / 2}px`,
+    if (!map) return;
+    map.resize();
+    map.setPadding({
+      top: Math.max(0, 2 * pivot.y - h),
+      bottom: Math.max(0, h - 2 * pivot.y),
+      left: 0,
+      right: 0,
     });
-    map?.invalidateSize({ pan: false });
     place();
   }
 
-  function createMap() {
-    map = L.map('nav-map', {
-      zoomControl: false,
+  async function createMap() {
+    const [ml, style] = await Promise.all([
+      import('maplibre-gl'),
+      loadStyle(),
+      import('maplibre-gl/dist/maplibre-gl.css'),
+    ]);
+    const workerUrl = (
+      await import('maplibre-gl/dist/maplibre-gl-worker.mjs?url')
+    ).default;
+    ml.setWorkerUrl(workerUrl);
+    MarkerClass = ml.Marker;
+    noStyle = !style;
+    map = new ml.Map({
+      container: 'nav-map',
+      style: style ?? NEUTRAL_STYLE,
       attributionControl: false,
-      // Zoom around the map's center, the traveler while following, so it
-      // works on the turned map; panning is handled in `setupGestures`.
-      dragging: false,
-      // Double tap (and hold to zoom with one finger) is `setupQuickZoom`'s:
-      // iOS does not give Leaflet the clicks it needs on this screen.
-      touchZoom: 'center',
-      scrollWheelZoom: 'center',
+      center: [0, 0],
+      zoom: ZOOM,
+      maxPitch: 0,
+      pitchWithRotate: false,
+      dragRotate: false,
+      touchPitch: false,
+      touchZoomRotate: { around: 'center' },
+      // A double tap zooms around the traveler (see `setupTouch`), not the
+      // tapped point; tap-and-drag zoom stays MapLibre's, around the center.
       doubleClickZoom: false,
-      // No synthetic long-press menu from Leaflet on iOS.
-      tapHold: false,
       boxZoom: false,
       keyboard: false,
-      fadeAnimation: false,
-      zoomAnimation: false,
+      fadeDuration: 0,
+      renderWorldCopies: false,
+      // MapLibre's default 'same-origin' credentials send nothing cross-origin.
     });
-    // A gesture that ends on the level it reached while moving fires no
-    // `zoomend`, so every settled view is checked against the code's zoom.
-    map.on('zoomend moveend', () => {
-      if (placing || !map || map.getZoom() === placedZoom) return;
-      placedZoom = map.getZoom();
+    const m = map;
+    // Gestures carry the event that caused them; the code's moves do not.
+    m.on('dragstart', (e) => {
+      if (e.originalEvent) goFree();
+    });
+    m.on('rotate', (e) => {
+      if (!e.originalEvent) return;
+      goFree();
+      setRotor(-m.getBearing(), true);
+    });
+    m.on('zoomstart', (e) => {
+      if (e.originalEvent) gestureZoom = true;
+    });
+    m.on('zoom', report);
+    m.on('zoomend', () => {
+      if (!gestureZoom) return;
+      gestureZoom = false;
       userZoom();
     });
-    setupQuickZoom(map, { center: true });
-    map.on('quickzoomstart', () => (quickZooming = true));
-    map.on('quickzoomend', () => (quickZooming = false));
-    const config = tileConfig('standard');
-    tiles = L.tileLayer(config.url, {
-      maxNativeZoom: config.maxNativeZoom,
-      maxZoom: config.maxZoom,
-      keepBuffer: 1,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-    }).addTo(map);
-    tiles.on('tileerror', () => {
+    m.on('error', () => {
       tileErrors++;
       mapNotice();
     });
-    tiles.on('tileload', () => {
-      tileLoads++;
-      mapNotice();
+    m.on('data', (e) => {
+      if ((e as { tile?: unknown }).tile) {
+        tileLoads++;
+        mapNotice();
+      }
+    });
+    await new Promise<void>((resolve) => {
+      if (m.isStyleLoaded()) resolve();
+      else m.once('load', () => resolve());
+    });
+    m.addSource('travelled', { type: 'geojson', data: lines([]) });
+    m.addSource('route', { type: 'geojson', data: lines([]) });
+    m.addSource('accuracy', { type: 'geojson', data: lines([]) });
+    const line = { 'line-cap': 'round', 'line-join': 'round' } as const;
+    m.addLayer({
+      id: 'nav-accuracy',
+      type: 'fill',
+      source: 'accuracy',
+      paint: {
+        'fill-color': '#0b72c6',
+        'fill-opacity': 0.18,
+        'fill-outline-color': '#0b72c6',
+      },
+    });
+    m.addLayer({
+      id: 'nav-route',
+      type: 'line',
+      source: 'route',
+      layout: line,
+      paint: { 'line-color': '#12796e', 'line-width': 8 },
+    });
+    m.addLayer({
+      id: 'nav-travelled',
+      type: 'line',
+      source: 'travelled',
+      layout: line,
+      paint: { 'line-color': '#8795a1', 'line-width': 8 },
     });
   }
   /** Without tiles the route still draws over the neutral background. */
   function mapNotice() {
+    $('nav-no-gl').hidden = !mapFailed;
     $('nav-no-map').hidden =
-      navigator.onLine && !(tileErrors >= 4 && !tileLoads);
+      mapFailed ||
+      (navigator.onLine && !noStyle && !(tileErrors >= 4 && !tileLoads));
   }
+  const source = (id: string) => map?.getSource<GeoJSONSource>(id);
 
   function drawRoute(next: Route) {
-    if (!map) return;
-    ahead?.remove();
-    behind?.remove();
-    ahead = L.polyline(next.segments, {
-      className: 'nav-route',
-      color: '#12796e',
-      weight: 8,
-      interactive: false,
-    }).addTo(map);
-    behind = L.polyline([], {
-      className: 'nav-travelled',
-      color: '#8795a1',
-      weight: 8,
-      interactive: false,
-    }).addTo(map);
+    source('route')?.setData(lines(next.segments));
+    source('travelled')?.setData(lines([]));
   }
 
   /** Moves the map and the marker to the latest fix (or the route start). */
@@ -423,56 +499,49 @@ export function setupNavigation(deps: {
     const coord = last?.coord ?? route.segments[0]?.[0];
     if (!coord) return;
     if (view === 'follow')
-      quietly(() => map!.setView(coord, followZoom, { animate: false }));
+      map.jumpTo({ center: [coord[1], coord[0]], zoom: followZoom });
     else if (view === 'overview') {
       setRotor(0);
-      const w = stage.clientWidth,
-        h = stage.clientHeight;
-      const left = size / 2 - pivot.x,
-        top = size / 2 - pivot.y;
-      quietly(() =>
-        map!.fitBounds(L.latLngBounds(route!.segments.flat()), {
+      const all = route.segments.flat();
+      const lats = all.map((c) => c[0]),
+        lons = all.map((c) => c[1]);
+      map.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+      map.fitBounds(
+        [
+          [Math.min(...lons), Math.min(...lats)],
+          [Math.max(...lons), Math.max(...lats)],
+        ],
+        {
           animate: false,
+          bearing: 0,
           // The floating banner covers the top of the map.
-          paddingTopLeft: [left + 24, top + 24 + bannerBottom()],
-          paddingBottomRight: [size - w - left + 24, size - h - top + 24],
-        }),
+          padding: {
+            top: 24 + bannerBottom(),
+            bottom: 24,
+            left: 24,
+            right: 24,
+          },
+        },
       );
     }
     if (!last) {
       applyHeading();
       return;
     }
-    if (!marker) {
-      marker = L.marker(last.coord, {
-        interactive: false,
-        keyboard: false,
-        icon: L.divIcon({
-          className: 'nav-position',
-          html: '<span class="nav-arrow"></span>',
-          iconSize: [44, 44],
-          iconAnchor: [22, 22],
-        }),
-      }).addTo(map);
-      marker.getElement()?.setAttribute('aria-hidden', 'true');
-      marker
-        .getElement()
-        ?.querySelector('.nav-arrow')
-        ?.append(icon('navigate'));
-    } else marker.setLatLng(last.coord);
-    marker.getElement()?.classList.toggle('weak', !!readout?.weak);
-    if (readout?.weak) {
-      if (!circle)
-        circle = L.circle(last.coord, {
-          radius: last.accuracy,
-          className: 'nav-accuracy',
-          interactive: false,
-        }).addTo(map);
-      else circle.setLatLng(last.coord).setRadius(last.accuracy);
-    } else {
-      circle?.remove();
-      circle = null;
-    }
+    if (!marker && MarkerClass) {
+      const element = document.createElement('div');
+      element.className = 'nav-position';
+      element.setAttribute('aria-hidden', 'true');
+      element.innerHTML = '<span class="nav-arrow"></span>';
+      element.querySelector('.nav-arrow')!.append(icon('navigate'));
+      marker = new MarkerClass({ element })
+        .setLngLat([last.coord[1], last.coord[0]])
+        .addTo(map);
+    } else marker?.setLngLat([last.coord[1], last.coord[0]]);
+    marker?.getElement().classList.toggle('weak', !!readout?.weak);
+    source('accuracy')?.setData(
+      readout?.weak ? circleAround(last.coord, last.accuracy) : lines([]),
+    );
     applyHeading();
   }
 
@@ -532,9 +601,7 @@ export function setupNavigation(deps: {
       ? 'Waiting for GPS'
       : `${r?.weak ? t('Weak GPS') : t('GPS on')} ±${shortDistanceLabel(last.accuracy, units())}`;
     $('nav-gps').hidden = !last || !r?.weak;
-    if (behind && r) {
-      behind.setLatLngs(tracker.travelled(r.progress));
-    }
+    if (r) source('travelled')?.setData(lines(tracker.travelled(r.progress)));
   }
 
   function onFix(position: GeolocationPosition) {
@@ -664,8 +731,21 @@ export function setupNavigation(deps: {
     // The screen itself takes focus, not its first button, so no button
     // looks selected when navigation starts.
     screen.focus({ preventScroll: true });
-    if (!map) createMap();
-    drawRoute(route);
+    // Without WebGL there is no map; the directions above still guide.
+    mapReady ??= createMap().catch(() => {
+      mapFailed = true;
+      map = null;
+    });
+    const shown = route;
+    void mapReady.then(() => {
+      if (route !== shown) return;
+      mapNotice();
+      if (!map) return;
+      drawRoute(shown);
+      setRotor(rotorAngle);
+      layout();
+      render();
+    });
     layout();
     mapNotice();
     render();
@@ -700,8 +780,7 @@ export function setupNavigation(deps: {
     window.removeEventListener('offline', onNetwork);
     marker?.remove();
     marker = null;
-    circle?.remove();
-    circle = null;
+    source('accuracy')?.setData(lines([]));
     last = null;
     readout = null;
     tracker = null;
@@ -779,78 +858,56 @@ export function setupNavigation(deps: {
   new ResizeObserver(() =>
     screen.style.setProperty('--nav-top', `${bannerBottom()}px`),
   ).observe(banner);
-  setupGestures();
+  // The browser's own long-press menu, loupe, callout and text selection
+  // never open on the map; MapLibre handles pan, pinch, turn and zoom.
+  stage.addEventListener('contextmenu', (event) => event.preventDefault());
+  stage.addEventListener('selectstart', (event) => event.preventDefault());
+  setupTouch();
   /**
-   * One finger pans the map; double tap (and hold to zoom) is
-   * `setupQuickZoom`'s; two fingers are Leaflet's pinch zoom and, once they
-   * twist past `TWIST_START`, turn the map. The
-   * browser's own long-press menu, loupe, callout and text selection never
-   * open on the map.
+   * Cancelling the touch stops iOS from starting its loupe or callout; a
+   * double tap zooms in one level around the traveler (the map's center),
+   * so following keeps following.
    */
-  function setupGestures() {
-    const fingers = new Map<number, { x: number; y: number }>();
-    let panning = false,
-      twist: { last: number; total: number; turning: boolean } | null = null;
-    /** The angle of the line between the two fingers, clockwise. */
-    const fingerAngle = () => {
-      const [a, b] = [...fingers.values()];
-      return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
-    };
+  function setupTouch() {
+    let down: { x: number; y: number } | null = null,
+      lastTap: { x: number; y: number; time: number } | null = null;
     const control = (target: EventTarget | null) =>
-      !!(target as Element | null)?.closest?.('button, a');
-    stage.addEventListener('contextmenu', (event) => event.preventDefault());
-    stage.addEventListener('selectstart', (event) => event.preventDefault());
-    // Pointer events come first and still arrive; cancelling the touch stops
-    // iOS from starting its loupe, selection or callout on the map.
+      !!(target as Element | null)?.closest?.('button, a, .credits-dialog');
     stage.addEventListener(
       'touchstart',
       (event) => {
-        if (!control(event.target)) event.preventDefault();
+        if (control(event.target)) return;
+        event.preventDefault();
+        const touch = event.touches[0];
+        down =
+          event.touches.length === 1
+            ? { x: touch.clientX, y: touch.clientY }
+            : null;
       },
       { passive: false },
     );
-    stage.addEventListener('pointerdown', (event) => {
-      if (control(event.target) || quickZooming) return;
-      if (!fingers.size) panning = false;
-      fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      twist =
-        fingers.size === 2
-          ? { last: fingerAngle(), total: 0, turning: false }
-          : null;
+    stage.addEventListener('touchmove', (event) => {
+      const touch = event.touches[0];
+      if (
+        down &&
+        Math.hypot(touch.clientX - down.x, touch.clientY - down.y) > 10
+      )
+        down = null;
     });
-    stage.addEventListener('pointermove', (event) => {
-      const from = fingers.get(event.pointerId);
-      if (!from || quickZooming) return;
-      if (twist && fingers.size === 2) {
-        fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        const angle = fingerAngle();
-        let turn = ((angle - twist.last + 540) % 360) - 180;
-        twist.last = angle;
-        twist.total += turn;
-        if (!twist.turning) {
-          if (Math.abs(twist.total) < TWIST_START) return;
-          twist.turning = true;
-          turn = twist.total;
-        }
-        turnBy(turn);
-        return;
-      }
-      if (fingers.size !== 1) return;
-      const dx = event.clientX - from.x,
-        dy = event.clientY - from.y;
-      if (!panning && Math.hypot(dx, dy) < PAN_START) return;
-      panning = true;
-      fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      panBy(dx, dy);
+    stage.addEventListener('touchend', (event) => {
+      if (!down || event.touches.length || !map) return;
+      const tap = { ...down, time: event.timeStamp };
+      down = null;
+      if (
+        lastTap &&
+        tap.time - lastTap.time < 350 &&
+        Math.hypot(tap.x - lastTap.x, tap.y - lastTap.y) < 40
+      ) {
+        lastTap = null;
+        map.zoomTo(map.getZoom() + 1, { duration: 0 });
+        userZoom();
+      } else lastTap = tap;
     });
-    const lift = (event: PointerEvent) => {
-      fingers.delete(event.pointerId);
-      twist = null;
-      // After a pinch, the finger left on the screen must not pan.
-      if (fingers.size) fingers.clear();
-    };
-    stage.addEventListener('pointerup', lift);
-    stage.addEventListener('pointercancel', lift);
   }
 
   return {

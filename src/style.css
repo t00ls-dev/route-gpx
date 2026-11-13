@@ -1789,7 +1789,7 @@ html.navigating body {
   -webkit-user-select: none;
   user-select: none;
 }
-.map-credits-dialog {
+.credits-dialog {
   width: min(
     360px,
     calc(
@@ -1811,17 +1811,17 @@ html.navigating body {
   font-size: 14px;
   line-height: 1.4;
 }
-.map-credits-dialog[open] {
+.credits-dialog[open] {
   display: flex;
   flex-direction: column;
   animation: credits-open 180ms ease-out;
 }
-.map-credits-dialog h2 {
+.credits-dialog h2 {
   flex: 0 0 auto;
   font-size: 18px;
   margin: 0 0 12px;
 }
-.map-credits-dialog ul {
+.credits-dialog ul {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -1830,10 +1830,10 @@ html.navigating body {
   padding: 0;
   margin: 0 0 12px;
 }
-.map-credits-dialog li + li {
+.credits-dialog li + li {
   margin-top: 4px;
 }
-.planner .map-credits-dialog a {
+.credits-dialog a {
   display: flex;
   align-items: center;
   min-height: 44px;
@@ -1841,12 +1841,12 @@ html.navigating body {
   color: #125d48;
   overflow-wrap: anywhere;
 }
-.map-credits-dialog form {
+.credits-dialog form {
   flex: 0 0 auto;
   display: flex;
   justify-content: flex-end;
 }
-.map-credits-dialog::backdrop {
+.credits-dialog::backdrop {
   background: #18382a33;
 }
 @keyframes credits-open {
@@ -1860,7 +1860,7 @@ html.navigating body {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .map-credits-dialog[open] {
+  .credits-dialog[open] {
     animation: none;
   }
 }
@@ -2774,7 +2774,7 @@ input[type='range'].range-input:disabled {
   box-shadow: var(--shadow-control);
   font-size: 13px;
 }
-.map-credits-dialog {
+.credits-dialog {
   border: 0;
   border-radius: 16px;
   box-shadow: var(--shadow-raised);
@@ -3020,6 +3020,7 @@ dialog.nav-screen::backdrop {
 }
 .nav-rotor {
   position: absolute;
+  inset: 0;
   /* Its own stacking layer, turned or not, so the map's panes never cover
      the buttons and notices above it. */
   z-index: 0;
@@ -3160,18 +3161,21 @@ dialog.nav-screen::backdrop {
 .nav-resume .button-icon {
   fill: currentColor;
 }
-.nav-credit {
+.nav-credits {
   position: absolute;
   z-index: 3;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  padding: 1px 6px;
-  background: #ffffffd9;
-  font-size: 12px;
+  right: 12px;
+  bottom: 12px;
 }
-.nav-credit a {
-  color: var(--color-text);
+.nav-credits-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: var(--shadow-control);
 }
 .nav-bar {
   z-index: 2;

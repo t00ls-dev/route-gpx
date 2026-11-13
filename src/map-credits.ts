@@ -3,29 +3,39 @@ import { icon } from './icons';
 import {
   mapCredits,
   type BaseLayer,
+  type MapCredit,
   type SatelliteVintage,
 } from './tile-layers';
 
-export function setupMapCredits(map: L.Map) {
+/**
+ * A round info button that opens a modal list of credits, shared by the
+ * planner map and the navigation map so neither shows a credit line.
+ */
+export function creditsDialog(options: {
+  id: string;
+  name: string;
+  /** Where focus goes on close when the button itself is hidden. */
+  fallback?: () => HTMLElement | null;
+}) {
   const container = document.createElement('div');
-  container.className = 'map-credits';
+  container.className = options.name;
   const toggle = document.createElement('button');
   toggle.type = 'button';
-  toggle.className = 'map-credits-toggle';
+  toggle.className = `${options.name}-toggle`;
   toggle.setAttribute('aria-label', 'Map credits');
   toggle.title = 'Map credits';
   toggle.setAttribute('aria-haspopup', 'dialog');
   toggle.setAttribute('aria-expanded', 'false');
-  toggle.setAttribute('aria-controls', 'map-credits-dialog');
+  toggle.setAttribute('aria-controls', options.id);
   toggle.append(icon('info'));
   container.append(toggle);
   const dialog = document.createElement('dialog');
-  dialog.id = 'map-credits-dialog';
-  dialog.className = 'map-credits-dialog';
+  dialog.id = options.id;
+  dialog.className = `${options.name}-dialog credits-dialog`;
   dialog.setAttribute('role', 'dialog');
   dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-labelledby', 'map-credits-title');
-  dialog.innerHTML = `<h2 id="map-credits-title">Map credits</h2><ul></ul><form method="dialog"><button autofocus>Close</button></form>`;
+  dialog.setAttribute('aria-labelledby', `${options.id}-title`);
+  dialog.innerHTML = `<h2 id="${options.id}-title">Map credits</h2><ul></ul><form method="dialog"><button autofocus>Close</button></form>`;
   const closeButton = dialog.querySelector<HTMLButtonElement>('button')!;
   toggle.onclick = () => {
     dialog.showModal();
@@ -35,7 +45,7 @@ export function setupMapCredits(map: L.Map) {
   dialog.addEventListener('close', () => {
     toggle.setAttribute('aria-expanded', 'false');
     if (getComputedStyle(toggle).visibility === 'hidden')
-      document.getElementById('panel-toggle')!.focus();
+      options.fallback?.()?.focus();
     else toggle.focus();
   });
   dialog.addEventListener('click', (event) => {
@@ -64,16 +74,44 @@ export function setupMapCredits(map: L.Map) {
       first.focus();
     }
   });
-  for (const element of [container, dialog]) {
+  /** Replaces the list: linked credits, then plain notes. */
+  function setCredits(credits: MapCredit[], notes: string[] = []) {
+    if (dialog.open) dialog.close();
+    dialog.querySelector('ul')!.replaceChildren(
+      ...credits.map(({ text, url }) => {
+        const item = document.createElement('li');
+        const link = document.createElement('a');
+        link.textContent = text;
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        item.append(link);
+        return item;
+      }),
+      ...notes.map((text) => {
+        const item = document.createElement('li');
+        item.textContent = text;
+        return item;
+      }),
+    );
+  }
+  return { elements: [container, dialog], setCredits };
+}
+
+export function setupMapCredits(map: L.Map) {
+  const { elements, setCredits } = creditsDialog({
+    id: 'map-credits-dialog',
+    name: 'map-credits',
+    fallback: () => document.getElementById('panel-toggle'),
+  });
+  for (const element of elements) {
     L.DomEvent.disableClickPropagation(element);
     L.DomEvent.disableScrollPropagation(element);
     map.getContainer().append(element);
   }
-  return (layer: BaseLayer, vintage: SatelliteVintage, labels: boolean) => {
-    if (dialog.open) dialog.close();
-    const list = dialog.querySelector('ul')!;
-    list.replaceChildren(
-      ...[
+  return (layer: BaseLayer, vintage: SatelliteVintage, labels: boolean) =>
+    setCredits(
+      [
         { text: 'Leaflet', url: 'https://leafletjs.com/' },
         ...mapCredits(layer, vintage, labels),
         { text: 'Weather data by Open-Meteo', url: 'https://open-meteo.com/' },
@@ -85,20 +123,7 @@ export function setupMapCredits(map: L.Map) {
           text: 'Weather data license: CC BY 4.0',
           url: 'https://creativecommons.org/licenses/by/4.0/',
         },
-      ].map(({ text, url }) => {
-        const item = document.createElement('li');
-        const link = document.createElement('a');
-        link.textContent = text;
-        link.href = url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        item.append(link);
-        return item;
-      }),
+      ],
+      ['Passage times and risk summaries calculated by route-gpx.'],
     );
-    const note = document.createElement('li');
-    note.textContent =
-      'Passage times and risk summaries calculated by route-gpx.';
-    list.append(note);
-  };
 }
