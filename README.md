@@ -10,7 +10,7 @@ A static web tool that turns addresses, coordinates and map points into a GPX 1.
 - **Edit:** move and reorder points, reverse the route, add a return trip, undo changes and lock the route against accidental edits.
 - **Review:** distance, estimated duration, road references and an itinerary with turn directions, in kilometers or miles (detected from the browser, changeable in Settings), estimated from your own average speed (remembered on this device), plus sunrise, sunset and sections in the dark for a departure time, an elevation profile with altitude statistics and the climbs along the route, the road surface, paved or unpaved, with its unpaved stretches, and a virtual playback that travels the route.
 - **GPX, FIT and TCX:** import GPX, FIT and TCX files up to 10 MB, also as `.gz` or `.zip` (only geometry, names, course points and recorded elevation are read, locally) and export GPX 1.1 with complete track segments and named waypoints.
-- **Navigate:** on a phone, follow the route on screen with your live position, the next turn and the one after it, the remaining distance and time and the arrival time, on a map that turns with your direction of travel, or with the compass when you stop.
+- **Navigate:** on a phone, follow the route on screen with your live position, the next turn and the one after it, the remaining distance and time and the arrival time, on a map that turns with your direction of travel, or with the compass when you stop; zoom, drag or turn the map to look around and Re-center to follow again.
 - **Weather:** conditions and risks along the route for a departure date, including recent past dates, in Celsius or Fahrenheit.
 
 - **Map layers:** standard, topographic and satellite maps, with optional labels, route coloring by daylight, grade or surface and route marks (direction arrows, separate out-and-back lines, weather icons on or off).
@@ -29,6 +29,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 ## Good to know
 
 - Nothing is saved automatically: use **Save route** to keep the exact geometry in this browser, and export backups, since clearing browser data can remove saved routes.
+- On phones, More actions › Add to home screen shows your browser's steps to open the site from an icon; there is nothing to install. Only the map zooms on phones, so the page never zooms by accident; Help and What's new still zoom with a pinch.
 - After one visit with a connection, the app opens offline in the same browser and saved routes open and download as GPX; map tiles, routing, search, weather, elevation and surface still need a connection.
 - Routing currently uses a car profile. **Prefer main roads** flags possible local sections but does not guarantee their exclusion; estimates exclude stops and real-time traffic.
 - Imported GPX, FIT and TCX tracks stay intact. Editing a point recalculates only the sections next to it, and the rest of the imported track is kept exactly; **Calculate route** recalculates the whole route. Share links store points and options, not imported geometry.
@@ -42,7 +43,7 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 - Weather is requested only for the route and its departure. Without a chosen departure, the route leaves at the next half hour automatically, so weather is requested from Open-Meteo once the route is ready and at each new half hour; uncheck Automatic departure below the Departure field to turn this off on the device. Elevation is requested only when you open Elevation or choose the Grade coloring (points along the route go to Open-Meteo), or for one map point when you choose Elevation here; GPX files that record elevation need no request.
 - Opening the Itinerary of an imported track sends that track, reduced to points about every 300 m, to the configured OSRM server for map matching; a route saved before turn directions existed gets them with one routing request. Neither changes the route's geometry.
 - Surface is requested only when you open Surface or choose the Surface coloring: the route geometry, in pieces of up to 190 km, goes to the configured Valhalla server for its OpenStreetMap road attributes.
-- Exact GPS coordinates stay in memory. Navigation watches your location only from Start navigation until Stop, pauses while the page is hidden, and never stores or sends the positions. Using your location as a route point creates a coordinate rounded to about 100 m.
+- Exact GPS coordinates stay in memory. Navigation watches your location only from Start navigation until End, pauses while the page is hidden, and never stores or sends the positions. Using your location as a route point creates a coordinate rounded to about 100 m.
 - Approximate region detection by IP can be turned off in **Settings**.
 - Every service URL is configurable in **Settings**. Route links that suggest other routing or search servers open with the defaults until you choose **Use link servers**.
 

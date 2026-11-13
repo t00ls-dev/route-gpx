@@ -152,7 +152,7 @@ test.describe('phone navigation', () => {
     await expect(page.locator('#nav-road')).toHaveText('You have arrived');
     await expect(page.locator('#nav-then')).toBeHidden();
 
-    await page.getByRole('button', { name: 'Stop navigation' }).click();
+    await page.getByRole('button', { name: 'End navigation' }).click();
     await expect(screen).toBeHidden();
     await expect(page.locator('#navigate')).toBeFocused();
   });
@@ -235,12 +235,16 @@ test.describe('phone navigation', () => {
     await page.locator('#navigate').click();
     await page.locator('#nav-notice-start').click();
     await expect(page.locator('#nav-fix-text')).toHaveText('GPS on ±6 m');
-    await page.getByRole('button', { name: 'Route overview' }).click();
+    // The screen, not its first button, takes focus: none looks selected.
+    await expect(page.locator('#nav-screen')).toBeFocused();
+    // From the keyboard, focus moves to the button that replaces it.
+    await page.getByRole('button', { name: 'Route overview' }).focus();
+    await page.keyboard.press('Enter');
     await expect(page.locator('#nav-rotor')).not.toHaveAttribute(
       'style',
       /rotate/,
     );
-    const resume = page.getByRole('button', { name: 'Resume navigation' });
+    const resume = page.getByRole('button', { name: 'Re-center' });
     await expect(resume).toBeVisible();
     await expect(resume).toBeFocused();
     // On top of the map, where a finger reaches it, not under its layers.
@@ -267,6 +271,208 @@ test.describe('phone navigation', () => {
       'style',
       /rotate\(-90deg\)/,
     );
+  });
+
+  test('the map zooms and pans by touch, with Resume back to following', async ({
+    page,
+  }) => {
+    await setup(page);
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await expect(page.locator('#nav-fix-text')).toHaveText('GPS on ±6 m');
+    const rotor = page.locator('#nav-rotor'),
+      resume = page.locator('#nav-resume'),
+      marker = page.locator('.nav-arrow');
+    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    await expect(resume).toBeHidden();
+    const stage = (await page.locator('#nav-stage').boundingBox())!;
+    const x = stage.x + 120,
+      y = stage.y + 200;
+    // A double tap zooms in around the traveler and keeps following.
+    const before = (await marker.boundingBox())!;
+    await page.touchscreen.tap(x, y);
+    await page.touchscreen.tap(x, y);
+    await expect(resume).toBeVisible();
+    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    const zoomed = (await marker.boundingBox())!;
+    expect(Math.abs(zoomed.x - before.x)).toBeLessThan(2);
+    expect(Math.abs(zoomed.y - before.y)).toBeLessThan(2);
+    await resume.click();
+    await expect(resume).toBeHidden();
+    // The browser's long-press menu never opens on the map: selection is
+    // off on the whole page while navigating (iOS ignores it on the map).
+    expect(
+      await page.evaluate(() => getComputedStyle(document.body).userSelect),
+    ).toBe('none');
+    // The browser's long-press menu never opens on the map.
+    expect(
+      await page.evaluate(() =>
+        document
+          .getElementById('nav-map')!
+          .dispatchEvent(
+            new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+          ),
+      ),
+    ).toBe(false);
+    // A pan on the turned map follows the finger and stops following.
+    const drag = async (dx: number, dy: number) => {
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx, y + dy, { steps: 8 });
+      await page.mouse.up();
+    };
+    const start = (await marker.boundingBox())!;
+    await drag(-60, 80);
+    const moved = (await marker.boundingBox())!;
+    expect(moved.x - start.x).toBeLessThan(-40);
+    expect(moved.y - start.y).toBeGreaterThan(60);
+    await expect(resume).toBeVisible();
+    // Panned, the map stays as the finger left it: the compass no longer
+    // turns it.
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new DeviceOrientationEvent('deviceorientationabsolute', {
+          alpha: 0,
+          absolute: true,
+        }),
+      ),
+    );
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document.querySelector<HTMLElement>('.nav-arrow')!.style.transform,
+        ),
+      )
+      .not.toBe('rotate(90deg)');
+    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    await resume.click();
+    await expect(resume).toBeHidden();
+    // The whole route stays north-up when panned.
+    await page.locator('#nav-overview').click();
+    await drag(40, 0);
+    await expect(page.locator('#nav-overview')).toBeVisible();
+    await expect(rotor).not.toHaveAttribute('style', /rotate/);
+  });
+
+  test('one finger zooms: double tap and drag, around the traveler', async ({
+    page,
+    context,
+  }) => {
+    await setup(page);
+    const zooms: number[] = [];
+    await page.route('https://tile.openstreetmap.org/**', (r) => {
+      zooms.push(Number(/\.org\/(\d+)\//.exec(r.request().url())![1]));
+      return r.fulfill({ status: 204 });
+    });
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await expect(page.locator('#nav-fix-text')).toHaveText('GPS on ±6 m');
+    await expect.poll(() => zooms.length).toBeGreaterThan(0);
+    const before = Math.max(...zooms);
+    const marker = (await page.locator('.nav-arrow').boundingBox())!;
+    const stage = (await page.locator('#nav-stage').boundingBox())!;
+    const x = stage.x + 120,
+      y = stage.y + stage.height / 3;
+    const session = await context.newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', ty = y) =>
+      session.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: type === 'touchEnd' ? [] : [{ x, y: ty }],
+      });
+    zooms.length = 0;
+    await touch('touchStart');
+    await touch('touchEnd');
+    await page.waitForTimeout(80);
+    await touch('touchStart');
+    for (let step = 1; step <= 10; step++) {
+      await touch('touchMove', y + 22 * step);
+      await page.waitForTimeout(30);
+    }
+    await touch('touchEnd');
+    await expect
+      .poll(() => Math.max(...zooms))
+      .toBeGreaterThanOrEqual(before + 2);
+    // A zoom, not a pan: still following, the traveler where it was.
+    await expect(page.locator('#nav-resume')).toBeVisible();
+    await expect(page.locator('#nav-rotor')).toHaveAttribute(
+      'style',
+      /rotate\(-90deg\)/,
+    );
+    const after = (await page.locator('.nav-arrow').boundingBox())!;
+    expect(Math.abs(after.x - marker.x)).toBeLessThan(2);
+    expect(Math.abs(after.y - marker.y)).toBeLessThan(2);
+  });
+
+  test('two fingers turning turn the map; Re-center turns it back', async ({
+    page,
+    context,
+  }) => {
+    await setup(page);
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await expect(page.locator('#nav-fix-text')).toHaveText('GPS on ±6 m');
+    const rotor = page.locator('#nav-rotor'),
+      resume = page.getByRole('button', { name: 'Re-center' });
+    await expect(rotor).toHaveAttribute('style', /rotate\(-90deg\)/);
+    const stage = (await page.locator('#nav-stage').boundingBox())!;
+    const cx = stage.x + stage.width / 2,
+      cy = stage.y + stage.height / 2,
+      r = 80;
+    const session = await context.newCDPSession(page);
+    // Two fingers on a circle, turning together by `degrees` clockwise.
+    const fingers = (degrees: number) => {
+      const a = (degrees * Math.PI) / 180;
+      return [
+        { x: cx - r * Math.cos(a), y: cy - r * Math.sin(a), id: 0 },
+        { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a), id: 1 },
+      ];
+    };
+    const turn = async (degrees: number) => {
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: fingers(0),
+      });
+      for (let step = 1; step <= 10; step++)
+        await session.send('Input.dispatchTouchEvent', {
+          type: 'touchMove',
+          touchPoints: fingers((degrees * step) / 10),
+        });
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchEnd',
+        touchPoints: [],
+      });
+    };
+    const angle = async () =>
+      Number(
+        /rotate\((-?[\d.]+)deg\)/.exec(
+          (await rotor.getAttribute('style')) ?? '',
+        )?.[1],
+      );
+    // A small twist during a pinch does not turn the map.
+    await turn(8);
+    expect(await angle()).toBeCloseTo(-90, 0);
+    await expect(resume).toBeHidden();
+    await turn(45);
+    expect(await angle()).toBeCloseTo(-45, 0);
+    await expect(resume).toBeVisible();
+    // At the bottom left, where a thumb reaches it.
+    const box = (await resume.boundingBox())!;
+    expect(box.x).toBeLessThan(20);
+    expect(box.y + box.height).toBeGreaterThan(stage.y + stage.height - 60);
+    await resume.click();
+    await expect(resume).toBeHidden();
+    expect(await angle()).toBeCloseTo(-90, 0);
+    // The compass shows on a turned map; it turns the map north-up and
+    // keeps following, and Re-center goes back to heading-up.
+    const compass = page.getByRole('button', { name: 'North up' });
+    await expect(compass).toBeVisible();
+    await compass.click();
+    await expect(rotor).not.toHaveAttribute('style', /rotate/);
+    await expect(compass).toBeHidden();
+    await expect(resume).toBeVisible();
+    await resume.click();
+    expect(await angle()).toBeCloseTo(-90, 0);
   });
 
   test('stopped, the map turns with the compass; moving, with the route', async ({

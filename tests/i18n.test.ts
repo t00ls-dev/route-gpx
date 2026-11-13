@@ -131,6 +131,7 @@ describe('translation coverage', () => {
     'EOX 2025 · CC BY-NC-SA 4.0',
     'EOX 2016 · CC BY 4.0',
     'GitHub',
+    'Android',
   ]);
   // Thrown only to callers that replace them with a translated message.
   const internalErrors = new Set([

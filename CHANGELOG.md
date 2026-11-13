@@ -8,7 +8,8 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Added
 
-- Navigate, on phones: follow the route on screen with your live position, the next turn and its road, the turn after it, the remaining distance and time and the arrival time, on a map that turns with your direction of travel, or with the compass, corrected to true north, when you stop, and keeps the screen on; Resume navigation returns from the whole-route view. A short safety notice shows when navigation starts and can be turned off, also in Settings. Your location is watched only until Stop, pauses while the page is hidden and is never stored or sent; without map tiles the route and your position still show.
+- Navigate, on phones: follow the route on screen with your live position, the next turn and its road, the turn after it, the remaining distance and time and the arrival time, on a map that turns with your direction of travel, or with the compass, corrected to true north, when you stop, and keeps the screen on. Pinch, double tap or double tap and drag to zoom, drag or turn the map with your fingers, and Re-center, at the bottom left, to follow you again; on a turned map, the compass puts north up. The next turn shows on a card floating over the map. A short safety notice shows when navigation starts and can be turned off, also in Settings. Your location is watched only until End, pauses while the page is hidden and is never stored or sent; without map tiles the route and your position still show.
+- Add to home screen, in More actions on phones, shows your browser's steps to open route-gpx from an icon on the home screen; there is nothing to install. Help explains it for each platform.
 - After one visit with a connection, the app opens without one in the same browser: saved routes open, show their summary and directions and download as GPX, with a notice that you are offline; map tiles, routing, search, weather, elevation and surface still need a connection.
 - Surface in the route summary: how much of the route is paved or unpaved, the unpaved stretches to check, each shown on the map when selected, and a Surface route coloring in Map layers; the route's road attributes are requested from Valhalla only on these choices.
 - Elevation marks the highest and lowest points of the route on the map with their altitude while it is open, and Elevation here in the map point menu shows the approximate altitude of any point, requested only on that choice.
@@ -18,6 +19,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Changed
 
+- On phones, only the map zooms: a double tap or a stray pinch no longer enlarges the planner page, and buttons respond without the double-tap delay. Help and What's new still zoom with a pinch, and the browser's text size and zoom settings keep working.
 - In Portuguese, the address of the app, Help and What's new ends in ?lang=pt, so a shared address opens in that language.
 - Help moved from the header to the bottom of the route panel, beside What's new and GitHub, each with its icon; Settings has a gear icon, and the line about public servers left the panel (Help describes them).
 

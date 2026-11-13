@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { setupQuickZoom } from './quick-zoom';
 import type { Coord, Route, Step } from './core';
 import { decimalYear, magneticDeclination } from './declination';
 import { byId as $ } from './dom';
@@ -36,6 +37,19 @@ const NOTICE_KEY = 'navigation-notice';
 const ZOOM = 17;
 /** Where the traveler sits on the map while following, as a share of its height. */
 const PIVOT = 0.7;
+/** Finger travel, in pixels, before a touch on the map becomes a pan. */
+const PAN_START = 8;
+/**
+ * Degrees two fingers must turn before the map turns with them, so a pinch
+ * that twists a little only zooms.
+ */
+const TWIST_START = 12;
+/**
+ * The map view: following the traveler (heading-up, any zoom the traveler
+ * chooses), the whole route (north-up), or free after the traveler moved or
+ * zoomed it there. Anything but following at the default zoom offers Resume.
+ */
+type MapView = 'follow' | 'overview' | 'free';
 /** Off the route by more than this (meters), the device heading is used. */
 const OFF_ROUTE_HEADING = 50;
 /** A compass reading older than this (ms) is not used. */
@@ -97,14 +111,17 @@ export function setupNavigation(deps: {
     stage = $('nav-stage'),
     rotor = $('nav-rotor'),
     overview = $<HTMLButtonElement>('nav-overview'),
-    resume = $<HTMLButtonElement>('nav-resume');
+    resume = $<HTMLButtonElement>('nav-resume'),
+    compassButton = $<HTMLButtonElement>('nav-compass-button');
   iconControl(button, 'navigate', 'Navigate');
   button.setAttribute('aria-label', 'Start navigation');
   button.title = 'Start navigation';
-  iconControl(resume, 'navigate', 'Resume navigation');
-  iconControl($('nav-stop'), 'close', 'Stop');
-  $('nav-stop').title = 'Stop navigation';
-  $('nav-stop').setAttribute('aria-label', 'Stop navigation');
+  iconControl(resume, 'navigate', 'Re-center');
+  iconControl(compassButton, 'compass', 'North up', true);
+  const needle = compassButton.querySelector<SVGSVGElement>('svg')!;
+  iconControl($('nav-stop'), 'close', 'End');
+  $('nav-stop').title = 'End navigation';
+  $('nav-stop').setAttribute('aria-label', 'End navigation');
   $('nav-notice').querySelector('.nav-notice-warning')!.prepend(icon('alert'));
   $('nav-notice')
     .querySelector('li:not(.nav-notice-warning)')!
@@ -112,8 +129,6 @@ export function setupNavigation(deps: {
   $('nav-gps').prepend(icon('alert'));
   $('nav-no-map').prepend(icon('info'));
   $('nav-compass').prepend(icon('alert'));
-  const screenOn = $('nav-screen-on');
-  screenOn.prepend(icon('weather-sun'));
   setting.checked = noticeWanted();
   setting.onchange = () => rememberNotice(setting.checked);
 
@@ -127,7 +142,21 @@ export function setupNavigation(deps: {
     circle: L.Circle | null = null,
     watch: number | null = null,
     lock: WakeLockSentinel | null = null,
-    following = true,
+    view: MapView = 'follow',
+    /** Zoom while following; the traveler may change it. */
+    followZoom = ZOOM,
+    /** Where the traveler sits (share of the height), kept in the free view. */
+    pivotRatio = PIVOT,
+    /** The map's current turn in degrees, kept in the free view for panning. */
+    rotorAngle = 0,
+    /** Following north-up instead of heading-up, chosen with the compass. */
+    northUp = false,
+    /** A one-finger zoom (double tap and hold) is under way: no panning. */
+    quickZooming = false,
+    /** Set while the code itself moves the map, to tell it from gestures. */
+    placing = false,
+    /** The zoom the code last set; any other one came from a gesture. */
+    placedZoom = ZOOM,
     heading = 0,
     /** Direction of travel: the route ahead, or the GPS course off the route. */
     travelHeading = 0,
@@ -150,11 +179,60 @@ export function setupNavigation(deps: {
 
   const units = () => distanceUnits();
 
-  /** The whole-route view offers a clear way back to following. */
-  function setOverviewButton() {
+  /** Every view but the default one offers a clear way back to following. */
+  function setViewButtons() {
     iconControl(overview, 'route', 'Route overview', true);
-    overview.hidden = !following;
-    resume.hidden = following;
+    overview.hidden = view === 'overview';
+    resume.hidden = view === 'follow' && followZoom === ZOOM && !northUp;
+  }
+  /** Turns the map to `angle` and the compass needle with it. */
+  function setRotor(angle: number) {
+    rotorAngle = angle;
+    const shown = Math.round(angle * 10) / 10 || 0;
+    rotor.style.transform = shown ? `rotate(${shown}deg)` : '';
+    // The compass shows only on a turned map and points to its north.
+    compassButton.hidden = !shown;
+    needle.style.transform = shown ? `rotate(${shown}deg)` : '';
+  }
+  /** Programmatic moves are not gestures. */
+  function quietly(move: () => void) {
+    placing = true;
+    try {
+      move();
+    } finally {
+      placing = false;
+      if (map) placedZoom = map.getZoom();
+    }
+  }
+  /** A pinch or double tap: following keeps following, at that zoom. */
+  function userZoom() {
+    if (!map) return;
+    if (view === 'follow') followZoom = map.getZoom();
+    else view = 'free';
+    setViewButtons();
+  }
+  /** Two fingers turning: the map turns with them and stops following. */
+  function turnBy(degrees: number) {
+    if (view !== 'free') {
+      view = 'free';
+      setViewButtons();
+    }
+    setRotor(((rotorAngle + degrees + 540) % 360) - 180);
+  }
+  /** A pan stops following and leaves the map where the finger put it. */
+  function panBy(dx: number, dy: number) {
+    if (!map) return;
+    if (view !== 'free') {
+      view = 'free';
+      setViewButtons();
+    }
+    // The map turns by `rotorAngle`; turn the finger's motion back into it.
+    const a = (rotorAngle * Math.PI) / 180,
+      cos = Math.cos(a),
+      sin = Math.sin(a);
+    map.panBy([-(cos * dx + sin * dy), -(cos * dy - sin * dx)], {
+      animate: false,
+    });
   }
 
   /**
@@ -175,7 +253,7 @@ export function setupNavigation(deps: {
   function applyHeading() {
     // A tenth of a degree is finer than the eye sees; it keeps styles short.
     const angle = Math.round(heading * 10) / 10 || 0;
-    if (following) rotor.style.transform = `rotate(${-angle || 0}deg)`;
+    if (view === 'follow') setRotor(northUp ? 0 : -angle);
     const arrow = marker
       ?.getElement()
       ?.querySelector<HTMLElement>('.nav-arrow');
@@ -251,7 +329,7 @@ export function setupNavigation(deps: {
   function layout() {
     const w = stage.clientWidth,
       h = stage.clientHeight;
-    pivot = { x: w / 2, y: following ? h * PIVOT : h / 2 };
+    pivot = { x: w / 2, y: h * pivotRatio };
     size = Math.ceil(
       2 *
         Math.hypot(
@@ -273,15 +351,31 @@ export function setupNavigation(deps: {
     map = L.map('nav-map', {
       zoomControl: false,
       attributionControl: false,
+      // Zoom around the map's center, the traveler while following, so it
+      // works on the turned map; panning is handled in `setupGestures`.
       dragging: false,
-      touchZoom: false,
-      scrollWheelZoom: false,
+      // Double tap (and hold to zoom with one finger) is `setupQuickZoom`'s:
+      // iOS does not give Leaflet the clicks it needs on this screen.
+      touchZoom: 'center',
+      scrollWheelZoom: 'center',
       doubleClickZoom: false,
+      // No synthetic long-press menu from Leaflet on iOS.
+      tapHold: false,
       boxZoom: false,
       keyboard: false,
       fadeAnimation: false,
       zoomAnimation: false,
     });
+    // A gesture that ends on the level it reached while moving fires no
+    // `zoomend`, so every settled view is checked against the code's zoom.
+    map.on('zoomend moveend', () => {
+      if (placing || !map || map.getZoom() === placedZoom) return;
+      placedZoom = map.getZoom();
+      userZoom();
+    });
+    setupQuickZoom(map, { center: true });
+    map.on('quickzoomstart', () => (quickZooming = true));
+    map.on('quickzoomend', () => (quickZooming = false));
     const config = tileConfig('standard');
     tiles = L.tileLayer(config.url, {
       maxNativeZoom: config.maxNativeZoom,
@@ -326,21 +420,24 @@ export function setupNavigation(deps: {
   /** Moves the map and the marker to the latest fix (or the route start). */
   function place() {
     if (!map || !route) return;
-    if (!following) rotor.style.transform = '';
     const coord = last?.coord ?? route.segments[0]?.[0];
     if (!coord) return;
-    if (following) map.setView(coord, ZOOM, { animate: false });
-    else {
-      rotor.style.transform = '';
+    if (view === 'follow')
+      quietly(() => map!.setView(coord, followZoom, { animate: false }));
+    else if (view === 'overview') {
+      setRotor(0);
       const w = stage.clientWidth,
         h = stage.clientHeight;
       const left = size / 2 - pivot.x,
         top = size / 2 - pivot.y;
-      map.fitBounds(L.latLngBounds(route.segments.flat()), {
-        animate: false,
-        paddingTopLeft: [left + 24, top + 24],
-        paddingBottomRight: [size - w - left + 24, size - h - top + 24],
-      });
+      quietly(() =>
+        map!.fitBounds(L.latLngBounds(route!.segments.flat()), {
+          animate: false,
+          // The floating banner covers the top of the map.
+          paddingTopLeft: [left + 24, top + 24 + bannerBottom()],
+          paddingBottomRight: [size - w - left + 24, size - h - top + 24],
+        }),
+      );
     }
     if (!last) {
       applyHeading();
@@ -435,7 +532,6 @@ export function setupNavigation(deps: {
       ? 'Waiting for GPS'
       : `${r?.weak ? t('Weak GPS') : t('GPS on')} ±${shortDistanceLabel(last.accuracy, units())}`;
     $('nav-gps').hidden = !last || !r?.weak;
-    screenOn.hidden = !lock;
     if (behind && r) {
       behind.setLatLngs(tracker.travelled(r.progress));
     }
@@ -546,7 +642,11 @@ export function setupNavigation(deps: {
     last = null;
     readout = null;
     announced = undefined;
-    following = true;
+    view = 'follow';
+    followZoom = ZOOM;
+    pivotRatio = PIVOT;
+    northUp = false;
+    setRotor(0);
     heading = 0;
     travelHeading = 0;
     compass = null;
@@ -555,8 +655,15 @@ export function setupNavigation(deps: {
     previous = null;
     tileErrors = 0;
     tileLoads = 0;
-    setOverviewButton();
+    setViewButtons();
     screen.showModal();
+    // iOS 26 ignores -webkit-touch-callout on the map itself; with selection
+    // off on the whole page (as `html.map-touching` does for the planner
+    // map), no callout or selection menu opens while navigating.
+    document.documentElement.classList.add('navigating');
+    // The screen itself takes focus, not its first button, so no button
+    // looks selected when navigation starts.
+    screen.focus({ preventScroll: true });
     if (!map) createMap();
     drawRoute(route);
     layout();
@@ -575,6 +682,7 @@ export function setupNavigation(deps: {
   }
   /** Every way out (Stop, Escape, the back gesture) ends here. */
   function cleanup() {
+    document.documentElement.classList.remove('navigating');
     stopWatching();
     orientationEvents.forEach((name) =>
       window.removeEventListener(name, onOrientation as EventListener),
@@ -634,18 +742,116 @@ export function setupNavigation(deps: {
     start();
   };
   $('nav-stop').onclick = stop;
-  overview.onclick = () => {
-    following = false;
-    setOverviewButton();
+  /**
+   * The pressed button hides, so focus moves on: to the other button from a
+   * keyboard, to the screen after a tap, so no button looks selected.
+   */
+  const moveFocus = (event: MouseEvent, next: HTMLElement) =>
+    (event.detail ? screen : next).focus({ preventScroll: true });
+  overview.onclick = (event) => {
+    view = 'overview';
+    pivotRatio = 0.5;
+    setViewButtons();
     layout();
-    resume.focus();
+    moveFocus(event, resume);
   };
-  resume.onclick = () => {
-    following = true;
-    setOverviewButton();
+  resume.onclick = (event) => {
+    view = 'follow';
+    northUp = false;
+    followZoom = ZOOM;
+    pivotRatio = PIVOT;
+    setViewButtons();
     layout();
-    overview.focus();
+    moveFocus(event, overview);
   };
+  /** North up: following keeps following, north-up; other views just turn. */
+  compassButton.onclick = (event) => {
+    if (view === 'follow') northUp = true;
+    setRotor(0);
+    setViewButtons();
+    moveFocus(event, resume);
+  };
+  // Notices and buttons stay below the floating banner, whatever its height.
+  const banner = screen.querySelector<HTMLElement>('.nav-banner')!;
+  function bannerBottom() {
+    return banner.offsetTop + banner.offsetHeight;
+  }
+  new ResizeObserver(() =>
+    screen.style.setProperty('--nav-top', `${bannerBottom()}px`),
+  ).observe(banner);
+  setupGestures();
+  /**
+   * One finger pans the map; double tap (and hold to zoom) is
+   * `setupQuickZoom`'s; two fingers are Leaflet's pinch zoom and, once they
+   * twist past `TWIST_START`, turn the map. The
+   * browser's own long-press menu, loupe, callout and text selection never
+   * open on the map.
+   */
+  function setupGestures() {
+    const fingers = new Map<number, { x: number; y: number }>();
+    let panning = false,
+      twist: { last: number; total: number; turning: boolean } | null = null;
+    /** The angle of the line between the two fingers, clockwise. */
+    const fingerAngle = () => {
+      const [a, b] = [...fingers.values()];
+      return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+    };
+    const control = (target: EventTarget | null) =>
+      !!(target as Element | null)?.closest?.('button, a');
+    stage.addEventListener('contextmenu', (event) => event.preventDefault());
+    stage.addEventListener('selectstart', (event) => event.preventDefault());
+    // Pointer events come first and still arrive; cancelling the touch stops
+    // iOS from starting its loupe, selection or callout on the map.
+    stage.addEventListener(
+      'touchstart',
+      (event) => {
+        if (!control(event.target)) event.preventDefault();
+      },
+      { passive: false },
+    );
+    stage.addEventListener('pointerdown', (event) => {
+      if (control(event.target) || quickZooming) return;
+      if (!fingers.size) panning = false;
+      fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      twist =
+        fingers.size === 2
+          ? { last: fingerAngle(), total: 0, turning: false }
+          : null;
+    });
+    stage.addEventListener('pointermove', (event) => {
+      const from = fingers.get(event.pointerId);
+      if (!from || quickZooming) return;
+      if (twist && fingers.size === 2) {
+        fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const angle = fingerAngle();
+        let turn = ((angle - twist.last + 540) % 360) - 180;
+        twist.last = angle;
+        twist.total += turn;
+        if (!twist.turning) {
+          if (Math.abs(twist.total) < TWIST_START) return;
+          twist.turning = true;
+          turn = twist.total;
+        }
+        turnBy(turn);
+        return;
+      }
+      if (fingers.size !== 1) return;
+      const dx = event.clientX - from.x,
+        dy = event.clientY - from.y;
+      if (!panning && Math.hypot(dx, dy) < PAN_START) return;
+      panning = true;
+      fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      panBy(dx, dy);
+    });
+    const lift = (event: PointerEvent) => {
+      fingers.delete(event.pointerId);
+      twist = null;
+      // After a pinch, the finger left on the screen must not pan.
+      if (fingers.size) fingers.clear();
+    };
+    stage.addEventListener('pointerup', lift);
+    stage.addEventListener('pointercancel', lift);
+  }
 
   return {
     /** Settings opened: show the stored notice choice. */

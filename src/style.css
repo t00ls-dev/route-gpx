@@ -42,6 +42,18 @@
 * {
   box-sizing: border-box;
 }
+/* Accidental page zoom (#131): no double-tap zoom on any page. In the
+   planner, a pinch never zooms the page either: everything fits from 320 px,
+   and the map keeps its own pinch and double-tap zoom (Leaflet, with
+   `touch-action: none` on #map). Help and What's new keep pinch zoom for
+   reading, and the viewport stays zoomable, so browser text size and forced
+   zoom settings still work. */
+html {
+  touch-action: manipulation;
+}
+body.planner {
+  touch-action: pan-x pan-y;
+}
 body {
   margin: 0;
   font-size: 15px;
@@ -1044,6 +1056,16 @@ div.step-item {
   }
 }
 
+/* Add to home screen in More actions: phones only. */
+#add-home {
+  flex-basis: 100%;
+}
+@media (min-width: 760px) {
+  #add-home {
+    display: none;
+  }
+}
+
 /* Settings dialog. */
 dialog.settings {
   width: min(480px, calc(100vw - 24px));
@@ -1760,7 +1782,9 @@ dialog.settings::backdrop {
   pointer-events: none;
 }
 html.map-touching,
-html.map-touching body {
+html.map-touching body,
+html.navigating,
+html.navigating body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -2793,7 +2817,8 @@ input[type='range'].range-input:disabled {
 }
 
 /* Guided navigation (#31): start notice and the full-screen navigation view. */
-dialog.nav-notice {
+dialog.nav-notice,
+dialog.home-dialog {
   width: 100%;
   max-width: 560px;
   max-height: calc(100dvh - 24px);
@@ -2807,7 +2832,8 @@ dialog.nav-notice {
   font-size: 16px;
   overflow-y: auto;
 }
-dialog.nav-notice::backdrop {
+dialog.nav-notice::backdrop,
+dialog.home-dialog::backdrop {
   background: #1b293480;
 }
 .nav-notice h2 {
@@ -2851,7 +2877,45 @@ dialog.nav-notice::backdrop {
   border-radius: var(--radius-large);
   font-size: 18px;
 }
+/* Add to home screen steps, a bottom sheet like the navigation notice. */
+.home-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+.home-dialog p {
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+.home-dialog h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+.home-dialog ol {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding-left: 24px;
+  line-height: 1.4;
+}
+.home-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#close-home {
+  flex: 0 1 50%;
+  min-height: 52px;
+  border-radius: var(--radius-large);
+  font-size: 18px;
+}
 dialog.nav-screen {
+  touch-action: none;
+  outline: none;
+  /* No callout, loupe or text selection from touches on the map. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   position: fixed;
   inset: 0;
   width: 100%;
@@ -2873,11 +2937,16 @@ dialog.nav-screen[open] {
 dialog.nav-screen::backdrop {
   background: #e9ece9;
 }
+/* The banner floats over the map as a rounded card; the map runs under it.
+   `--nav-top` (set from its height) keeps notices and buttons below it. */
 .nav-banner {
-  position: relative;
-  z-index: 2;
-  flex: none;
-  padding-top: env(safe-area-inset-top, 0px);
+  position: absolute;
+  z-index: 4;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  right: 8px;
+  left: 8px;
+  overflow: hidden;
+  border-radius: 16px;
   background: var(--color-primary-strong);
   color: #fff;
   box-shadow: var(--shadow-raised);
@@ -3023,7 +3092,7 @@ dialog.nav-screen::backdrop {
 .nav-chips {
   position: absolute;
   z-index: 3;
-  top: 12px;
+  top: calc(var(--nav-top, 0px) + 12px);
   left: 12px;
   display: flex;
   flex-direction: column;
@@ -3040,30 +3109,56 @@ dialog.nav-screen::backdrop {
   width: 18px;
   height: 18px;
 }
-.nav-map-button {
+/* Route overview and compass, a column at the top right of the map. */
+.nav-map-tools {
   position: absolute;
   z-index: 3;
-  top: 12px;
+  top: calc(var(--nav-top, 0px) + 12px);
   right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nav-map-button {
   box-shadow: var(--shadow-control);
+}
+/* The needle points to north on the map: red north half, grey south half. */
+.nav-map-tools #nav-compass-button .button-icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  stroke: none;
+}
+#nav-compass-button .needle-north {
+  fill: var(--color-danger);
+}
+#nav-compass-button .needle-south {
+  fill: #8795a1;
 }
 .nav-map-button[hidden],
 .nav-resume[hidden] {
   display: none;
 }
-/* Back from the whole-route view, where a thumb reaches it. */
+/* Re-center, at the bottom left as in common navigation apps: back to
+   following from any other view, where a thumb reaches it. */
 .nav-resume {
   position: absolute;
   z-index: 3;
   bottom: 32px;
-  left: 50%;
+  left: 12px;
   min-height: 48px;
-  padding: 0 20px;
+  padding: 0 20px 0 16px;
+  border: 0;
   border-radius: 24px;
+  background: var(--color-surface);
   box-shadow: var(--shadow-raised);
+  color: var(--color-primary-strong);
   font-size: 17px;
+  font-weight: 700;
   white-space: nowrap;
-  transform: translateX(-50%);
+}
+.nav-resume .button-icon {
+  fill: currentColor;
 }
 .nav-credit {
   position: absolute;
