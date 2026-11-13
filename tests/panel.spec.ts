@@ -321,3 +321,28 @@ for (const [width, language] of [
     if (width < 760) expect(Math.abs(before - after)).toBeLessThan(2);
     else expect(after).toBeLessThan(2);
   });
+
+for (const width of [320, 390, 1280])
+  test(`the space reserved for the first two points matches them at ${width} px`, async ({
+    page,
+  }) => {
+    // style.css reserves this height while the list is empty, so the panel
+    // below does not shift on load; it must follow the rows' real height.
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(base);
+    for (const language of ['en', 'pt']) {
+      await page.locator('#language').selectOption(language);
+      await expect(page.locator('#points > li')).toHaveCount(2);
+      const [rendered, reserved] = await page.evaluate(() => {
+        const list = document.getElementById('points')!;
+        const rows = [...list.children];
+        const height = () => list.getBoundingClientRect().height;
+        const rendered = height();
+        list.replaceChildren();
+        const reserved = height();
+        list.replaceChildren(...rows);
+        return [rendered, reserved];
+      });
+      expect(Math.abs(rendered - reserved)).toBeLessThanOrEqual(1);
+    }
+  });
