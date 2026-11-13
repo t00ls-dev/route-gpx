@@ -43,6 +43,7 @@ import {
   type Language,
 } from './i18n';
 import { languageQuery } from './seo';
+import { registerServiceWorker, watchConnection } from './offline';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './style.css';
@@ -1200,14 +1201,30 @@ function changed(preserveEditor = false, forceRouting = false) {
         if (version === fitRevision) fit();
       })
       .catch((e) => {
-        if (version === revision) updateSelection();
-        if (version === revision)
+        if (version !== revision) return;
+        updateSelection();
+        if (!navigator.onLine) {
           status(
-            e instanceof Error
-              ? e.message
-              : 'Routing server unavailable. Please try again.',
+            'No connection. The route will be calculated when the connection returns.',
             true,
           );
+          // One new attempt when the browser is back online, if nothing
+          // changed meanwhile: a single request, not a retry loop.
+          window.addEventListener(
+            'online',
+            () => {
+              if (version === revision) changed(true, forceRouting);
+            },
+            { once: true },
+          );
+          return;
+        }
+        status(
+          e instanceof Error
+            ? e.message
+            : 'Routing server unavailable. Please try again.',
+          true,
+        );
       });
   }, 900);
 }
@@ -1242,6 +1259,14 @@ $('calculate').onclick = () => {
   if (editBlocked()) return;
   if (dirty.size || state.points.some((p) => !p.coord)) {
     status('Set your start and destination.', true);
+    return;
+  }
+  // Without a connection the request can only fail: keep the route on screen.
+  if (!navigator.onLine) {
+    // Nothing failed: the route is intact, so this is information, not an error.
+    status(
+      'No connection. The route on screen is kept; calculate it again when you are back online.',
+    );
     return;
   }
   changed(false, true);
@@ -1561,6 +1586,8 @@ history.replaceState(
 pageLinks(initialLanguage, encodeState(state));
 renderPoints();
 observeTranslations();
+watchConnection($('offline-notice'));
+registerServiceWorker();
 $<HTMLSelectElement>('language').onchange = () => {
   const lang = $<HTMLSelectElement>('language').value as Language;
   rememberLanguage(lang);

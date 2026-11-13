@@ -8,6 +8,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Added
 
+- After one visit with a connection, the app opens without one in the same browser: saved routes open, show their summary and directions and download as GPX, with a notice that you are offline; map tiles, routing, search, weather, elevation and surface still need a connection.
 - Surface in the route summary: how much of the route is paved or unpaved, the unpaved stretches to check, each shown on the map when selected, and a Surface route coloring in Map layers; the route's road attributes are requested from Valhalla only on these choices.
 - Elevation marks the highest and lowest points of the route on the map with their altitude while it is open, and Elevation here in the map point menu shows the approximate altitude of any point, requested only on that choice.
 - Grade route coloring, in Map layers: descents in blue, flat stretches in gray and climbs in orange and red, with a color scale marking −8%, −3%, +3% and +8% in the legend; it requests the route's elevation only when chosen, and none for files with recorded elevation.
@@ -32,6 +33,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 
 ### Fixed
 
+- On touch screens, tapping Download GPX before the route is ready no longer makes it look available.
 - Screen readers announce each point's search results as a named group, and on phones the route panel no longer jumps down while the page loads.
 - Weather icons no longer pile up when the map is zoomed out: icons that would cover each other show as one (the worst alert among them, otherwise a start, stop or destination, otherwise the worst weather) with a +N count of the others, bordered in red when they include alerts; tapping the count or zooming in shows them all.
 - The wind badge on map weather markers shows the whole speed beside its unit, for example 99.9 km/h; longer speeds overlapped the unit.

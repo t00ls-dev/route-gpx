@@ -329,11 +329,23 @@ export async function calculate(
         return await valhallaRoute(state);
       } catch {
         throw new Error(
-          `No route available. Check the points or try again later. ${e instanceof Error ? e.message : ''} The fallback server also failed.`,
+          `No route available. Check the points or try again later. ${routingFailure(e)} The fallback server also failed.`,
         );
       }
     }
   });
+}
+/**
+ * One sentence about why the primary router failed. A failed fetch carries the
+ * browser's own wording (Failed to fetch, Load failed...), so it reads as a
+ * network error in every browser and language.
+ */
+export function routingFailure(error: unknown): string {
+  if (error instanceof TypeError || !(error instanceof Error))
+    return 'Network error.';
+  const message = error.message.trim();
+  if (!message) return 'Network error.';
+  return /[.!?]$/.test(message) ? message : `${message}.`;
 }
 /** The public OSRM server accepts at most 10 trace points per match request. */
 const MATCH_POINTS = 10,

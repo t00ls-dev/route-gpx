@@ -5,6 +5,7 @@ import {
   translate,
 } from './i18n';
 import { updateSeo } from './seo';
+import { registerServiceWorker } from './offline';
 import './style.css';
 // Shared by the separate pages: help and What's new.
 const page = document.body.classList.contains('changelog-page')
@@ -39,6 +40,7 @@ select.onchange = () => {
 // the hash is reserved for the route state used by Back to map.
 const section = new URLSearchParams(location.search).get('section');
 apply();
+registerServiceWorker();
 if (section && /^[a-z-]{1,40}$/.test(section))
   document
     .getElementById(`${section}-${select.value === 'pt' ? 'pt' : 'en'}`)

@@ -252,6 +252,16 @@
           remove them; keep a backup. Matching names in a backup keep your
           existing saved route.
         </p>
+        <p>
+          After one visit with a connection, route-gpx also opens without one,
+          in the same browser: a saved route opens with its geometry, summary
+          and directions and downloads as GPX, and a notice says you are
+          offline. Map tiles, routing, search, weather, elevation and surface
+          still need a connection, so the map background may be empty. Offline,
+          Calculate route keeps the route on screen, and a route changed offline
+          is calculated once the connection returns. A new version is used on
+          the next visit with a connection.
+        </p>
         <h2>GPX, import and sharing</h2>
         <p>
           Set GPX name above the download button to name the file and track.
@@ -608,7 +618,9 @@
           locations. The browser stores a search timestamp to coordinate tabs,
           and the named routes you explicitly save in local IndexedDB. It also
           remembers language, region preferences and panel state without
-          location data. Do not enter confidential addresses.
+          location data. A service worker keeps only route-gpx's own files so it
+          opens offline; it stores no locations and never caches map tiles or
+          answers from other services. Do not enter confidential addresses.
         </p>
         <p>
           <a href="https://operations.osmfoundation.org/policies/nominatim/"
@@ -838,6 +850,16 @@
           ficam neste perfil do navegador, sem nuvem. Limpar os dados do
           navegador pode apagá-los; guarde um backup. Nomes iguais no backup
           mantêm a rota que já está salva.
+        </p>
+        <p>
+          Depois de uma visita com conexão, o route-gpx também abre sem ela, no
+          mesmo navegador: uma rota salva abre com geometria, resumo e
+          instruções e pode ser baixada em GPX, e um aviso diz que você está sem
+          conexão. Os blocos do mapa, o roteamento, a busca, o clima, a elevação
+          e o pavimento continuam precisando de conexão, então o fundo do mapa
+          pode ficar vazio. Sem conexão, Calcular rota mantém a rota na tela, e
+          uma rota alterada sem conexão é calculada quando a conexão voltar. Uma
+          versão nova é usada na próxima visita com conexão.
         </p>
         <h2>GPX, importação e links</h2>
         <p>
@@ -1210,7 +1232,10 @@
           locais. O navegador guarda um horário de busca para coordenar abas e
           as rotas nomeadas que você salvar explicitamente no IndexedDB local.
           Também lembra idioma, preferências de região e estado do painel, sem
-          dados de localização. Não informe endereços confidenciais.
+          dados de localização. Um service worker guarda só os arquivos do
+          próprio route-gpx para ele abrir sem conexão; não guarda locais e
+          nunca guarda blocos do mapa nem respostas de outros serviços. Não
+          informe endereços confidenciais.
         </p>
         <p>
           <a href="https://operations.osmfoundation.org/policies/nominatim/"

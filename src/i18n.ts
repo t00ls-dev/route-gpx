@@ -38,6 +38,13 @@ export function preferredLanguage(): Language {
   return storedLanguage() ?? detectLanguage();
 }
 const pt: Record<string, string> = {
+  'No connection. The route on screen is kept; calculate it again when you are back online.':
+    'Sem conexão. A rota na tela foi mantida; calcule de novo quando a conexão voltar.',
+  'No connection. The route will be calculated when the connection returns.':
+    'Sem conexão. A rota será calculada quando a conexão voltar.',
+  'Network error.': 'Erro de rede.',
+  'You are offline. The route on screen and saved routes still work; routing, search, weather, elevation and surface need a connection.':
+    'Você está sem conexão. A rota na tela e as rotas salvas continuam funcionando; roteamento, busca, clima, elevação e pavimento precisam de conexão.',
   'Back to map': 'Voltar ao mapa',
   'Use link servers': 'Usar servidores do link',
   'Keep default servers': 'Manter servidores padrão',
