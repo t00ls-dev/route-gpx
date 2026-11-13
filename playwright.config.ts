@@ -4,8 +4,9 @@ export default defineConfig({
   testDir: 'tests',
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
-  // One worker per process; CI scales through shards (see ci.yml).
-  workers: 1,
+  // Two workers per process, locally and in each CI shard (see ci.yml): the
+  // suite runs in about half the time and tests must stay independent.
+  workers: 2,
   // CI shards write blob reports that the merge-reports job combines.
   reporter: process.env.CI ? 'blob' : 'list',
   use: {
