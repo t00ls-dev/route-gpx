@@ -1011,6 +1011,10 @@ div.step-item {
 #download {
   flex: 1 1 0;
 }
+/* Guided navigation is offered in the phone layout only (see below). */
+#navigate {
+  display: none;
+}
 #more-actions,
 .label-long {
   display: none;
@@ -1509,12 +1513,37 @@ dialog.settings::backdrop {
     border-color: var(--color-primary);
     background: var(--color-soft);
   }
-  #share {
+  #share,
+  #download {
     width: var(--control);
     padding: 0;
   }
-  #share .button-label {
+  #share .button-label,
+  #download .button-label {
     display: none;
+  }
+  /* Navigate is the main action on phones; Download becomes an icon. */
+  #navigate {
+    display: inline-flex;
+    flex: 1 1 0;
+  }
+  #download {
+    flex: 0 0 auto;
+  }
+  #download.primary {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-weight: 550;
+  }
+  #download.primary:hover:not(:disabled) {
+    background: var(--color-subtle);
+    color: var(--color-text);
+  }
+  #download.primary:disabled {
+    border-color: var(--color-border);
+    background: #e8edf1;
+    color: #586673;
   }
   .map-note,
   .planner.panel-closed .map-note {
@@ -2761,4 +2790,370 @@ input[type='range'].range-input:disabled {
   stroke-opacity: 0.85;
   stroke-linecap: round;
   fill: none;
+}
+
+/* Guided navigation (#31): start notice and the full-screen navigation view. */
+dialog.nav-notice {
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100dvh - 24px);
+  margin: auto auto 0;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 16px;
+  overflow-y: auto;
+}
+dialog.nav-notice::backdrop {
+  background: #1b293480;
+}
+.nav-notice h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+.nav-notice ul {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.nav-notice li {
+  display: flex;
+  gap: 12px;
+  line-height: 1.4;
+}
+.nav-notice li .button-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  color: var(--color-primary);
+}
+.nav-notice li.nav-notice-warning .button-icon {
+  color: var(--color-warning);
+}
+.nav-notice .check {
+  min-height: var(--control);
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.nav-notice .check input {
+  width: 22px;
+  height: 22px;
+}
+#nav-notice-start {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--radius-large);
+  font-size: 18px;
+}
+dialog.nav-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #e9ece9;
+  color: var(--color-text);
+  font-size: 16px;
+  overflow: hidden;
+}
+dialog.nav-screen[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.nav-screen::backdrop {
+  background: #e9ece9;
+}
+.nav-banner {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--color-primary-strong);
+  color: #fff;
+  box-shadow: var(--shadow-raised);
+}
+.nav-banner-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px 12px;
+}
+.nav-turn {
+  display: flex;
+  flex: none;
+}
+.nav-turn .button-icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  stroke-width: 2.4;
+}
+.nav-banner .mirror,
+.nav-then .mirror {
+  transform: scaleX(-1);
+}
+.nav-banner-text {
+  min-width: 0;
+}
+.nav-distance {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nav-road {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.nav-then {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: #093827;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.nav-then[hidden] {
+  display: none;
+}
+.nav-then-icon {
+  display: flex;
+}
+.nav-then-icon .button-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+.nav-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #e9ece9;
+}
+.nav-rotor {
+  position: absolute;
+  /* Its own stacking layer, turned or not, so the map's panes never cover
+     the buttons and notices above it. */
+  z-index: 0;
+  transform-origin: 50% 50%;
+}
+#nav-map {
+  width: 100%;
+  height: 100%;
+  background: #e9ece9;
+}
+.nav-position {
+  display: grid;
+  place-items: center;
+}
+.nav-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px #1b293466;
+  color: var(--color-focus);
+}
+.nav-arrow .button-icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+}
+.nav-position.weak .nav-arrow {
+  opacity: 0.75;
+}
+.nav-accuracy {
+  fill: #0b72c6;
+  fill-opacity: 0.18;
+  stroke: #0b72c6;
+  stroke-opacity: 0.5;
+  stroke-width: 2;
+}
+.nav-route,
+.nav-travelled {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav-chip {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 92px);
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--color-warning-border);
+  border-radius: 18px;
+  background: var(--color-warning-bg);
+  box-shadow: var(--shadow-control);
+  color: var(--color-warning);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.nav-chip[hidden] {
+  display: none;
+}
+/* Notices stack down the left side when more than one shows. */
+.nav-chips {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: calc(100% - 92px);
+}
+.nav-chips .nav-chip {
+  position: static;
+  max-width: none;
+}
+.nav-chip .button-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.nav-map-button {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  right: 12px;
+  box-shadow: var(--shadow-control);
+}
+.nav-map-button[hidden],
+.nav-resume[hidden] {
+  display: none;
+}
+/* Back from the whole-route view, where a thumb reaches it. */
+.nav-resume {
+  position: absolute;
+  z-index: 3;
+  bottom: 32px;
+  left: 50%;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-raised);
+  font-size: 17px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.nav-credit {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 1px 6px;
+  background: #ffffffd9;
+  font-size: 12px;
+}
+.nav-credit a {
+  color: var(--color-text);
+}
+.nav-bar {
+  z-index: 2;
+  flex: none;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--color-surface);
+  box-shadow: 0 -4px 20px #1b293426;
+}
+.nav-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-eta {
+  flex: 1;
+  min-width: 0;
+}
+.nav-time {
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nav-rest {
+  color: var(--color-text-muted);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nav-stop {
+  flex: none;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 2px solid var(--color-danger);
+  border-radius: var(--radius-large);
+  color: var(--color-danger);
+  font-size: 17px;
+  font-weight: 700;
+}
+.nav-stop:hover {
+  background: var(--color-danger-bg);
+}
+.nav-status {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.nav-status > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-status > span[hidden] {
+  display: none;
+}
+.nav-status .button-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px #12644733;
+}
+.nav-dot.weak {
+  background: #b8730f;
+  box-shadow: 0 0 0 3px #b8730f33;
+}
+.nav-dot.waiting {
+  background: var(--color-border-strong);
+  box-shadow: 0 0 0 3px #8795a133;
 }

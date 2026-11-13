@@ -7,7 +7,7 @@
     <title>route-gpx — Route Planning &amp; GPX Help</title>
     <meta
       name="description"
-      content="Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, set speed and units, and save or share routes."
+      content="Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, navigate, set units, and save or share routes."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="route-gpx" />
@@ -39,7 +39,7 @@
     />
     <meta
       property="og:description"
-      content="Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, set speed and units, and save or share routes."
+      content="Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, navigate, set units, and save or share routes."
     />
     <meta property="og:url" content="https://route-gpx.t00ls.dev/help.html" />
     <meta property="og:locale" content="en_US" />
@@ -60,7 +60,7 @@
     />
     <meta
       name="twitter:description"
-      content="Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, set speed and units, and save or share routes."
+      content="Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, navigate, set units, and save or share routes."
     />
     <meta
       name="twitter:image"
@@ -491,6 +491,41 @@
           Unknown. On noisy tracks, a parallel road can be matched instead.
           Check before you leave.
         </p>
+        <h2 id="navigate-en">Navigate</h2>
+        <p>
+          On a phone, press Navigate in the action bar to follow the route on
+          screen. The top of the screen shows the next turn, the distance to it
+          and its road, with the turn after it below; the bottom shows the time
+          and distance left and the arrival time, using your average speed, and
+          Stop. The map turns with you and keeps you in its lower part: while
+          you move it follows your direction of travel, and when you stop it
+          follows the compass, turning as you point the phone (iOS asks for
+          permission to use motion and orientation). Phone compasses point to
+          magnetic north, so the app turns their reading to true north, the
+          north of the map, with the World Magnetic Model calculated on your
+          phone. If the compass is imprecise, iPhones say so and the app asks
+          you to move the phone in a figure 8; metal and magnets nearby, such as
+          car mounts, also throw it off. The route button shows the whole route;
+          Resume navigation goes back to following you. A weak GPS signal is
+          flagged with the accuracy of your position, and without map tiles the
+          route and your position still show over a plain background.
+        </p>
+        <p>
+          A short safety notice shows each time navigation starts: avoid
+          handling the phone while moving, put it in a mount you can see and
+          check the route before you leave. Check Don't show this notice again
+          to skip it, and turn it back on in Settings.
+        </p>
+        <p>
+          Keep the tab open and the screen on: browsers stop following your
+          location with the screen off or in another tab, iOS Safari especially.
+          The app asks the browser to keep the screen on while navigating, where
+          the browser allows it. Routes without turn directions, such as
+          imported tracks before their Itinerary is opened, count down to the
+          destination. There is no live traffic and no rerouting yet. Your
+          location is watched only from Start navigation until Stop, pauses
+          while the page is hidden and is never stored or sent.
+        </p>
         <h2>Travel the route</h2>
         <p>
           Open Travel the route in the route summary to follow the route before
@@ -674,8 +709,9 @@
           >. Built with Leaflet, OSRM, Valhalla, Nominatim and Photon. IP region
           by ipwho.is; maps by OpenTopoMap and EOX. Weather data by Open-Meteo
           (CC BY 4.0); elevation data from the Copernicus DEM GLO-90 via
-          Open-Meteo. Source and license links appear in the respective sections
-          above and in the
+          Open-Meteo. Compass headings are corrected to true north with the
+          World Magnetic Model (NOAA NCEI and BGS, public domain). Source and
+          license links appear in the respective sections above and in the
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >services and privacy details</a
@@ -1100,6 +1136,42 @@
           parte que falha, aparecem como Desconhecido. Em trilhas com ruído, uma
           via paralela pode ser escolhida. Confira antes de sair.
         </p>
+        <h2 id="navigate-pt">Navegar</h2>
+        <p>
+          No celular, toque em Navegar na barra de ações para seguir a rota na
+          tela. No alto aparecem a próxima conversão, a distância até ela e a
+          via, com a conversão seguinte logo abaixo; embaixo ficam o tempo e a
+          distância restantes e o horário de chegada, pela sua velocidade média,
+          e o botão Parar. O mapa gira com você e o mantém na parte de baixo: em
+          movimento, segue a direção do deslocamento e, parado, segue a bússola,
+          girando conforme você aponta o celular (no iOS, o navegador pede
+          permissão para movimento e orientação). A bússola do celular aponta
+          para o norte magnético; o app converte a leitura para o norte
+          verdadeiro, o norte do mapa, com o World Magnetic Model calculado no
+          seu celular. Se a bússola estiver imprecisa, o iPhone avisa e o app
+          pede que você movimente o celular em forma de 8; metal e ímãs por
+          perto, como os de suportes de carro, também a desviam. O botão da rota
+          mostra a rota inteira; Retomar navegação volta a seguir você. Um sinal
+          de GPS fraco aparece com a precisão da sua posição e, sem os blocos do
+          mapa, a rota e a sua posição continuam na tela sobre um fundo neutro.
+        </p>
+        <p>
+          Um aviso curto de segurança aparece sempre que a navegação começa:
+          evite mexer no celular em movimento, prenda-o num suporte à vista e
+          confira a rota antes de sair. Marque Não exibir mais este aviso para
+          pulá-lo e religue-o nas Configurações.
+        </p>
+        <p>
+          Deixe a aba aberta e a tela acesa: os navegadores param de acompanhar
+          a localização com a tela apagada ou em outra aba, principalmente o
+          Safari no iOS. O app pede ao navegador que mantenha a tela acesa
+          durante a navegação, quando o navegador permite. Rotas sem instruções
+          de conversão, como trilhas importadas antes de abrir o Itinerário,
+          contam a distância até o destino. Ainda não há trânsito ao vivo nem
+          recálculo da rota. Sua localização é acompanhada só de Iniciar
+          navegação até Parar, pausa com a página oculta e nunca é guardada nem
+          enviada.
+        </p>
         <h2>Percorrer a rota</h2>
         <p>
           Abra Percorrer a rota no resumo para acompanhar a rota antes de sair.
@@ -1292,8 +1364,9 @@
           >. Feito com Leaflet, OSRM, Valhalla, Nominatim e Photon. Região por
           IP pelo ipwho.is; mapas por OpenTopoMap e EOX. Dados do tempo por
           Open-Meteo (CC BY 4.0); dados de elevação do Copernicus DEM GLO-90 via
-          Open-Meteo. Links das fontes e licenças estão nas respectivas seções
-          acima e nos
+          Open-Meteo. A bússola é corrigida para o norte verdadeiro com o World
+          Magnetic Model (NOAA NCEI e BGS, domínio público). Links das fontes e
+          licenças estão nas respectivas seções acima e nos
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >detalhes de serviços e privacidade</a

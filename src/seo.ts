@@ -2,21 +2,21 @@ const texts = {
   app: {
     en: [
       'route-gpx — Route Planner & GPX Export',
-      'Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and road surface on the way and download complete GPX tracks. Free, no account.',
+      'Plan routes along real roads, import GPX, FIT or TCX, check weather, elevation and surface, navigate on your phone and download complete GPX tracks. No account.',
     ],
     pt: [
       'route-gpx — Planejador de rotas e exportação GPX',
-      'Crie rotas pelas ruas, importe GPX, FIT ou TCX, veja clima, elevação e pavimento no caminho e baixe o traçado completo em GPX. Grátis e sem cadastro.',
+      'Crie rotas pelas ruas, importe GPX, FIT ou TCX, veja clima, elevação e pavimento, navegue pelo celular e baixe o traçado completo em GPX. Sem cadastro.',
     ],
   },
   help: {
     en: [
       'route-gpx — Route Planning & GPX Help',
-      'Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, set speed and units, and save or share routes.',
+      'Learn to plan and edit routes, import GPX, FIT and TCX, read the itinerary, weather, elevation and surface, navigate, set units, and save or share routes.',
     ],
     pt: [
       'route-gpx — Ajuda para criar e exportar rotas',
-      'Aprenda a criar e editar rotas, importar GPX, FIT e TCX, ver itinerário, clima, elevação e pavimento, ajustar velocidade e unidades e salvar ou compartilhar.',
+      'Aprenda a criar e editar rotas, importar GPX, FIT e TCX, ver itinerário, clima, elevação e pavimento, navegar, ajustar unidades e salvar ou compartilhar.',
     ],
   },
   changelog: {

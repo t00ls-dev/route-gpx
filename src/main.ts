@@ -84,6 +84,7 @@ import { shareFile } from './share-gpx';
 import { setupPointMenu } from './point-menu';
 import { setupQuickZoom } from './quick-zoom';
 import { setupPlayback } from './route-playback';
+import { setupNavigation } from './navigation-ui';
 import { setupElevation } from './elevation-ui';
 import { setupSurface } from './surface-ui';
 import { SURFACE_KINDS } from './surface';
@@ -1788,9 +1789,16 @@ void refreshSavedRoutes();
 updateSaveButton();
 
 setupPanel(map);
+const navigation = setupNavigation({
+  route: () => current,
+  speedKmh: () => speedKmh,
+  locale: () => (state.language === 'pt' ? 'pt-BR' : 'en'),
+  status,
+});
 // Settings always open with the values in use; unapplied edits are dropped.
 $('open-settings').addEventListener('click', () => {
   settings();
+  navigation.syncSetting();
   $<HTMLInputElement>('photon').value = photonUrl;
 });
 setupMapView(map, {
