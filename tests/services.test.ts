@@ -5,6 +5,7 @@ import {
   decodePolyline,
   osrmRoute,
   RequestQueue,
+  routingFailure,
   valhallaRoute,
 } from '../src/services';
 afterEach(() => {
@@ -335,4 +336,19 @@ it('does not start Valhalla when a route is superseded during the fallback delay
   await vi.runAllTimersAsync();
   await assertion;
   expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+describe('routing failure sentence', () => {
+  it('names a failed fetch a network error in every browser', () => {
+    for (const message of ['Failed to fetch', 'Load failed', 'NetworkError'])
+      expect(routingFailure(new TypeError(message))).toBe('Network error.');
+    expect(routingFailure('offline')).toBe('Network error.');
+    expect(routingFailure(new Error(''))).toBe('Network error.');
+  });
+  it('keeps a router message as one sentence', () => {
+    expect(routingFailure(new Error('OSRM HTTP 429'))).toBe('OSRM HTTP 429.');
+    expect(routingFailure(new Error('No route found.'))).toBe(
+      'No route found.',
+    );
+  });
 });

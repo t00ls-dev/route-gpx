@@ -17,10 +17,22 @@ export default defineConfig({
     // the UTC zone), while the initial map view still follows "en".
     locale: 'en-150',
   },
-  webServer: {
-    command: 'npm run dev -- --host 127.0.0.1',
-    url: 'http://127.0.0.1:5173/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30000,
-  },
+  webServer: [
+    {
+      command: 'npm run dev -- --host 127.0.0.1',
+      url: 'http://127.0.0.1:5173/',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+    },
+    {
+      // A production build for the service worker tests (offline.spec.ts),
+      // which the development server does not register. Built fresh every
+      // run into an ignored folder, so it always matches the checkout.
+      command:
+        'npx vite build --outDir .preview-test.local --emptyOutDir && npx vite preview --outDir .preview-test.local --host 127.0.0.1 --port 4175 --strictPort',
+      url: 'http://127.0.0.1:4175/',
+      reuseExistingServer: false,
+      timeout: 120000,
+    },
+  ],
 });

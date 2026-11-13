@@ -346,3 +346,33 @@ for (const width of [320, 390, 1280])
       expect(Math.abs(rendered - reserved)).toBeLessThanOrEqual(1);
     }
   });
+
+for (const mobile of [false, true])
+  test(`disabled buttons keep their disabled look under hover (${mobile ? 'phone' : 'desktop'})`, async ({
+    page,
+  }) => {
+    // A tap leaves :hover on touch screens; a disabled button (Download GPX
+    // before a route exists) must not then look enabled.
+    await page.setViewportSize(
+      mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    );
+    await page.goto(base);
+    await expect(page.locator('#download')).toBeDisabled();
+    const disabled = page.locator('button:disabled:visible');
+    const count = await disabled.count();
+    expect(count).toBeGreaterThan(0);
+    const look = (i: number) =>
+      disabled.nth(i).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return [style.backgroundColor, style.color, style.borderColor];
+      });
+    for (let i = 0; i < count; i++) {
+      await page.mouse.move(0, 0);
+      const before = await look(i);
+      await disabled.nth(i).hover({ force: true });
+      expect(
+        await look(i),
+        await disabled.nth(i).evaluate((e) => e.id || e.textContent),
+      ).toEqual(before);
+    }
+  });

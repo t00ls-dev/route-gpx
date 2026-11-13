@@ -127,7 +127,9 @@ button:disabled {
   color: #fff;
   font-weight: 650;
 }
-.primary:hover {
+/* Not on disabled buttons: a tap leaves :hover on touch screens, and a
+   disabled primary button must not look enabled. */
+.primary:hover:not(:disabled) {
   background: var(--color-primary-strong);
   color: #fff;
 }

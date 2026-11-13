@@ -28,13 +28,14 @@ Gestures, shortcuts and every control are explained on the [Help page](https://r
 ## Good to know
 
 - Nothing is saved automatically: use **Save route** to keep the exact geometry in this browser, and export backups, since clearing browser data can remove saved routes.
+- After one visit with a connection, the app opens offline in the same browser and saved routes open and download as GPX; map tiles, routing, search, weather, elevation and surface still need a connection.
 - Routing currently uses a car profile. **Prefer main roads** flags possible local sections but does not guarantee their exclusion; estimates exclude stops and real-time traffic.
 - Imported GPX, FIT and TCX tracks stay intact. Editing a point recalculates only the sections next to it, and the rest of the imported track is kept exactly; **Calculate route** recalculates the whole route. Share links store points and options, not imported geometry.
 - Weather risks are a review aid, not an official warning, and the exported GPX carries no forecast or timestamps.
 
 ## Privacy
 
-- No cookies, analytics or account.
+- No cookies, analytics or account. A service worker keeps only the app's own files for offline use; it stores no locations and never caches map tiles or other services' responses.
 - Map, routing, search and weather providers receive the locations each request needs and your IP address.
 - Weather is requested only for the route and its departure. Without a chosen departure, the route leaves at the next half hour automatically, so weather is requested from Open-Meteo once the route is ready and at each new half hour; uncheck Automatic departure below the Departure field to turn this off on the device. Elevation is requested only when you open Elevation or choose the Grade coloring (points along the route go to Open-Meteo), or for one map point when you choose Elevation here; GPX files that record elevation need no request.
 - Opening the Itinerary of an imported track sends that track, reduced to points about every 300 m, to the configured OSRM server for map matching; a route saved before turn directions existed gets them with one routing request. Neither changes the route's geometry.
