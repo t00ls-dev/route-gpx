@@ -2937,6 +2937,22 @@ dialog.nav-screen[open] {
 dialog.nav-screen::backdrop {
   background: #e9ece9;
 }
+/* Opened from the home screen (an iOS web app), the page runs under the
+   status bar, where iOS fades the map behind the clock. A solid strip as tall
+   as that area gives the status bar a clean surface. In the browser the area
+   is zero tall: the browser's own toolbar covers it. */
+body.planner::before,
+dialog.nav-screen::before {
+  content: '';
+  position: fixed;
+  z-index: 5000;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--color-surface);
+  pointer-events: none;
+}
 /* The banner floats over the map as a rounded card; the map runs under it.
    `--nav-top` (set from its height) keeps notices and buttons below it. */
 .nav-banner {

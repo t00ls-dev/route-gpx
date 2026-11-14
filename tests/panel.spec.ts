@@ -452,3 +452,36 @@ test('Add to home screen is a phone action only', async ({ page }) => {
   await page.goto(base);
   await expect(page.locator('#add-home')).toBeHidden();
 });
+
+test('opened from the home screen, the status bar sits on a solid strip', async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // An iOS web app runs under the status bar: the top safe area is not zero.
+  const session = await context.newCDPSession(page);
+  await session.send('Emulation.setSafeAreaInsetsOverride', {
+    insets: { top: 59, bottom: 34 },
+  });
+  await page.goto(base);
+  const strip = () =>
+    page.evaluate(() => {
+      const style = getComputedStyle(document.body, '::before');
+      return { height: style.height, background: style.backgroundColor };
+    });
+  expect(await strip()).toEqual({
+    height: '59px',
+    background: 'rgb(255, 255, 255)',
+  });
+  // It sits above the map, and the header stays below it.
+  expect(
+    await page.evaluate(
+      () => getComputedStyle(document.body, '::before').zIndex,
+    ),
+  ).toBe('5000');
+  const header = (await page.locator('header').first().boundingBox())!;
+  expect(header.y).toBeGreaterThanOrEqual(59);
+  // In the browser, whose toolbar covers that area, it is zero tall.
+  await session.send('Emulation.setSafeAreaInsetsOverride', { insets: {} });
+  await expect.poll(async () => (await strip()).height).toBe('0px');
+});
