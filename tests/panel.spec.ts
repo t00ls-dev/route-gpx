@@ -453,35 +453,50 @@ test('Add to home screen is a phone action only', async ({ page }) => {
   await expect(page.locator('#add-home')).toBeHidden();
 });
 
-test('opened from the home screen, the status bar sits on a solid strip', async ({
-  page,
-  context,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  // An iOS web app runs under the status bar: the top safe area is not zero.
-  const session = await context.newCDPSession(page);
-  await session.send('Emulation.setSafeAreaInsetsOverride', {
-    insets: { top: 59, bottom: 34 },
-  });
-  await page.goto(base);
-  const strip = () =>
-    page.evaluate(() => {
-      const style = getComputedStyle(document.body, '::before');
-      return { height: style.height, background: style.backgroundColor };
+for (const path of ['', 'help.html'])
+  test(`a home-screen web app keeps its controls below a white status strip (${path || 'app'})`, async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 393, height: 852 });
+    // An iOS home-screen web app with the black-translucent status bar runs
+    // under it: the top safe area is 59 px and navigator.standalone is set.
+    await page.addInitScript(() =>
+      Object.defineProperty(navigator, 'standalone', { value: true }),
+    );
+    const session = await context.newCDPSession(page);
+    await session.send('Emulation.setSafeAreaInsetsOverride', {
+      insets: { top: 59, bottom: 34 },
     });
-  expect(await strip()).toEqual({
-    height: '59px',
-    background: 'rgb(255, 255, 255)',
+    await page.goto(base + path);
+    expect(
+      await page
+        .locator('meta[name="apple-mobile-web-app-status-bar-style"]')
+        .getAttribute('content'),
+    ).toBe('black-translucent');
+    // White over the status bar and the 16 px band iOS fades below it.
+    const strip = page.locator('.top-edge').first();
+    expect((await strip.boundingBox())!.height).toBe(75);
+    expect(
+      await strip.evaluate((e) => getComputedStyle(e).backgroundColor),
+    ).toBe('rgb(255, 255, 255)');
+    const header = (await page.locator('header').first().boundingBox())!;
+    expect(header.y).toBeGreaterThanOrEqual(75);
+    if (!path) {
+      // Modal cards stay below it and above the home indicator.
+      await page.locator('#open-settings').click();
+      const card = (await page.locator('dialog.settings').boundingBox())!;
+      expect(card.y).toBeGreaterThanOrEqual(75);
+      expect(card.y + card.height).toBeLessThanOrEqual(852 - 34);
+    }
   });
-  // It sits above the map, and the header stays below it.
+
+test('in the browser the status strip takes no room', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(base);
   expect(
-    await page.evaluate(
-      () => getComputedStyle(document.body, '::before').zIndex,
-    ),
-  ).toBe('5000');
+    (await page.locator('.top-edge').first().boundingBox())?.height ?? 0,
+  ).toBe(0);
   const header = (await page.locator('header').first().boundingBox())!;
-  expect(header.y).toBeGreaterThanOrEqual(59);
-  // In the browser, whose toolbar covers that area, it is zero tall.
-  await session.send('Emulation.setSafeAreaInsetsOverride', { insets: {} });
-  await expect.poll(async () => (await strip()).height).toBe('0px');
+  expect(header.y).toBe(8);
 });

@@ -1,5 +1,8 @@
 /* Design tokens: one light, high-contrast theme (see docs/BRAND.md). */
 :root {
+  /* Top of the usable area: the status bar's safe area, plus, in an iOS
+     home-screen web app, the band where iOS fades content under it. */
+  --safe-top: env(safe-area-inset-top, 0px);
   font-family:
     system-ui,
     -apple-system,
@@ -1179,7 +1182,7 @@ dialog.settings::backdrop {
   display: none;
 }
 .planner .leaflet-top {
-  top: env(safe-area-inset-top, 0px);
+  top: var(--safe-top);
   /* Map tools and the Map layers menu open above the bottom controls (the
      route coloring legend), which come later in the page. */
   z-index: 1001;
@@ -1378,7 +1381,7 @@ dialog.settings::backdrop {
   .planner.panel-closed .sheet > header {
     position: fixed;
     z-index: 600;
-    top: calc(8px + env(safe-area-inset-top, 0px));
+    top: calc(8px + var(--safe-top));
     left: calc(8px + env(safe-area-inset-left, 0px));
     display: flex;
     gap: 0;
@@ -1516,7 +1519,7 @@ dialog.settings::backdrop {
   .action-bar,
   .planner.panel-closed .action-bar {
     display: flex;
-    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 16px max(12px, env(safe-area-inset-bottom, 0px));
   }
   .more-panel {
     display: none;
@@ -1569,13 +1572,13 @@ dialog.settings::backdrop {
   }
   .map-note,
   .planner.panel-closed .map-note {
-    top: calc(60px + env(safe-area-inset-top, 0px));
+    top: calc(60px + var(--safe-top));
     left: calc(8px + env(safe-area-inset-left, 0px));
     max-width: calc(100% - 76px);
     font-size: 13px;
   }
   .location-card {
-    top: calc(60px + env(safe-area-inset-top, 0px));
+    top: calc(60px + var(--safe-top));
   }
   /* Phones zoom with pinch and double tap; the column keeps room for map tools. */
   .planner .leaflet-control-zoom {
@@ -1798,8 +1801,7 @@ html.navigating body {
     )
   );
   max-height: calc(
-    100dvh - 32px - env(safe-area-inset-top, 0px) -
-      env(safe-area-inset-bottom, 0px)
+    100dvh - 32px - var(--safe-top) - env(safe-area-inset-bottom, 0px)
   );
   overflow: auto;
   padding: 20px;
@@ -2937,28 +2939,44 @@ dialog.nav-screen[open] {
 dialog.nav-screen::backdrop {
   background: #e9ece9;
 }
-/* Opened from the home screen (an iOS web app), the page runs under the
-   status bar, where iOS fades the map behind the clock. A solid strip as tall
-   as that area gives the status bar a clean surface. In the browser the area
-   is zero tall: the browser's own toolbar covers it. */
-body.planner::before,
-dialog.nav-screen::before {
-  content: '';
+/* An iOS home-screen web app (`html.ios-web-app`, black-translucent status
+   bar) runs under the status bar, where iOS 26 keeps the clock black and
+   fades the content below it. A white strip covers the status bar and that
+   fade band (16 px more), and the controls start below it. In the browser
+   the strip is zero tall: the safe area is zero and the class is absent. */
+html.ios-web-app {
+  --safe-top: calc(env(safe-area-inset-top, 0px) + 16px);
+}
+.top-edge {
   position: fixed;
   z-index: 5000;
   top: 0;
   right: 0;
   left: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: var(--color-surface);
-  pointer-events: none;
+  height: var(--safe-top);
+  background: #fff;
+}
+/* Modal cards stay between that strip and the home indicator. */
+dialog:modal:not(.nav-screen) {
+  inset: var(--safe-top) 0 env(safe-area-inset-bottom, 0px);
+  max-height: calc(
+    100dvh - var(--safe-top) - env(safe-area-inset-bottom, 0px) - 24px
+  );
+}
+/* Help and What's new keep their text inside the safe area. */
+.help-page {
+  padding: var(--safe-top) env(safe-area-inset-right, 0px) 0
+    env(safe-area-inset-left, 0px);
+}
+.help-page header {
+  top: var(--safe-top);
 }
 /* The banner floats over the map as a rounded card; the map runs under it.
    `--nav-top` (set from its height) keeps notices and buttons below it. */
 .nav-banner {
   position: absolute;
   z-index: 4;
-  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  top: calc(var(--safe-top) + 8px);
   right: 8px;
   left: 8px;
   overflow: hidden;

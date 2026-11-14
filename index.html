@@ -7,6 +7,10 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <title>route-gpx — Route Planner &amp; GPX Export</title>
     <meta
       name="description"
@@ -103,6 +107,7 @@
     </script>
   </head>
   <body class="planner">
+    <div class="top-edge" aria-hidden="true"></div>
     <noscript
       ><p>
         route-gpx needs JavaScript to calculate routes and export GPX.
@@ -644,6 +649,7 @@
       aria-label="Navigation"
       tabindex="-1"
     >
+      <div class="top-edge" aria-hidden="true"></div>
       <div class="nav-banner">
         <div class="nav-banner-main">
           <span id="nav-turn" class="nav-turn"></span>

@@ -2,6 +2,16 @@
 // notice. Without a service worker (development, old browsers, insecure
 // origins) the app works as before, online only.
 
+/**
+ * Marks an iOS home-screen web app (`navigator.standalone`): with the
+ * black-translucent status bar it runs under the status bar, so the page
+ * keeps its controls below a white strip (`.top-edge` in style.css).
+ */
+export function markHomeScreenApp(): void {
+  if ((navigator as Navigator & { standalone?: boolean }).standalone)
+    document.documentElement.classList.add('ios-web-app');
+}
+
 /** Registers `/sw.js` in production builds after the page has loaded. */
 export function registerServiceWorker(): void {
   if (
