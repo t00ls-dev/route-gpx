@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { Coord, Route, Step } from '../src/core';
 import {
   OFF_ROUTE_DELAY,
+  REROUTE_AFTER,
+  REROUTE_INTERVAL,
+  REROUTE_SESSION_CAP,
   compassHeading,
   createNavigationTracker,
   createOffRouteDetector,
+  createRerouteSchedule,
+  spliceRoute,
   isMoving,
   turnToward,
   navigationDistanceLabel,
@@ -211,6 +216,129 @@ describe('off the route', () => {
     // On the way back (past 10 × M), heading west, not the outbound pass.
     expect(r.rejoin!.at).toBeGreaterThan(10 * M);
     expect(r.rejoin!.coord[1]).toBeLessThan(0.005);
+  });
+});
+
+describe('recalculation', () => {
+  it('waits 15 s off the route, then at most once a minute', () => {
+    const plan = createRerouteSchedule();
+    expect(plan.auto(REROUTE_AFTER - 1, 0, true)).toBe(false);
+    expect(plan.auto(REROUTE_AFTER, 0, true)).toBe(true);
+    expect(plan.auto(REROUTE_AFTER, null, true)).toBe(false);
+    expect(plan.auto(REROUTE_AFTER, 0, false)).toBe(false);
+    plan.start(REROUTE_AFTER, true);
+    // Nothing while in flight, by hand or automatically.
+    expect(plan.manual(REROUTE_AFTER + REROUTE_INTERVAL, true)).toBe(false);
+    plan.finish();
+    expect(plan.auto(REROUTE_AFTER + REROUTE_INTERVAL - 1, 0, true)).toBe(
+      false,
+    );
+    expect(plan.wait(REROUTE_AFTER + 1000)).toBe(REROUTE_INTERVAL - 1000);
+    expect(plan.auto(REROUTE_AFTER + REROUTE_INTERVAL, 0, true)).toBe(true);
+    // The button follows the same interval, and only online.
+    expect(plan.manual(REROUTE_AFTER + REROUTE_INTERVAL, false)).toBe(false);
+    expect(plan.manual(REROUTE_AFTER + REROUTE_INTERVAL, true)).toBe(true);
+  });
+  it('stops automatic requests at the session cap, not the button', () => {
+    const plan = createRerouteSchedule();
+    let now = REROUTE_AFTER;
+    for (let i = 0; i < REROUTE_SESSION_CAP; i++) {
+      expect(plan.auto(now, 0, true)).toBe(true);
+      plan.start(now, true);
+      plan.finish();
+      now += REROUTE_INTERVAL;
+    }
+    expect(plan.auto(now, 0, true)).toBe(false);
+    expect(plan.manual(now, true)).toBe(true);
+  });
+  it('aims 300 m past the rejoin point, never past the next stop', () => {
+    const tracker = createNavigationTracker(route(), [[0, 0.01]]);
+    tracker.update({ coord: [0, 0.002], accuracy: 5, time: 0 });
+    const rejoin = {
+      coord: [0, 0.003] as Coord,
+      at: 3 * M,
+      straight: 100,
+      bearing: 90,
+    };
+    expect(tracker.rerouteTarget(rejoin)!.at).toBeCloseTo(3 * M + 300, 0);
+    // The stop at 1.1 km comes first.
+    const far = { ...rejoin, at: 8 * M };
+    expect(tracker.rerouteTarget(far)!.at).toBeCloseTo(10 * M, 0);
+    expect(tracker.rerouteTarget(far)!.coord[1]).toBeCloseTo(0.01, 6);
+    // Without stops, the end of the route.
+    const free = createNavigationTracker(route());
+    free.update({ coord: [0, 0.002], accuracy: 5, time: 0 });
+    expect(free.rerouteTarget({ ...rejoin, at: 19.9 * M })!.at).toBeCloseTo(
+      20 * M,
+      0,
+    );
+  });
+  it('splices the recalculated path onto the planned route', () => {
+    // From 300 m north of the 0.4 km mark, east then south to 0.8 km.
+    const fresh: Route = {
+      segments: [
+        [
+          [0.0027, 0.004],
+          [0.0027, 0.008],
+          [0, 0.008],
+        ],
+      ],
+      steps: [
+        step({ name: 'Side road', kind: 'depart', at: [0.0027, 0.004] }),
+        step({
+          name: 'Cross road',
+          kind: 'turn',
+          modifier: 'right',
+          at: [0.0027, 0.008],
+        }),
+        step({ name: '', kind: 'arrive', at: [0, 0.008], distance: 0 }),
+      ],
+      distance: 750,
+      duration: 60,
+      provider: 'OSRM',
+    };
+    const spliced = spliceRoute(route(), fresh, 8 * M);
+    // One line: the recalculated path, then the planned track from 0.8 km.
+    expect(spliced.segments).toHaveLength(1);
+    expect(spliced.segments[0][0]).toEqual([0.0027, 0.004]);
+    expect(spliced.segments[0].at(-1)![1]).toBeCloseTo(0.02, 9);
+    // Its arrival is gone; the planned maneuvers after 0.8 km follow.
+    expect(
+      navigationManeuvers(spliced).map((m) => m.step.name || m.step.kind),
+    ).toEqual(['Cross road', 'Third road', 'arrive']);
+    expect(spliced.distance).toBeCloseTo(750 + 12 * M, 0);
+    // Navigation on it starts at the position, on the route.
+    const r = createNavigationTracker(spliced).update({
+      coord: [0.0027, 0.0045],
+      accuracy: 5,
+      time: 0,
+    })!;
+    expect(r.offRoute).toBe(false);
+    expect(r.next?.step.name).toBe('Cross road');
+    expect(r.after?.step.name).toBe('Third road');
+  });
+  it('keeps GPX segment gaps after the target', () => {
+    const gapped = route({
+      segments: [east(0, 10), east(12, 20)],
+      steps: [],
+      provider: 'GPX',
+    });
+    const fresh: Route = {
+      segments: [
+        [
+          [0.002, 0.004],
+          [0, 0.006],
+        ],
+      ],
+      steps: [],
+      distance: 300,
+      duration: null,
+      provider: 'OSRM',
+    };
+    const spliced = spliceRoute(gapped, fresh, 6 * M);
+    expect(spliced.segments).toHaveLength(2);
+    expect(spliced.segments[1][0]).toEqual([0, 0.012]);
+    expect(spliced.duration).toBeNull();
   });
 });
 

@@ -233,8 +233,9 @@
           The initial view prefers the URL route, then already authorized GPS,
           approximate IP region, and browser timezone/language. To stop IP
           requests, open Settings and disable Detect region by IP. The selected
-          provider receives your IP address. Exact GPS is never stored or sent
-          to routing services; tile requests reveal the visible area.
+          provider receives your IP address. Exact GPS is never stored; it goes
+          to the routing service only as a navigation recalculation, rounded to
+          about 10 m; tile requests reveal the visible area.
         </p>
         <h2>Choose main roads</h2>
         <p>
@@ -544,9 +545,14 @@
           Back to route, with an arrow and the straight-line distance to a point
           on the route ahead of you, and the map shows a dashed line to it. The
           arrow does not know the roads: take the streets that lead there. It
-          needs no connection. There is no live traffic and no rerouting yet.
-          Your location is watched only from Start navigation until End, pauses
-          while the page is hidden and is never stored or sent.
+          needs no connection. Online, after 15 seconds off the route the app
+          recalculates a way back to the planned route, at most once a minute;
+          Recalculate route asks right away within the same limit. The new path
+          is used only during this navigation; the planned route does not
+          change. There is no live traffic. Your location is watched only from
+          Start navigation until End, pauses while the page is hidden and is
+          never stored; a recalculation sends only your current position,
+          rounded to about 10 m, to the routing server.
         </p>
         <h2>Travel the route</h2>
         <p>
@@ -917,8 +923,8 @@
           aproximada por IP e fuso/idioma do navegador. Para impedir consultas
           por IP, abra Configurações e desative Detectar região pelo IP. O
           provedor escolhido recebe seu endereço IP. O GPS exato nunca é
-          armazenado nem enviado aos roteadores; as requisições de tiles revelam
-          a área visível.
+          armazenado; só vai ao roteador num recálculo da navegação, arredondado
+          para cerca de 10 m; as requisições de tiles revelam a área visível.
         </p>
         <h2>Escolher vias principais</h2>
         <p>
@@ -1242,10 +1248,14 @@
           fica âmbar e diz Volte à rota, com uma seta e a distância em linha
           reta até um ponto da rota à sua frente, e o mapa mostra uma linha
           tracejada até ele. A seta não conhece as ruas: siga pelas ruas que
-          levam até lá. Não precisa de conexão. Ainda não há trânsito ao vivo
-          nem recálculo da rota. Sua localização é acompanhada só de Iniciar
-          navegação até Sair, pausa com a página oculta e nunca é guardada nem
-          enviada.
+          levam até lá. Não precisa de conexão. Com conexão, depois de 15
+          segundos fora da rota o app recalcula um caminho de volta à rota
+          planejada, no máximo uma vez por minuto; Recalcular rota pede na hora,
+          dentro do mesmo limite. O novo caminho vale só nesta navegação; a rota
+          planejada não muda. Não há trânsito ao vivo. Sua localização é
+          acompanhada só de Iniciar navegação até Sair, pausa com a página
+          oculta e nunca é guardada; um recálculo envia ao roteador só a sua
+          posição atual, arredondada para cerca de 10 m.
         </p>
         <h2>Percorrer a rota</h2>
         <p>

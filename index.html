@@ -668,6 +668,12 @@
           <p id="nav-compass" class="nav-chip" hidden>
             <span>Compass imprecise. Move the phone in a figure 8.</span>
           </p>
+          <p id="nav-rerouted" class="nav-chip ok" hidden role="status">
+            <span>Route recalculated</span>
+          </p>
+          <p id="nav-reroute-failed" class="nav-chip" hidden>
+            <span>Could not recalculate the route</span>
+          </p>
           <p id="nav-no-gl" class="nav-chip" hidden>
             <span
               >This browser cannot draw the map. Follow the directions.</span
@@ -690,6 +696,12 @@
             hidden
           ></button>
         </div>
+        <button
+          id="nav-reroute"
+          class="nav-resume nav-reroute"
+          type="button"
+          hidden
+        ></button>
         <button
           id="nav-resume"
           class="nav-resume"

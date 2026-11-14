@@ -117,14 +117,27 @@ interface OsrmResponse {
     }[];
   }[];
 }
-function osrmUrl(state: State): string {
+/** Allowed difference from the start heading, degrees either way. */
+export const START_HEADING_RANGE = 60;
+/**
+ * The OSRM route URL. A start heading (navigation recalculation, degrees
+ * from north) keeps the route from starting against the direction of travel.
+ */
+export function osrmUrl(state: State, startHeading?: number | null): string {
   const pts = state.points
     .map((p) => `${p.coord![1]},${p.coord![0]}`)
     .join(';');
-  return `${serverUrl(state.osrm)}/route/v1/driving/${pts}?overview=full&geometries=geojson&steps=true&continue_straight=true`;
+  const bearings =
+    typeof startHeading === 'number' && Number.isFinite(startHeading)
+      ? `&bearings=${Math.round(((startHeading % 360) + 360) % 360)},${START_HEADING_RANGE}${';'.repeat(state.points.length - 1)}`
+      : '';
+  return `${serverUrl(state.osrm)}/route/v1/driving/${pts}?overview=full&geometries=geojson&steps=true&continue_straight=true${bearings}`;
 }
-export async function osrmRoute(state: State): Promise<Route> {
-  const d = (await json(osrmUrl(state))) as OsrmResponse;
+export async function osrmRoute(
+  state: State,
+  startHeading?: number | null,
+): Promise<Route> {
+  const d = (await json(osrmUrl(state, startHeading))) as OsrmResponse;
   if (d.code !== 'Ok' || !d.routes?.length)
     throw new Error(
       d.code === 'NoRoute'
@@ -263,12 +276,22 @@ interface ValhallaResponse {
     }[];
   };
 }
-export async function valhallaRoute(state: State): Promise<Route> {
+export async function valhallaRoute(
+  state: State,
+  startHeading?: number | null,
+): Promise<Route> {
+  const heading =
+    typeof startHeading === 'number' && Number.isFinite(startHeading)
+      ? Math.round(((startHeading % 360) + 360) % 360)
+      : null;
   const body = {
-    locations: state.points.map((p) => ({
+    locations: state.points.map((p, i) => ({
       lat: p.coord![0],
       lon: p.coord![1],
       type: 'break',
+      ...(i === 0 && heading !== null
+        ? { heading, heading_tolerance: START_HEADING_RANGE }
+        : {}),
     })),
     costing: 'auto',
     costing_options: { auto: { use_highways: state.prefer ? 1 : 0.5 } },
@@ -316,17 +339,18 @@ export async function valhallaRoute(state: State): Promise<Route> {
 export async function calculate(
   state: State,
   isCurrent: () => boolean = () => true,
+  startHeading?: number | null,
 ): Promise<Route> {
   return routing.run(async () => {
     if (!isCurrent()) throw new Error('Superseded route');
     try {
-      return await osrmRoute(state);
+      return await osrmRoute(state, startHeading);
     } catch (e) {
       if (!isCurrent()) throw e;
       await pause(1500);
       if (!isCurrent()) throw e;
       try {
-        return await valhallaRoute(state);
+        return await valhallaRoute(state, startHeading);
       } catch {
         throw new Error(
           `No route available. Check the points or try again later. ${routingFailure(e)} The fallback server also failed.`,
@@ -1184,4 +1208,30 @@ export async function valhallaAttributes(
     out.push(value === undefined ? 'failed' : value);
   }
   return out;
+}
+
+/**
+ * A navigation recalculation (#31): one route from the traveler's position
+ * (already rounded by `navigationPoint`) to a point on the planned route,
+ * with the route's servers and options, on the routing queue with the usual
+ * OSRM → Valhalla fallback and no retries. The caller limits how often.
+ */
+export function navigationRoute(
+  state: State,
+  from: Coord,
+  to: Coord,
+  heading: number | null,
+  isCurrent: () => boolean,
+): Promise<Route> {
+  return calculate(
+    {
+      ...state,
+      points: [
+        { name: 'Position', coord: from },
+        { name: 'Route', coord: to },
+      ],
+    },
+    isCurrent,
+    heading,
+  );
 }

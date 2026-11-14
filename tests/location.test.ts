@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import {
   approximatePoint,
   authorizedView,
+  navigationPoint,
   positionView,
 } from '../src/location';
 import {
@@ -46,4 +47,10 @@ it('does not access the network when IP detection is disabled and rejects insecu
   expect(await approximateRegion(false, defaultRegionUrl)).toBeNull();
   expect(fetch).not.toHaveBeenCalled();
   expect(() => regionUrl('http://example.com')).toThrow();
+});
+
+it('sends a recalculation position of about 10 m only', () => {
+  expect(navigationPoint([-22.123456, -43.654321])).toEqual([
+    -22.1235, -43.6543,
+  ]);
 });

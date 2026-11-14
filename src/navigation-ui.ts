@@ -5,12 +5,13 @@ import type {
   Marker as VectorMarker,
   StyleSpecification,
 } from 'maplibre-gl';
-import type { Coord, Route, Step } from './core';
+import type { Coord, Route, State, Step } from './core';
 import { decimalYear, magneticDeclination } from './declination';
 import { byId as $ } from './dom';
 import { t } from './i18n';
 import { icon, iconControl, type IconName } from './icons';
-import { locationError } from './location';
+import { locationError, navigationPoint } from './location';
+import { navigationRoute } from './services';
 import { creditsDialog } from './map-credits';
 import { osmCredit } from './tile-layers';
 import { maneuverIcon, maneuverText } from './maneuvers';
@@ -18,6 +19,8 @@ import { navigationStyle } from './navigation-style';
 import {
   compassHeading,
   createNavigationTracker,
+  createRerouteSchedule,
+  spliceRoute,
   isMoving,
   turnToward,
   navigationDistanceLabel,
@@ -43,6 +46,8 @@ import { distanceUnits } from './unit-preferences';
 const NOTICE_KEY = 'navigation-notice';
 /** Vector tiles are 512 px: zoom 16 shows what raster zoom 17 did. */
 const ZOOM = 16;
+/** How long "Route recalculated" stays on screen, ms. */
+const REROUTED_NOTICE = 4000;
 /** Room kept between the rejoin point and the screen edges, pixels. */
 const REJOIN_MARGIN = 40;
 /** Off the route, the map never zooms out farther than this. */
@@ -151,6 +156,8 @@ function maneuverGlyph(step: Step | null): SVGSVGElement {
 
 export function setupNavigation(deps: {
   route: () => Route | null;
+  /** The planned route's state: servers, options and route points. */
+  state: () => State;
   speedKmh: () => number;
   locale: () => string;
   status: (message: string, error?: boolean) => void;
@@ -181,6 +188,10 @@ export function setupNavigation(deps: {
   $('nav-gps').prepend(icon('alert'));
   $('nav-no-map').prepend(icon('info'));
   $('nav-no-gl').prepend(icon('info'));
+  $('nav-rerouted').prepend(icon('route'));
+  $('nav-reroute-failed').prepend(icon('alert'));
+  const rerouteButton = $<HTMLButtonElement>('nav-reroute');
+  rerouteButton.onclick = () => reroute(true);
   $('nav-compass').prepend(icon('alert'));
   // Credits behind an info button, as on the planner map.
   const credits = creditsDialog({
@@ -234,6 +245,13 @@ export function setupNavigation(deps: {
     last: { coord: Coord; accuracy: number } | null = null,
     readout: NavigationReadout | null = null,
     announced: NavigationManeuver | 'off' | null | undefined,
+    /** Each navigation gets a number; late answers of an older one are dropped. */
+    session = 0,
+    schedule = createRerouteSchedule(),
+    rerouting: 'idle' | 'pending' | 'failed' = 'idle',
+    /** GPS course while moving, degrees, or null. */
+    course: number | null = null,
+    reroutedTimer = 0,
     tileErrors = 0,
     tileLoads = 0,
     pivot = { x: 0, y: 0 };
@@ -644,6 +662,7 @@ export function setupNavigation(deps: {
     const rejoin = !arrived ? (r?.rejoin ?? null) : null;
     screen.classList.toggle('off-route', !!rejoin);
     $('nav-hint').hidden = !rejoin;
+    renderReroute(!!rejoin);
     drawRejoin();
     if (rejoin) {
       // Off the route: an arrow to the rejoin point and the straight distance.
@@ -662,6 +681,24 @@ export function setupNavigation(deps: {
     } else renderManeuver(r, arrived);
     announce(r, arrived, !!rejoin);
     renderBar(r);
+  }
+  /** The Recalculate route button and the failure notice, off the route. */
+  function renderReroute(offRoute: boolean) {
+    const online = navigator.onLine,
+      wait = schedule.wait(Date.now());
+    rerouteButton.hidden = !offRoute || !online;
+    $('nav-reroute-failed').hidden = !offRoute || rerouting !== 'failed';
+    const label =
+      rerouting === 'pending'
+        ? 'Recalculating…'
+        : wait > 0
+          ? `Recalculate in ${Math.ceil(wait / 1000)} s`
+          : 'Recalculate route';
+    if (rerouteButton.dataset.label !== label) {
+      rerouteButton.dataset.label = label;
+      iconControl(rerouteButton, 'refresh', label);
+    }
+    rerouteButton.disabled = !schedule.manual(Date.now(), online);
   }
   function renderManeuver(r: NavigationReadout | null, arrived: boolean) {
     const turn = $('nav-turn');
@@ -765,10 +802,84 @@ export function setupNavigation(deps: {
       travelHeading = readout.heading;
     else if (deviceHeading !== null && Number.isFinite(deviceHeading))
       travelHeading = deviceHeading;
+    // The GPS course, while moving, tells the router which way the
+    // traveler is going; the compass is not reliable enough for that.
+    course =
+      moving && deviceHeading !== null && Number.isFinite(deviceHeading)
+        ? deviceHeading
+        : null;
     chooseHeading();
     calibrationNotice();
     render();
     place();
+    reroute(false);
+  }
+  /** Route points after the start, so neither hint nor reroute skips one. */
+  function stops(): Coord[] {
+    return deps
+      .state()
+      .points.slice(1)
+      .flatMap((p) => (p.coord ? [p.coord] : []));
+  }
+  /**
+   * Off the route, asks the router for a way back to the planned route,
+   * automatically or from the button, within `createRerouteSchedule`'s
+   * limits. Only the position (about 10 m) and the course are sent; the new
+   * route lives in page memory until End.
+   */
+  function reroute(manual: boolean) {
+    const r = readout;
+    if (!r?.rejoin || !last || !route || !tracker) return;
+    const now = Date.now(),
+      online = navigator.onLine;
+    if (
+      manual
+        ? !schedule.manual(now, online)
+        : !schedule.auto(now, r.offSince, online)
+    )
+      return;
+    const target = tracker.rerouteTarget(r.rejoin);
+    if (!target) return;
+    const planned = route,
+      mine = session;
+    // Superseded once navigation ends or the traveler is back on the route.
+    const isCurrent = () => mine === session && !!readout?.offRoute;
+    schedule.start(now, !manual);
+    rerouting = 'pending';
+    render();
+    navigationRoute(
+      deps.state(),
+      navigationPoint(last.coord),
+      target.coord,
+      course,
+      isCurrent,
+    )
+      .then((fresh) => {
+        if (!isCurrent() || route !== planned || !last) return;
+        route = spliceRoute(planned, fresh, target.at);
+        tracker = createNavigationTracker(route, stops());
+        readout = tracker.update(last);
+        announced = undefined;
+        drawRoute(route);
+        rerouting = 'idle';
+        $('nav-rerouted').hidden = false;
+        clearTimeout(reroutedTimer);
+        reroutedTimer = window.setTimeout(
+          () => ($('nav-rerouted').hidden = true),
+          REROUTED_NOTICE,
+        );
+      })
+      .catch(() => {
+        // No retry: the local hint stays until the next allowed attempt.
+        if (mine === session) rerouting = 'failed';
+      })
+      .finally(() => {
+        if (mine !== session) return;
+        schedule.finish();
+        if (rerouting === 'pending') rerouting = 'idle';
+        render();
+        place();
+      });
   }
   function onError(error: GeolocationPositionError) {
     if (error.code === 1) {
@@ -829,7 +940,11 @@ export function setupNavigation(deps: {
   function start() {
     route = deps.route();
     if (!route) return;
-    tracker = createNavigationTracker(route);
+    session++;
+    schedule = createRerouteSchedule();
+    rerouting = 'idle';
+    course = null;
+    tracker = createNavigationTracker(route, stops());
     declinationAt(route.segments[0]?.[0]);
     last = null;
     readout = null;
@@ -887,6 +1002,10 @@ export function setupNavigation(deps: {
   }
   /** Every way out (Stop, Escape, the back gesture) ends here. */
   function cleanup() {
+    // A recalculation still under way belongs to this navigation only.
+    session++;
+    clearTimeout(reroutedTimer);
+    $('nav-rerouted').hidden = true;
     document.documentElement.classList.remove('navigating');
     stopWatching();
     orientationEvents.forEach((name) =>

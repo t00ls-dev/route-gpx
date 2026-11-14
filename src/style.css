@@ -3178,6 +3178,31 @@ dialog.nav-screen::backdrop {
 .nav-resume .button-icon {
   fill: currentColor;
 }
+/* Off the route: Recalculate route, above Re-center when both show. */
+.nav-reroute {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-warning);
+}
+.nav-reroute .button-icon {
+  fill: none;
+}
+.nav-reroute:disabled {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+.nav-reroute[hidden] {
+  display: none;
+}
+.nav-reroute:has(~ .nav-resume:not([hidden])) {
+  bottom: 92px;
+}
+.nav-chip.ok {
+  border-color: var(--color-primary);
+  background: var(--color-soft);
+  color: var(--color-primary-strong);
+}
 .nav-credits {
   position: absolute;
   z-index: 3;

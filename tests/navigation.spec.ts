@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { chooseUnits } from './unit-settings';
 import { decimalYear, magneticDeclination } from '../src/declination';
 const base = 'http://127.0.0.1:5173/';
@@ -622,6 +622,176 @@ test.describe('phone navigation', () => {
       await expect(page.locator('#nav-screen')).not.toHaveClass(/off-route/);
       await expect.poll(zoom).toBeCloseTo(following, 1);
     });
+
+  /**
+   * Recalculation requests (any routing request not from the planned
+   * start), answered with a path east then south back to the route, or
+   * refused. Registered after `setup`, so it is matched first.
+   */
+  async function mockReroute(page: Page, ok = true) {
+    const asked: string[] = [];
+    const reroute = (url: string) => !url.includes(`/${lon(0)},${lat};`);
+    await page.route('**/route/v1/driving/**', (r) => {
+      if (!reroute(r.request().url())) return r.fallback();
+      asked.push(r.request().url());
+      if (!ok) return r.fulfill({ status: 503, body: '' });
+      const [from, to] = decodeURIComponent(
+        r.request().url().split('/driving/')[1].split('?')[0],
+      )
+        .split(';')
+        .map((p) => p.split(',').map(Number));
+      const corner = [to[0], from[1]];
+      return r.fulfill({
+        json: {
+          code: 'Ok',
+          waypoints: [from, to].map((location) => ({ location, distance: 0 })),
+          routes: [
+            {
+              distance: 700,
+              duration: 60,
+              geometry: { coordinates: [from, corner, to] },
+              legs: [
+                {
+                  steps: [
+                    {
+                      name: 'Rua Lateral',
+                      distance: 400,
+                      duration: 30,
+                      maneuver: { type: 'depart', location: from },
+                    },
+                    {
+                      name: 'Rua de Volta',
+                      distance: 300,
+                      duration: 30,
+                      maneuver: {
+                        type: 'turn',
+                        modifier: 'right',
+                        location: corner,
+                      },
+                    },
+                    {
+                      name: '',
+                      distance: 0,
+                      duration: 0,
+                      maneuver: { type: 'arrive', location: to },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+    });
+    await page.route('**/valhalla1.openstreetmap.de/**', (r) => {
+      asked.push(r.request().url());
+      return r.fulfill({ status: 503, body: '' });
+    });
+    return asked;
+  }
+  /** About 330 m north of the route at the 0.7 km mark; `shift` makes a new fix. */
+  const offRoute = (context: BrowserContext, shift = 0) =>
+    context.setGeolocation({
+      latitude: lat + 0.003 + shift,
+      longitude: lon(7) + shift,
+      accuracy: 8,
+    });
+
+  test('off the route for 15 s, the route is recalculated once', async ({
+    page,
+    context,
+  }) => {
+    await setup(page);
+    const asked = await mockReroute(page);
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await expect(page.locator('#nav-road')).toHaveText('Estrada das Furnas');
+    // New fixes every few seconds while off the route.
+    for (let i = 0; i < 7; i++) {
+      await offRoute(context, i * 0.00001);
+      await page.waitForTimeout(3000);
+    }
+    await expect(page.locator('#nav-road')).toHaveText('Rua de Volta');
+    await expect(page.locator('#nav-rerouted')).toBeVisible();
+    await expect(page.locator('#nav-screen')).not.toHaveClass(/off-route/);
+    expect(asked).toHaveLength(1);
+    // Only the position, rounded to 4 decimals (about 10 m), is sent.
+    const [from] = asked[0].split('/driving/')[1].split(';');
+    const [x, y] = from.split(',');
+    expect(x).toMatch(/^-43\.\d{4}$/);
+    expect(y).toMatch(/^-22\.\d{4}$/);
+    expect(Number(y)).toBeCloseTo(lat + 0.003, 3);
+    // The planned route goes on after the recalculated path.
+    await expect(page.locator('#nav-then')).toBeVisible();
+    // Nothing more within the minute, and the planner's route is unchanged.
+    await page.waitForTimeout(2000);
+    expect(asked).toHaveLength(1);
+    await page.locator('#nav-stop').click();
+    expect(page.url()).not.toContain('43.233');
+  });
+
+  test('Recalculate route asks once; a failure keeps the hint', async ({
+    page,
+    context,
+  }) => {
+    await setup(page);
+    const asked = await mockReroute(page, false);
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await expect(page.locator('#nav-road')).toHaveText('Estrada das Furnas');
+    const button = page.getByRole('button', { name: 'Recalculate route' });
+    await offRoute(context);
+    await page.waitForTimeout(5500);
+    await offRoute(context, 0.00001);
+    await expect(page.locator('#nav-road')).toHaveText('Back to route');
+    await expect(button).toBeEnabled();
+    await button.click();
+    // OSRM, then the Valhalla fallback once; no retry.
+    await expect(page.locator('#nav-reroute-failed')).toBeVisible({
+      timeout: 10000,
+    });
+    expect(asked).toHaveLength(2);
+    await expect(page.locator('#nav-road')).toHaveText('Back to route');
+    await expect(page.locator('#nav-hint')).toBeVisible();
+    // The button waits out the minute, saying how long.
+    const waiting = page.locator('#nav-reroute');
+    await expect(waiting).toBeDisabled();
+    await expect(waiting).toHaveText(/^Recalculate in \d+ s$/);
+    expect(await fits(page)).toEqual([]);
+    // Offline, there is no button and nothing is sent.
+    await context.setOffline(true);
+    await offRoute(context, 0.00002);
+    await expect(waiting).toBeHidden();
+    expect(asked).toHaveLength(2);
+    await context.setOffline(false);
+  });
+
+  test('the recalculation texts fit at 320 px in Portuguese', async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await setup(page);
+    await page.locator('#language').selectOption('pt');
+    await mockReroute(page, false);
+    await page.locator('#navigate').click();
+    await page.locator('#nav-notice-start').click();
+    await offRoute(context);
+    await page.waitForTimeout(5500);
+    await offRoute(context, 0.00001);
+    const button = page.getByRole('button', { name: 'Recalcular rota' });
+    await expect(button).toBeVisible();
+    expect(await fits(page)).toEqual([]);
+    await button.click();
+    await expect(page.locator('#nav-reroute-failed')).toHaveText(
+      'Não foi possível recalcular a rota',
+      { timeout: 10000 },
+    );
+    await expect(page.locator('#nav-reroute')).toHaveText(
+      /^Recalcular em \d+ s$/,
+    );
+    expect(await fits(page)).toEqual([]);
+  });
 
   test('without map tiles the route still shows with a notice', async ({
     page,
