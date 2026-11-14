@@ -43,7 +43,11 @@ import {
   type Language,
 } from './i18n';
 import { languageQuery } from './seo';
-import { registerServiceWorker, watchConnection } from './offline';
+import {
+  markHomeScreenApp,
+  registerServiceWorker,
+  watchConnection,
+} from './offline';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './style.css';
@@ -1589,6 +1593,7 @@ pageLinks(initialLanguage, encodeState(state));
 renderPoints();
 observeTranslations();
 watchConnection($('offline-notice'));
+markHomeScreenApp();
 registerServiceWorker();
 $<HTMLSelectElement>('language').onchange = () => {
   const lang = $<HTMLSelectElement>('language').value as Language;

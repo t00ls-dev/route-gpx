@@ -40,6 +40,7 @@ The site is deployed from `main` after every merge, so entries under Unreleased 
 ### Fixed
 
 - After an update, the app no longer opens with plain text and no icons; opened again from the home screen, it switches to the new version by itself, without removing and adding the icon.
+- Opened from an icon on the iPhone home screen, the map no longer shows faded behind the clock and battery: they sit on a white strip and the controls, dialogs, navigation, Help and What's new start below it; the buttons at the bottom sit right above the home indicator. Add the icon again to get it.
 - On touch screens, tapping Download GPX before the route is ready no longer makes it look available.
 - Screen readers announce each point's search results as a named group, and on phones the route panel no longer jumps down while the page loads.
 - Weather icons no longer pile up when the map is zoomed out: icons that would cover each other show as one (the worst alert among them, otherwise a start, stop or destination, otherwise the worst weather) with a +N count of the others, bordered in red when they include alerts; tapping the count or zooming in shows them all.

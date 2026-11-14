@@ -3,6 +3,16 @@
 // origins) the app works as before, online only.
 
 /**
+ * Marks an iOS home-screen web app (`navigator.standalone`): with the
+ * black-translucent status bar it runs under the status bar, so the page
+ * keeps its controls below a white strip (`.top-edge` in style.css).
+ */
+export function markHomeScreenApp(): void {
+  if ((navigator as Navigator & { standalone?: boolean }).standalone)
+    document.documentElement.classList.add('ios-web-app');
+}
+
+/**
  * A home-screen web app is resumed, not reloaded, so it could stay on an old
  * build. Each time the page is shown again it asks for a new service worker;
  * once a new build takes over (it activates at once), the page reloads
