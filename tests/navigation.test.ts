@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Coord, Route, Step } from '../src/core';
 import {
+  OFF_ROUTE_DELAY,
   compassHeading,
   createNavigationTracker,
+  createOffRouteDetector,
   isMoving,
   turnToward,
   navigationDistanceLabel,
@@ -136,6 +138,79 @@ describe('navigation tracker', () => {
     const [part] = tracker.travelled(2 * M);
     expect(part[0]).toEqual([0, 0]);
     expect(part.at(-1)![1]).toBeCloseTo(0.002, 6);
+  });
+});
+
+describe('off the route', () => {
+  it('needs a sustained distance beyond the accuracy-aware threshold', () => {
+    const detect = createOffRouteDetector();
+    // 60 m off with a 5 m accuracy: beyond 50 m, but not yet for long.
+    expect(detect(60, 5, 0)).toBe(false);
+    expect(detect(60, 5, OFF_ROUTE_DELAY - 1)).toBe(false);
+    expect(detect(60, 5, OFF_ROUTE_DELAY)).toBe(true);
+    // A fix back near the route in between restarts the wait.
+    const again = createOffRouteDetector();
+    again(60, 5, 0);
+    again(20, 5, 3000);
+    expect(again(60, 5, 6000)).toBe(false);
+    expect(again(60, 5, 6000 + OFF_ROUTE_DELAY)).toBe(true);
+  });
+  it('scales the threshold with the accuracy and ignores poor fixes', () => {
+    const detect = createOffRouteDetector();
+    // 60 m off with a 40 m accuracy is within 1.5 × 40 m: still on route.
+    detect(60, 40, 0);
+    expect(detect(60, 40, 10000)).toBe(false);
+    expect(detect(70, 40, 20000)).toBe(false);
+    expect(detect(70, 40, 20000 + OFF_ROUTE_DELAY)).toBe(true);
+    // A fix worse than 100 m changes nothing either way.
+    expect(detect(0, 150, 40000)).toBe(true);
+  });
+  it('comes back on route only well inside the threshold (hysteresis)', () => {
+    const detect = createOffRouteDetector();
+    detect(80, 5, 0);
+    expect(detect(80, 5, OFF_ROUTE_DELAY)).toBe(true);
+    // Between 25 m and 50 m: neither back nor newly off.
+    expect(detect(40, 5, 6000)).toBe(true);
+    expect(detect(20, 5, 7000)).toBe(false);
+  });
+  it('points to a rejoin point ahead, never behind the progress', () => {
+    const tracker = createNavigationTracker(route());
+    tracker.update({ coord: [0, 0.004], accuracy: 5, time: 0 });
+    // About 330 m north of the route, beside the 0.5 km mark.
+    const off = { coord: [0.003, 0.005] as Coord, accuracy: 5 };
+    expect(tracker.update({ ...off, time: 1000 })!.offRoute).toBe(false);
+    const r = tracker.update({ ...off, time: 1000 + OFF_ROUTE_DELAY })!;
+    expect(r.offRoute).toBe(true);
+    // Ahead of the point straight below, where the trip is shortest.
+    expect(r.rejoin!.at).toBeGreaterThan(r.progress);
+    expect(r.rejoin!.at).toBeGreaterThan(5 * M + 50);
+    expect(r.rejoin!.coord[0]).toBeCloseTo(0, 6);
+    // Down and to the right: south-east.
+    expect(r.rejoin!.bearing).toBeGreaterThan(90);
+    expect(r.rejoin!.bearing).toBeLessThan(180);
+    // The way left counts the straight line back.
+    expect(r.remaining).toBeCloseTo(
+      r.rejoin!.straight + 20 * M - r.rejoin!.at,
+      0,
+    );
+    // Back on the route, the hint goes away.
+    const back = tracker.update({ coord: [0, 0.008], accuracy: 5, time: 9000 });
+    expect(back!.offRoute).toBe(false);
+    expect(back!.rejoin).toBeNull();
+  });
+  it('rejoins the pass being travelled on an out-and-back route', () => {
+    const back = [...east(0, 10)].reverse();
+    const tracker = createNavigationTracker(
+      route({ segments: [[...east(0, 10), ...back.slice(1)]], steps: [] }),
+    );
+    tracker.update({ coord: [0, 0.01], accuracy: 5, time: 0 });
+    tracker.update({ coord: [0, 0.006], accuracy: 5, time: 1000 });
+    const off = { coord: [0.002, 0.005] as Coord, accuracy: 5 };
+    tracker.update({ ...off, time: 2000 });
+    const r = tracker.update({ ...off, time: 2000 + OFF_ROUTE_DELAY })!;
+    // On the way back (past 10 × M), heading west, not the outbound pass.
+    expect(r.rejoin!.at).toBeGreaterThan(10 * M);
+    expect(r.rejoin!.coord[1]).toBeLessThan(0.005);
   });
 });
 

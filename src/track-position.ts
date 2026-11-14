@@ -212,3 +212,64 @@ export function legDistances(segments: Coord[][], points: Coord[]): number[] {
     return [position.distance];
   });
 }
+
+/** Roads are about this much longer than the straight line (circuity). */
+export const ROAD_DETOUR = 1.4;
+/** How far ahead of the progress a rejoin point is looked for, meters. */
+export const REJOIN_LOOKAHEAD = 10000;
+
+export interface RejoinPoint {
+  coord: Coord;
+  /** Along-track distance of the point, meters (never behind the progress). */
+  at: number;
+  /** Straight-line distance from the position, meters. */
+  straight: number;
+  /** Direction from the position to the point, degrees from north. */
+  bearing: number;
+}
+/**
+ * Where to rejoin the route from a position off it: the point on the track
+ * ahead of the progress (never behind it) that makes the trip shortest,
+ * counting the way back as the straight line times `ROAD_DETOUR` plus the
+ * route left from there. It does not know the roads; it is a hint.
+ */
+export function rejoinPoint(
+  index: TrackIndex,
+  coord: Coord,
+  progress: number,
+): RejoinPoint | null {
+  let best: {
+    coord: Coord;
+    at: number;
+    straight: number;
+    cost: number;
+  } | null = null;
+  const consider = (point: Coord, at: number) => {
+    const straight = meters(coord, point);
+    const cost = ROAD_DETOUR * straight + (index.total - at);
+    if (!best || cost < best.cost) best = { coord: point, at, straight, cost };
+  };
+  const along = (edge: Edge, t: number): Coord => [
+    edge.a[0] + (edge.b[0] - edge.a[0]) * t,
+    ((edge.a[1] + longitudeDelta(edge.a[1], edge.b[1]) * t + 540) % 360) - 180,
+  ];
+  for (const edge of index.edges) {
+    const end = edge.from + edge.length;
+    if (end < progress) continue;
+    if (edge.from > progress + REJOIN_LOOKAHEAD) break;
+    // The part of the edge at or ahead of the progress.
+    const t0 = Math.max(0, (progress - edge.from) / edge.length);
+    const { t } = project(edge, coord);
+    consider(along(edge, t0), edge.from + t0 * edge.length);
+    if (t > t0) consider(along(edge, t), edge.from + t * edge.length);
+    consider(edge.b, end);
+  }
+  if (!best) return null;
+  const chosen = best as { coord: Coord; at: number; straight: number };
+  return {
+    coord: chosen.coord,
+    at: chosen.at,
+    straight: chosen.straight,
+    bearing: bearingBetween(coord, chosen.coord) ?? 0,
+  };
+}

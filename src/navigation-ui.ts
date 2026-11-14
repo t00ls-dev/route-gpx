@@ -43,6 +43,10 @@ import { distanceUnits } from './unit-preferences';
 const NOTICE_KEY = 'navigation-notice';
 /** Vector tiles are 512 px: zoom 16 shows what raster zoom 17 did. */
 const ZOOM = 16;
+/** Room kept between the rejoin point and the screen edges, pixels. */
+const REJOIN_MARGIN = 40;
+/** Off the route, the map never zooms out farther than this. */
+const MIN_REJOIN_ZOOM = 12;
 /** OpenFreeMap's public vector style (#140). */
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 /** Without the style, the route and position draw on this background. */
@@ -229,7 +233,7 @@ export function setupNavigation(deps: {
     frame = 0,
     last: { coord: Coord; accuracy: number } | null = null,
     readout: NavigationReadout | null = null,
-    announced: NavigationManeuver | null | undefined,
+    announced: NavigationManeuver | 'off' | null | undefined,
     tileErrors = 0,
     tileLoads = 0,
     pivot = { x: 0, y: 0 };
@@ -267,6 +271,16 @@ export function setupNavigation(deps: {
       ?.querySelector<HTMLElement>('.nav-arrow');
     const angle = Math.round((heading + rotorAngle) * 10) / 10 || 0;
     if (arrow) arrow.style.transform = `rotate(${angle}deg)`;
+    turnRejoinArrow();
+  }
+  /** Off the route, the banner arrow points to the rejoin point on screen. */
+  function turnRejoinArrow() {
+    const svg = $('nav-turn').querySelector<SVGElement>('.rejoin');
+    if (!svg || !readout?.rejoin) return;
+    const angle =
+      Math.round((((readout.rejoin.bearing + rotorAngle) % 360) + 360) % 360) ||
+      0;
+    svg.style.transform = `rotate(${angle}deg)`;
   }
   /** A pinch or double tap: following keeps following, at that zoom. */
   function userZoom() {
@@ -453,6 +467,7 @@ export function setupNavigation(deps: {
     m.addSource('travelled', { type: 'geojson', data: lines([]) });
     m.addSource('route', { type: 'geojson', data: lines([]) });
     m.addSource('accuracy', { type: 'geojson', data: lines([]) });
+    m.addSource('rejoin', { type: 'geojson', data: lines([]) });
     const line = { 'line-cap': 'round', 'line-join': 'round' } as const;
     m.addLayer({
       id: 'nav-accuracy',
@@ -478,6 +493,59 @@ export function setupNavigation(deps: {
       layout: line,
       paint: { 'line-color': '#8795a1', 'line-width': 8 },
     });
+    // Off the route: a dashed straight line to the rejoin point, and a ring
+    // there. Dashes say it is not a road.
+    m.addLayer({
+      id: 'nav-rejoin',
+      type: 'line',
+      source: 'rejoin',
+      filter: ['==', ['geometry-type'], 'LineString'],
+      layout: { 'line-cap': 'round' },
+      paint: {
+        'line-color': '#74420b',
+        'line-width': 4,
+        'line-dasharray': [0.5, 2],
+      },
+    });
+    m.addLayer({
+      id: 'nav-rejoin-point',
+      type: 'circle',
+      source: 'rejoin',
+      filter: ['==', ['geometry-type'], 'Point'],
+      paint: {
+        'circle-radius': 9,
+        'circle-color': '#ffffff',
+        'circle-stroke-color': '#74420b',
+        'circle-stroke-width': 4,
+      },
+    });
+  }
+  /** The dashed way back from the position to the rejoin point, or nothing. */
+  function drawRejoin() {
+    const rejoin = readout?.rejoin;
+    const lonLat = (c: Coord) => [c[1], c[0]];
+    source('rejoin')?.setData(
+      rejoin && last
+        ? {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: [lonLat(last.coord), lonLat(rejoin.coord)],
+                },
+              },
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'Point', coordinates: lonLat(rejoin.coord) },
+              },
+            ],
+          }
+        : lines([]),
+    );
   }
   /** Without tiles the route still draws over the neutral background. */
   function mapNotice() {
@@ -493,13 +561,36 @@ export function setupNavigation(deps: {
     source('travelled')?.setData(lines([]));
   }
 
+  /**
+   * While following off the route, the zoom steps out just enough for the
+   * rejoin point to show between the traveler and the screen edges, in any
+   * direction; on the route it is the traveler's chosen zoom.
+   */
+  function zoomToRejoin(coord: Coord): number {
+    const rejoin = readout?.rejoin;
+    if (!rejoin) return followZoom;
+    const w = stage.clientWidth;
+    const room = Math.max(
+      60,
+      Math.min(pivot.y - bannerBottom(), w / 2, stage.clientHeight - pivot.y) -
+        REJOIN_MARGIN,
+    );
+    // Meters per CSS pixel at the follow zoom (512 px vector tiles).
+    const perPixel =
+      (40075016.7 * Math.cos((coord[0] * Math.PI) / 180)) /
+      (512 * 2 ** followZoom);
+    const needed = rejoin.straight / perPixel;
+    return needed <= room
+      ? followZoom
+      : Math.max(MIN_REJOIN_ZOOM, followZoom - Math.log2(needed / room));
+  }
   /** Moves the map and the marker to the latest fix (or the route start). */
   function place() {
     if (!map || !route) return;
     const coord = last?.coord ?? route.segments[0]?.[0];
     if (!coord) return;
     if (view === 'follow')
-      map.jumpTo({ center: [coord[1], coord[0]], zoom: followZoom });
+      map.jumpTo({ center: [coord[1], coord[0]], zoom: zoomToRejoin(coord) });
     else if (view === 'overview') {
       setRotor(0);
       const all = route.segments.flat();
@@ -550,12 +641,36 @@ export function setupNavigation(deps: {
     const r = readout;
     const turn = $('nav-turn');
     const arrived = !!r?.arrived;
+    const rejoin = !arrived ? (r?.rejoin ?? null) : null;
+    screen.classList.toggle('off-route', !!rejoin);
+    $('nav-hint').hidden = !rejoin;
+    drawRejoin();
+    if (rejoin) {
+      // Off the route: an arrow to the rejoin point and the straight distance.
+      const arrow = icon('maneuver-straight');
+      arrow.classList.add('rejoin');
+      turn.replaceChildren(arrow);
+      turnRejoinArrow();
+      $('nav-distance').hidden = false;
+      $('nav-distance').textContent = navigationDistanceLabel(
+        rejoin.straight,
+        units(),
+        deps.locale(),
+      );
+      $('nav-road').textContent = 'Back to route';
+      $('nav-then').hidden = true;
+    } else renderManeuver(r, arrived);
+    announce(r, arrived, !!rejoin);
+    renderBar(r);
+  }
+  function renderManeuver(r: NavigationReadout | null, arrived: boolean) {
+    const turn = $('nav-turn');
     const step = arrived ? null : (r?.next?.step ?? null);
     turn.replaceChildren(maneuverGlyph(step));
     $('nav-distance').textContent = arrived
       ? ''
       : navigationDistanceLabel(
-          r ? r.toNext : tracker.total,
+          r ? r.toNext : (tracker?.total ?? 0),
           units(),
           deps.locale(),
         );
@@ -575,16 +690,26 @@ export function setupNavigation(deps: {
         deps.locale(),
       );
     }
-    // Spoken by screen readers only when the maneuver changes.
-    const current = arrived ? null : (r?.next ?? null);
-    if (r && current !== announced) {
-      announced = current;
-      $('nav-announce').textContent = arrived
+  }
+  /** Spoken by screen readers only when the maneuver or the state changes. */
+  function announce(
+    r: NavigationReadout | null,
+    arrived: boolean,
+    offRoute: boolean,
+  ) {
+    const current = offRoute ? 'off' : arrived ? null : (r?.next ?? null);
+    if (!r || current === announced) return;
+    announced = current;
+    $('nav-announce').textContent = offRoute
+      ? `${t('Off the route')} · ${t('Back to route')}`
+      : arrived
         ? t('You have arrived')
-        : current
-          ? `${t(maneuverText(current.step) ?? 'Continue')} · ${roadText(current.step)}`
+        : r.next
+          ? `${t(maneuverText(r.next.step) ?? 'Continue')} · ${roadText(r.next.step)}`
           : t('Destination');
-    }
+  }
+  function renderBar(r: NavigationReadout | null) {
+    if (!tracker) return;
     const remaining = r ? r.remaining : tracker.total;
     const seconds = travelTimeSeconds(remaining, deps.speedKmh());
     $('nav-time').textContent = r ? navigationDurationLabel(seconds) : '—';
