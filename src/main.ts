@@ -1793,6 +1793,7 @@ setupPanel(map);
 setupHomeScreen();
 const navigation = setupNavigation({
   route: () => current,
+  state: () => state,
   speedKmh: () => speedKmh,
   locale: () => (state.language === 'pt' ? 'pt-BR' : 'en'),
   status,

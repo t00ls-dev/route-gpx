@@ -3,7 +3,9 @@ import { defaults } from '../src/core';
 import {
   calculate,
   decodePolyline,
+  navigationRoute,
   osrmRoute,
+  osrmUrl,
   RequestQueue,
   routingFailure,
   valhallaRoute,
@@ -336,6 +338,53 @@ it('does not start Valhalla when a route is superseded during the fallback delay
   await vi.runAllTimersAsync();
   await assertion;
   expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+describe('navigation recalculation', () => {
+  it('sends the direction of travel to OSRM for the first point only', () => {
+    expect(osrmUrl(state(), 452.4)).toContain('&bearings=92,60;');
+    expect(osrmUrl(state())).not.toContain('bearings');
+    expect(osrmUrl(state(), null)).not.toContain('bearings');
+  });
+  it('asks once from the position, with Valhalla as the only fallback', async () => {
+    vi.useFakeTimers();
+    const fetch = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({}),
+      });
+    vi.stubGlobal('fetch', fetch);
+    const done = navigationRoute(
+      state(),
+      [-22.1234, -43.5678],
+      [-22.2, -43.6],
+      90,
+      () => true,
+    );
+    const failed = expect(done).rejects.toThrow('No route available');
+    await vi.runAllTimersAsync();
+    await failed;
+    // OSRM, then Valhalla once; no retries.
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const [osrmCall, valhallaCall] = fetch.mock.calls.map((c) => String(c[0]));
+    expect(osrmCall).toContain(
+      '/route/v1/driving/-43.5678,-22.1234;-43.6,-22.2?',
+    );
+    expect(osrmCall).toContain('bearings=90,60;');
+    const body = JSON.parse(
+      decodeURIComponent(valhallaCall.split('json=')[1]),
+    ) as { locations: Record<string, unknown>[] };
+    expect(body.locations[0]).toMatchObject({
+      lat: -22.1234,
+      lon: -43.5678,
+      heading: 90,
+      heading_tolerance: 60,
+    });
+    expect(body.locations[1]).not.toHaveProperty('heading');
+  });
 });
 
 describe('routing failure sentence', () => {

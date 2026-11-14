@@ -50,6 +50,14 @@ export function locationError(code: number): string {
       ? 'Location timed out. Move to an open area and try again, or choose a point on the map.'
       : 'Location unavailable. Check your device location settings or choose a point on the map.';
 }
+/**
+ * The traveler's position for a navigation recalculation (#31): about 10 m
+ * (4 decimals), so the new route starts on the right street. It is the only
+ * position ever sent, at that moment only, and never stored.
+ */
+export function navigationPoint(coord: Coord): Coord {
+  return coord.map((n) => Number(n.toFixed(4))) as Coord;
+}
 // Route services only receive an explicitly chosen approximate point (~100 m grid).
 export function approximatePoint(coord: Coord): Coord {
   const rounded = coord.map((n) => Number(n.toFixed(3))) as Coord;

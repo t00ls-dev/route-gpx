@@ -229,7 +229,8 @@ export interface RejoinPoint {
 }
 /**
  * Where to rejoin the route from a position off it: the point on the track
- * ahead of the progress (never behind it) that makes the trip shortest,
+ * ahead of the progress (never behind it, nor past `limit`) that makes the
+ * trip shortest,
  * counting the way back as the straight line times `ROAD_DETOUR` plus the
  * route left from there. It does not know the roads; it is a hint.
  */
@@ -237,7 +238,10 @@ export function rejoinPoint(
   index: TrackIndex,
   coord: Coord,
   progress: number,
+  /** Along-track distance it may not pass (the next route point). */
+  limit = Infinity,
 ): RejoinPoint | null {
+  const last = Math.min(limit, progress + REJOIN_LOOKAHEAD);
   let best: {
     coord: Coord;
     at: number;
@@ -256,13 +260,15 @@ export function rejoinPoint(
   for (const edge of index.edges) {
     const end = edge.from + edge.length;
     if (end < progress) continue;
-    if (edge.from > progress + REJOIN_LOOKAHEAD) break;
-    // The part of the edge at or ahead of the progress.
-    const t0 = Math.max(0, (progress - edge.from) / edge.length);
-    const { t } = project(edge, coord);
+    if (edge.from > last) break;
+    // The part of the edge at or ahead of the progress, up to the limit.
+    const t0 = Math.max(0, (progress - edge.from) / edge.length),
+      t1 = Math.min(1, (last - edge.from) / edge.length);
+    if (t1 < t0) continue;
+    const t = Math.max(t0, Math.min(t1, project(edge, coord).t));
     consider(along(edge, t0), edge.from + t0 * edge.length);
     if (t > t0) consider(along(edge, t), edge.from + t * edge.length);
-    consider(edge.b, end);
+    consider(along(edge, t1), edge.from + t1 * edge.length);
   }
   if (!best) return null;
   const chosen = best as { coord: Coord; at: number; straight: number };

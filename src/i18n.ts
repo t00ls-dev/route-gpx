@@ -82,6 +82,10 @@ const pt: Record<string, string> = {
   'This browser cannot draw the map. Follow the directions.':
     'Este navegador não consegue desenhar o mapa. Siga as indicações.',
   'Back to route': 'Volte à rota',
+  'Recalculate route': 'Recalcular rota',
+  'Recalculating…': 'Recalculando…',
+  'Route recalculated': 'Rota recalculada',
+  'Could not recalculate the route': 'Não foi possível recalcular a rota',
   'Off the route': 'Fora da rota',
   'Straight line, not by road': 'Em linha reta, não pelas ruas',
   'No map. The route and your position still show.':
@@ -602,6 +606,7 @@ const patterns: [RegExp, (...args: string[]) => string][] = [
     (kind, n, unit) =>
       `Limite de uso ${kind === 'Weather' ? 'do clima' : 'da elevação'} atingido. Tente em ${n}${unit}.`,
   ],
+  [/^Recalculate in (\d+) s$/, (n) => `Recalcular em ${n} s`],
   [/^Climbs \((\d+)\)$/, (n) => `Subidas (${n})`],
   [/^Unpaved stretches \((\d+)\)$/, (n) => `Trechos sem asfalto (${n})`],
   [

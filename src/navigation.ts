@@ -3,6 +3,7 @@ import { maneuverPositions } from './maneuvers';
 import { isImportedRoute } from './track-legs';
 import {
   indexTrack,
+  legDistances,
   locateOnTrack,
   pointAtDistance,
   rejoinPoint,
@@ -42,6 +43,19 @@ export const OFF_ROUTE_ACCURACY = 1.5;
 export const OFF_ROUTE_DELAY = 5000;
 export const ON_ROUTE_MIN = 25;
 export const OFF_ROUTE_MAX_ACCURACY = 100;
+/**
+ * Recalculation (#31, rules in AGENTS.md): automatic once off the route for
+ * `REROUTE_AFTER` and online, then at most once every `REROUTE_INTERVAL`
+ * (the Recalculate button too), at most `REROUTE_SESSION_CAP` automatic
+ * requests per navigation; the new route rejoins the planned one
+ * `REROUTE_AHEAD` past the rejoin point, never past the next route point.
+ */
+export const REROUTE_AFTER = 15000;
+export const REROUTE_INTERVAL = 60000;
+export const REROUTE_SESSION_CAP = 20;
+export const REROUTE_AHEAD = 300;
+/** A route point closer than this ahead of the progress counts as reached. */
+const STOP_REACHED = 30;
 
 export interface NavigationManeuver {
   step: Step;
@@ -76,6 +90,47 @@ export interface NavigationReadout {
   offRoute: boolean;
   /** Off the route, where to rejoin it ahead; null otherwise. */
   rejoin: RejoinPoint | null;
+  /** Off the route since about this time (ms), or null on it. */
+  offSince: number | null;
+}
+
+/**
+ * When a recalculation may be requested: automatically once off the route
+ * long enough and online, by the button online; never while one is in
+ * flight, nor within `REROUTE_INTERVAL` of the last attempt.
+ */
+export function createRerouteSchedule() {
+  let last = -Infinity,
+    automatic = 0,
+    inFlight = false;
+  const ready = (now: number, online: boolean) =>
+    online && !inFlight && now - last >= REROUTE_INTERVAL;
+  return {
+    auto(now: number, offSince: number | null, online: boolean): boolean {
+      return (
+        offSince !== null &&
+        now - offSince >= REROUTE_AFTER &&
+        automatic < REROUTE_SESSION_CAP &&
+        ready(now, online)
+      );
+    },
+    manual: ready,
+    /** Milliseconds until the button may ask again (0 when it may). */
+    wait(now: number): number {
+      return Math.max(0, last + REROUTE_INTERVAL - now);
+    },
+    get inFlight() {
+      return inFlight;
+    },
+    start(now: number, isAutomatic: boolean) {
+      inFlight = true;
+      last = now;
+      if (isAutomatic) automatic++;
+    },
+    finish() {
+      inFlight = false;
+    },
+  };
 }
 
 /**
@@ -136,16 +191,37 @@ function headingAt(index: TrackIndex, distance: number): number | null {
  * fixes so loops and out-and-back routes keep the pass being travelled; a
  * jump back is accepted only within the fix's accuracy (GPS jitter).
  */
-export function createNavigationTracker(route: Route) {
+export function createNavigationTracker(
+  route: Route,
+  /** Route points after the start, so hints never skip one. */
+  stops: Coord[] = [],
+) {
   const index = indexTrack(route.segments);
   const maneuvers = navigationManeuvers(route);
   const offRoute = createOffRouteDetector();
-  let progress: number | undefined;
+  const stopsAt = legDistances(route.segments, stops);
+  const nextStop = (at: number) =>
+    stopsAt.find((d) => d > at + STOP_REACHED) ?? index.total;
+  let progress: number | undefined,
+    offSince: number | null = null;
   return {
     total: index.total,
     hasManeuvers: maneuvers.length > 0,
     /** Track from the start to an along-track distance, split at segment gaps. */
     travelled: (distance: number) => trackSlice(index, 0, distance),
+    /**
+     * Where a recalculated route should rejoin this one: past the rejoin
+     * point by `REROUTE_AHEAD`, never past the next route point.
+     */
+    rerouteTarget(rejoin: RejoinPoint): { coord: Coord; at: number } | null {
+      const at = Math.min(
+        rejoin.at + REROUTE_AHEAD,
+        nextStop(progress ?? 0),
+        index.total,
+      );
+      const point = pointAtDistance(index, at);
+      return point ? { coord: point.coord, at } : null;
+    },
     update(fix: NavigationFix): NavigationReadout | null {
       const accuracy = Number.isFinite(fix.accuracy)
         ? Math.max(0, fix.accuracy)
@@ -156,8 +232,13 @@ export function createNavigationTracker(route: Route) {
       });
       if (!position) return null;
       progress = position.distance;
-      const off = offRoute(position.offTrack, accuracy, fix.time ?? Date.now());
-      const rejoin = off ? rejoinPoint(index, fix.coord, progress) : null;
+      const time = fix.time ?? Date.now();
+      const off = offRoute(position.offTrack, accuracy, time);
+      if (!off) offSince = null;
+      else offSince ??= time - OFF_ROUTE_DELAY;
+      const rejoin = off
+        ? rejoinPoint(index, fix.coord, progress, nextStop(progress))
+        : null;
       const nextIndex = maneuvers.findIndex((m) => m.at > progress! + PASSED);
       const next = nextIndex < 0 ? null : maneuvers[nextIndex];
       const after = nextIndex < 0 ? null : (maneuvers[nextIndex + 1] ?? null);
@@ -179,6 +260,7 @@ export function createNavigationTracker(route: Route) {
         heading: headingAt(index, progress),
         offRoute: off,
         rejoin,
+        offSince,
       };
     },
   };
@@ -276,4 +358,50 @@ export function compassHeading(
 export function turnToward(from: number, to: number, share: number): number {
   const delta = ((to - from + 540) % 360) - 180;
   return (((from + delta * share) % 360) + 360) % 360;
+}
+
+/**
+ * The route navigation follows after a recalculation: the recalculated path
+ * from the position to the planned route, then the planned track from
+ * `targetAt` on (GPX segment gaps kept), with the recalculated steps (not
+ * their arrival) and the planned maneuvers after the target. It lives in page
+ * memory only; the planned route, links and saved routes do not change.
+ */
+export function spliceRoute(
+  planned: Route,
+  recalculated: Route,
+  targetAt: number,
+): Route {
+  const index = indexTrack(planned.segments);
+  const rest = trackSlice(index, targetAt, index.total);
+  const segments = recalculated.segments.map((part) => [...part]);
+  if (rest.length && segments.length) {
+    // The router ends on the road near the target: join the two there.
+    const [first, ...others] = rest;
+    segments[segments.length - 1].push(...first);
+    segments.push(...others);
+  } else segments.push(...rest);
+  const positions = maneuverPositions(planned, !isImportedRoute(planned));
+  const after = planned.steps.flatMap((step, i) => {
+    const at = positions[i];
+    if (at === null || at <= targetAt || step.kind === 'depart') return [];
+    return [{ ...step, at: step.at ?? pointAtDistance(index, at)!.coord }];
+  });
+  const restLength = Math.max(0, index.total - targetAt);
+  return {
+    ...recalculated,
+    segments: segments.filter((part) => part.length >= 2),
+    steps: [
+      ...recalculated.steps.filter((step) => step.kind !== 'arrive'),
+      ...after,
+    ],
+    distance: recalculated.distance + restLength,
+    duration:
+      recalculated.duration === null || planned.duration === null
+        ? null
+        : recalculated.duration +
+          (planned.distance > 0
+            ? (planned.duration * restLength) / planned.distance
+            : 0),
+  };
 }
