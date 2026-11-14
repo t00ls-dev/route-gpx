@@ -1,4 +1,5 @@
 import type { ExpressionSpecification, StyleSpecification } from 'maplibre-gl';
+import { localNames } from './basemap';
 
 /**
  * Local adjustments to the OpenFreeMap style for the navigation map (#140):
@@ -61,6 +62,8 @@ export function scaleWidth(width: unknown, factor: number): unknown {
 }
 
 export function navigationStyle(style: StyleSpecification): StyleSpecification {
+  // Local names, as on the street signs, instead of English ones.
+  localNames(style);
   for (const layer of style.layers) {
     if (layer.type === 'line' && isRoadLine(layer.id) && layer.paint) {
       const width = layer.paint['line-width'];
@@ -71,13 +74,6 @@ export function navigationStyle(style: StyleSpecification): StyleSpecification {
         ) as typeof width;
     }
     if (layer.type !== 'symbol' || !layer.layout?.['text-field']) continue;
-    // Local names, as on the street signs, instead of English ones.
-    if (JSON.stringify(layer.layout['text-field']).includes('"name'))
-      layer.layout['text-field'] = [
-        'coalesce',
-        ['get', 'name'],
-        ['get', 'name:latin'],
-      ];
     if (
       layer.id.startsWith('highway-name') &&
       layer.id !== 'highway-name-path'

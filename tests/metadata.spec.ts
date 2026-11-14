@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { mockBasemap } from './map-helpers';
 import { defaults, encodeState } from '../src/core';
 const base = 'http://127.0.0.1:5173/';
 test('SEO metadata stays localized and excludes private route state', async ({
   page,
 }) => {
-  await page.route('https://tile.openstreetmap.org/**', (r) =>
-    r.fulfill({ status: 204 }),
-  );
+  await mockBasemap(page);
   await page.goto(base);
   const canonical = 'https://route-gpx.t00ls.dev/';
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
@@ -69,9 +68,7 @@ test('manifest and icon files resolve at the custom-domain root', async ({
   page,
   request,
 }) => {
-  await page.route('https://tile.openstreetmap.org/**', (r) =>
-    r.fulfill({ status: 204 }),
-  );
+  await mockBasemap(page);
   await page.goto(base);
   const href = await page.locator('link[rel=manifest]').getAttribute('href');
   const manifestUrl = new URL(href!, base);

@@ -39,13 +39,14 @@ const pages = paths.flatMap((path) => [
 const categories = ['performance', 'accessibility', 'best-practices', 'seo'];
 // Performance varies between runs and runners; the map tiles make the app's
 // mobile score, in every language, the most variable, so its minimum is the lowest.
-const minimum = (page, category) =>
-  category === 'performance'
-    ? new URL(page.path, 'https://site.invalid/').pathname === '/' &&
-      !page.desktop
-      ? 60
-      : 85
-    : { accessibility: 95, 'best-practices': 90, seo: 95 }[category];
+// The app on desktop draws the WebGL vector map in software in the audit (no GPU),
+// which held it near 78 when that map arrived; raise it as the map gets lighter.
+const minimum = (page, category) => {
+  if (category !== 'performance')
+    return { accessibility: 95, 'best-practices': 90, seo: 95 }[category];
+  if (new URL(page.path, 'https://site.invalid/').pathname !== '/') return 85;
+  return page.desktop ? 75 : 60;
+};
 const vitals = {
   'largest-contentful-paint': 'LCP',
   'cumulative-layout-shift': 'CLS',

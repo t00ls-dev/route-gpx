@@ -228,6 +228,9 @@ const localView = defaultView(
 const map = L.map('map', {
   zoomControl: false,
   attributionControl: false,
+  // The vector map has no zoom range of its own for Leaflet to read.
+  minZoom: 1,
+  maxZoom: 19,
 }).setView(localView.center, localView.zoom);
 let zooming = false;
 map.on('zoomstart', () => {

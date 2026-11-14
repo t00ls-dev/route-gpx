@@ -79,6 +79,14 @@ const pt: Record<string, string> = {
   'North up': 'Norte para cima',
   'Compass imprecise. Move the phone in a figure 8.':
     'Bússola imprecisa. Movimente o celular em forma de 8.',
+  'This browser cannot draw the map. The route still shows.':
+    'Este navegador não consegue desenhar o mapa. A rota continua visível.',
+  'The map could not be loaded. The route still shows.':
+    'Não foi possível carregar o mapa. A rota continua visível.',
+  'Terrain Tiles by Mapzen on AWS Open Data':
+    'Terrain Tiles da Mapzen no AWS Open Data',
+  'Elevation sources: SRTM, GMTED2010, ETOPO1 and others':
+    'Fontes de altitude: SRTM, GMTED2010, ETOPO1 e outras',
   'This browser cannot draw the map. Follow the directions.':
     'Este navegador não consegue desenhar o mapa. Siga as indicações.',
   'Back to route': 'Volte à rota',
@@ -217,7 +225,6 @@ const pt: Record<string, string> = {
   'Route panel': 'Painel da rota',
   'Map credits': 'Créditos do mapa',
   '© OpenStreetMap contributors': '© colaboradores do OpenStreetMap',
-  'Rendering © EOX::Maps': 'Renderização © EOX::Maps',
   Close: 'Fechar',
   'Detect region by IP': 'Detectar região pelo IP',
   'IP region service': 'Serviço de região por IP',
@@ -527,8 +534,9 @@ const pt: Record<string, string> = {
 };
 const patterns: [RegExp, (...args: string[]) => string][] = [
   [
-    /^Contains modified Copernicus Sentinel data (2016|2025)$/,
-    (year) => `Contém dados Copernicus Sentinel modificados de ${year}`,
+    /^Contains modified Copernicus Sentinel data (2016 & 2017|2025)$/,
+    (year) =>
+      `Contém dados Copernicus Sentinel modificados de ${year.replace('&', 'e')}`,
   ],
   [/^Open saved route: (.*?)$/, (n) => `Abrir rota salva: ${n}`],
   [/^Download saved route: (.*?)$/, (n) => `Baixar rota salva: ${n}`],

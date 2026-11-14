@@ -16,8 +16,10 @@
     "lighthouse": "node scripts/lighthouse.mjs"
   },
   "dependencies": {
+    "@maplibre/maplibre-gl-leaflet": "^0.1.4",
     "fflate": "^0.8.3",
     "leaflet": "^1.9.4",
+    "maplibre-contour": "^0.1.1",
     "maplibre-gl": "^6.15.0"
   },
   "devDependencies": {

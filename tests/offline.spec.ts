@@ -1,4 +1,5 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { BASEMAP_STYLE } from './map-helpers';
 // The app-shell service worker only runs in production builds: these tests
 // use the preview server started by playwright.config.ts.
 const base = 'http://127.0.0.1:4175/';
@@ -135,14 +136,16 @@ test('the service worker caches only same-origin files and never answers cross-o
 }) => {
   await mockServices(context);
   let tiles = 0;
-  await context.route('https://tile.openstreetmap.org/**', (r) => {
+  await context.route('https://tiles.openfreemap.org/**', (r) => {
     tiles++;
-    return r.fulfill({ status: 204 });
+    return r.request().url().includes('/styles/')
+      ? r.fulfill({ json: BASEMAP_STYLE })
+      : r.fulfill({ status: 204 });
   });
   await controlled(page);
   tiles = 0;
   await page.reload();
-  // A controlled page's tiles still reach the network (here, the mock).
+  // A controlled page's map style and tiles still reach the network (here, the mock).
   await expect.poll(() => tiles).toBeGreaterThan(0);
   const urls = await page.evaluate(async () => {
     const all: string[] = [];

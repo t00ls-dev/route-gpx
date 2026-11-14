@@ -1,16 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
+import { mockBasemap } from './map-helpers';
 import { defaults, encodeState, decodeState } from '../src/core';
 const base = 'http://127.0.0.1:5173/';
 const ipUrl = 'https://ipwho.is/**';
 const position = { latitude: 48.1234567, longitude: 11.7654321, accuracy: 35 };
-const tile =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#e3ecea"/></svg>';
 test.beforeEach(async ({ page }) => {
   await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
 
-  await page.route('https://tile.openstreetmap.org/**', (r) =>
-    r.fulfill({ contentType: 'image/svg+xml', body: tile }),
-  );
+  await mockBasemap(page);
   await page.route(ipUrl, (r) =>
     r.fulfill({
       json: { success: true, city: 'Paris', latitude: 48.85, longitude: 2.35 },
@@ -196,7 +193,8 @@ for (const mode of [
     let requests = 0;
     const tiles: string[] = [];
     page.on('request', (r) => {
-      if (r.url().includes('tile.openstreetmap.org')) tiles.push(r.url());
+      if (r.url().includes('tiles.openfreemap.org/planet/'))
+        tiles.push(r.url());
     });
     if (mode === 'disabled')
       await page.addInitScript(() =>
@@ -224,7 +222,10 @@ for (const mode of [
     await page.goto(base);
     await page.waitForTimeout(mode === 'timeout' ? 3800 : 350);
     expect(requests).toBe(mode === 'disabled' ? 0 : 1);
-    expect(tiles.some((url) => url.includes('/10/'))).toBe(mode === 'success');
+    // Zoom 10 in Leaflet is zoom 9 of the 512 px vector tiles.
+    await expect
+      .poll(() => tiles.some((url) => url.includes('/planet/9/')))
+      .toBe(mode === 'success');
     await expect(page.locator('#location-card')).toBeHidden();
     await expect(page.locator('#status')).not.toHaveClass('error');
     await page.reload();
@@ -261,20 +262,20 @@ for (const mobile of [false, true]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    // Loaded tile bounds cover the resized map, including after hiding the panel.
+    // The vector map covers the resized map, including after hiding the panel.
     await expect
       .poll(async () =>
         page.evaluate(() => {
           const map = document.getElementById('map')!.getBoundingClientRect();
-          const tiles = [
-            ...document.querySelectorAll('.leaflet-tile-loaded'),
-          ].map((tile) => tile.getBoundingClientRect());
+          const canvas = document
+            .querySelector('#map .leaflet-gl-layer canvas')
+            ?.getBoundingClientRect();
           return (
-            tiles.length > 0 &&
-            Math.min(...tiles.map((t) => t.left)) <= map.left &&
-            Math.max(...tiles.map((t) => t.right)) >= map.right &&
-            Math.min(...tiles.map((t) => t.top)) <= map.top &&
-            Math.max(...tiles.map((t) => t.bottom)) >= map.bottom
+            !!canvas &&
+            canvas.left <= map.left + 1 &&
+            canvas.right >= map.right - 1 &&
+            canvas.top <= map.top + 1 &&
+            canvas.bottom >= map.bottom - 1
           );
         }),
       )
