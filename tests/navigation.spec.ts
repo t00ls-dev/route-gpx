@@ -549,6 +549,80 @@ test.describe('phone navigation', () => {
     await expect(page.locator('#nav-compass')).toBeHidden();
   });
 
+  for (const [language, width] of [
+    ['en', 390],
+    ['pt', 320],
+  ] as const)
+    test(`off the route, a straight-line hint points back to it (${language}, ${width} px)`, async ({
+      page,
+      context,
+    }) => {
+      await page.setViewportSize({ width, height: 700 });
+      await setup(page);
+      await page.locator('#language').selectOption(language);
+      await page.locator('#navigate').click();
+      await page.locator('#nav-notice-start').click();
+      const road = page.locator('#nav-road'),
+        hint = page.locator('#nav-hint');
+      await expect(road).toHaveText('Estrada das Furnas');
+      await expect(hint).toBeHidden();
+      const zoom = async () =>
+        Number(await page.locator('#nav-rotor').getAttribute('data-zoom'));
+      await expect.poll(zoom).toBeGreaterThan(0);
+      const following = await zoom();
+      // About 330 m north of the route: off it only once it lasts 5 s.
+      const off = (shift: number) =>
+        context.setGeolocation({
+          latitude: lat + 0.003 + shift,
+          longitude: lon(7),
+          accuracy: 8,
+        });
+      await off(0);
+      await page.waitForTimeout(1000);
+      await expect(hint).toBeHidden();
+      await page.waitForTimeout(4500);
+      await off(0.00001);
+      const back = language === 'pt' ? 'Volte à rota' : 'Back to route';
+      await expect(road).toHaveText(back);
+      await expect(hint).toHaveText(
+        language === 'pt'
+          ? 'Em linha reta, não pelas ruas'
+          : 'Straight line, not by road',
+      );
+      await expect(page.locator('#nav-screen')).toHaveClass(/off-route/);
+      await expect(page.locator('#nav-then')).toBeHidden();
+      await expect(page.locator('#nav-announce')).toHaveText(
+        language === 'pt'
+          ? 'Fora da rota · Volte à rota'
+          : 'Off the route · Back to route',
+      );
+      // Straight-line distance to a point ahead, rounded like maneuvers.
+      await expect(page.locator('#nav-distance')).toHaveText(/^\d+ m$/);
+      // On the map turned east-up, the route (south) is to the right and
+      // ahead (east) is up: the arrow points up and to the right.
+      const angle = Number(
+        /rotate\((-?[\d.]+)deg\)/.exec(
+          (await page.locator('#nav-turn svg.rejoin').getAttribute('style')) ??
+            '',
+        )?.[1],
+      );
+      expect(angle).toBeGreaterThan(0);
+      expect(angle).toBeLessThan(90);
+      // The map steps out so the rejoin point shows.
+      await expect.poll(zoom).toBeLessThan(following);
+      expect(await fits(page)).toEqual([]);
+      // Back on the route, the maneuver returns at the chosen zoom.
+      await context.setGeolocation({
+        latitude: lat,
+        longitude: lon(8),
+        accuracy: 5,
+      });
+      await expect(road).toHaveText('Estrada das Furnas');
+      await expect(hint).toBeHidden();
+      await expect(page.locator('#nav-screen')).not.toHaveClass(/off-route/);
+      await expect.poll(zoom).toBeCloseTo(following, 1);
+    });
+
   test('without map tiles the route still shows with a notice', async ({
     page,
   }) => {

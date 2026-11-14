@@ -5,7 +5,9 @@ import {
   indexTrack,
   locateOnTrack,
   pointAtDistance,
+  rejoinPoint,
   trackSlice,
+  type RejoinPoint,
   type TrackIndex,
 } from './track-position';
 import type { DistanceUnits } from './units';
@@ -28,6 +30,18 @@ const ARRIVAL = 30;
 const ARRIVAL_OFF_TRACK = 100;
 /** The map points along the route this far ahead (meters), not at GPS noise. */
 const HEADING_AHEAD = 40;
+/**
+ * Off the route: farther from the track than the larger of `OFF_ROUTE_MIN`
+ * and `OFF_ROUTE_ACCURACY` times the fix accuracy, for `OFF_ROUTE_DELAY`.
+ * Back on it within the larger of `ON_ROUTE_MIN` and the accuracy (the gap
+ * between both keeps a fix near the edge from flipping the state). Fixes
+ * worse than `OFF_ROUTE_MAX_ACCURACY` leave the state as it is.
+ */
+export const OFF_ROUTE_MIN = 50;
+export const OFF_ROUTE_ACCURACY = 1.5;
+export const OFF_ROUTE_DELAY = 5000;
+export const ON_ROUTE_MIN = 25;
+export const OFF_ROUTE_MAX_ACCURACY = 100;
 
 export interface NavigationManeuver {
   step: Step;
@@ -38,6 +52,8 @@ export interface NavigationFix {
   coord: Coord;
   /** Accuracy radius reported by the device, meters. */
   accuracy: number;
+  /** When the fix was taken, ms; defaults to now. */
+  time?: number;
 }
 export interface NavigationReadout {
   /** Along-track distance travelled, meters. */
@@ -56,6 +72,34 @@ export interface NavigationReadout {
   weak: boolean;
   /** Direction of the route ahead, degrees from north, or null. */
   heading: number | null;
+  /** Off the route (sustained, accuracy-aware). */
+  offRoute: boolean;
+  /** Off the route, where to rejoin it ahead; null otherwise. */
+  rejoin: RejoinPoint | null;
+}
+
+/**
+ * Off-route state from successive fixes, with the thresholds above. Pure
+ * apart from its own state; the caller passes each fix's time.
+ */
+export function createOffRouteDetector() {
+  let off = false,
+    since: number | null = null;
+  return (offTrack: number, accuracy: number, time: number): boolean => {
+    if (!(accuracy <= OFF_ROUTE_MAX_ACCURACY)) return off;
+    if (off) {
+      if (offTrack <= Math.max(ON_ROUTE_MIN, accuracy)) {
+        off = false;
+        since = null;
+      }
+      return off;
+    }
+    if (offTrack > Math.max(OFF_ROUTE_MIN, OFF_ROUTE_ACCURACY * accuracy)) {
+      since ??= time;
+      if (time - since >= OFF_ROUTE_DELAY) off = true;
+    } else since = null;
+    return off;
+  };
 }
 
 /**
@@ -95,6 +139,7 @@ function headingAt(index: TrackIndex, distance: number): number | null {
 export function createNavigationTracker(route: Route) {
   const index = indexTrack(route.segments);
   const maneuvers = navigationManeuvers(route);
+  const offRoute = createOffRouteDetector();
   let progress: number | undefined;
   return {
     total: index.total,
@@ -111,12 +156,17 @@ export function createNavigationTracker(route: Route) {
       });
       if (!position) return null;
       progress = position.distance;
+      const off = offRoute(position.offTrack, accuracy, fix.time ?? Date.now());
+      const rejoin = off ? rejoinPoint(index, fix.coord, progress) : null;
       const nextIndex = maneuvers.findIndex((m) => m.at > progress! + PASSED);
       const next = nextIndex < 0 ? null : maneuvers[nextIndex];
       const after = nextIndex < 0 ? null : (maneuvers[nextIndex + 1] ?? null);
       return {
         progress,
-        remaining: position.remaining,
+        // Off the route: the straight line back plus the route from there.
+        remaining: rejoin
+          ? rejoin.straight + Math.max(0, index.total - rejoin.at)
+          : position.remaining,
         offTrack: position.offTrack,
         next,
         toNext: Math.max(0, (next ? next.at : index.total) - progress),
@@ -127,6 +177,8 @@ export function createNavigationTracker(route: Route) {
           position.offTrack <= Math.max(ARRIVAL_OFF_TRACK, accuracy),
         weak: !(accuracy <= WEAK_ACCURACY),
         heading: headingAt(index, progress),
+        offRoute: off,
+        rejoin,
       };
     },
   };

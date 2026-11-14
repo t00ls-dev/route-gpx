@@ -3003,6 +3003,23 @@ dialog.nav-screen::backdrop {
 .nav-then[hidden] {
   display: none;
 }
+/* Off the route: the banner turns amber and says the arrow is a straight
+   line, not a road to follow. */
+.off-route .nav-banner {
+  background: var(--color-warning);
+}
+.nav-hint {
+  margin: 0;
+  padding: 6px 16px;
+  background: #5a3308;
+  font-size: 15px;
+}
+.nav-hint[hidden] {
+  display: none;
+}
+.nav-turn .rejoin {
+  transition: transform 0.3s ease-out;
+}
 .nav-then-icon {
   display: flex;
 }

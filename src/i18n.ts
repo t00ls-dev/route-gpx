@@ -81,6 +81,9 @@ const pt: Record<string, string> = {
     'Bússola imprecisa. Movimente o celular em forma de 8.',
   'This browser cannot draw the map. Follow the directions.':
     'Este navegador não consegue desenhar o mapa. Siga as indicações.',
+  'Back to route': 'Volte à rota',
+  'Off the route': 'Fora da rota',
+  'Straight line, not by road': 'Em linha reta, não pelas ruas',
   'No map. The route and your position still show.':
     'Sem mapa. A rota e sua posição continuam na tela.',
   'Navigation needs location, which this browser does not offer here.':
