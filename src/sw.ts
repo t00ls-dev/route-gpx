@@ -84,7 +84,10 @@ function networkFirst(request: Request, key: string): Promise<Response> {
       resolve(response);
     };
     const timer = setTimeout(() => settle(cached()), NAVIGATION_TIMEOUT);
-    fetch(request).then(
+    // Revalidated with the server: GitHub Pages lets browsers keep pages for
+    // ten minutes, and a page kept from before a deploy names assets that
+    // are gone, so it would open without styles or scripts.
+    fetch(request, { cache: 'no-cache' }).then(
       (response) => {
         clearTimeout(timer);
         settle(Promise.resolve(response));
