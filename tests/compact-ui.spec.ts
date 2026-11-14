@@ -1,19 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { mockBasemap } from './map-helpers';
 test.use({ isMobile: true, hasTouch: true });
 const base = 'http://127.0.0.1:5173/';
-const tile =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#e3ecea"/></svg>';
 test.beforeEach(async ({ page }) => {
   await page.route('https://**/*', (route) => route.fulfill({ status: 204 }));
 
-  for (const domain of [
-    'tile.openstreetmap.org',
-    'a.tile.opentopomap.org',
-    'tiles.maps.eox.at',
-  ])
-    await page.route(`https://${domain}/**`, (r) =>
-      r.fulfill({ contentType: 'image/svg+xml', body: tile }),
-    );
+  await mockBasemap(page);
   await page.route('https://ipwho.is/**', (r) => r.fulfill({ status: 503 }));
   await page.route('https://photon.komoot.io/**', (r) =>
     r.fulfill({ json: { features: [] } }),
@@ -134,10 +126,10 @@ for (const width of [320, 360, 390, 430]) {
       await toggle.tap();
       await expect(page.locator('.map-credits-dialog')).toBeVisible();
       await expect(page.locator('.map-credits-dialog')).toContainText(
-        'MapServer',
+        'OpenFreeMap',
       );
       await expect(page.locator('.map-credits-dialog')).toContainText(
-        'CC BY-NC-SA 4.0',
+        'CC BY 4.0',
       );
       await page.keyboard.press('Escape');
       await expect(page.locator('.map-credits-dialog')).toBeHidden();
@@ -145,7 +137,7 @@ for (const width of [320, 360, 390, 430]) {
       await page.locator('#layers-toggle').tap();
       await page.locator('#map-labels').uncheck();
       await expect(page.locator('.map-credits-dialog')).not.toContainText(
-        'MapServer',
+        'OpenFreeMap',
       );
       await page.keyboard.press('Escape');
       await page.locator('#panel-toggle').tap();

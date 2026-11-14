@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockBasemap } from './map-helpers';
 test.use({ isMobile: true, hasTouch: true });
 const base = 'http://127.0.0.1:5173/';
 test.beforeEach(async ({ page }) => {
@@ -7,17 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem('detect-region', 'false'),
   );
-  for (const domain of [
-    'tile.openstreetmap.org',
-    'a.tile.opentopomap.org',
-    'tiles.maps.eox.at',
-  ])
-    await page.route(`https://${domain}/**`, (route) =>
-      route.fulfill({
-        contentType: 'image/svg+xml',
-        body: '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"/>',
-      }),
-    );
+  await mockBasemap(page);
 });
 for (const [width, height] of [
   [360, 844],
@@ -99,8 +90,6 @@ for (const [width, height] of [
         await expect(dialog).toContainText(
           'Contains modified Copernicus Sentinel data 2025',
         );
-        await expect(dialog).toContainText('EOX::Maps');
-        await expect(dialog).toContainText('MapServer');
         await expect(
           dialog.getByRole('link', { name: 'CC BY-NC-SA 4.0', exact: true }),
         ).toHaveAttribute(
@@ -108,6 +97,9 @@ for (const [width, height] of [
           'https://creativecommons.org/licenses/by-nc-sa/4.0/',
         );
       } else await expect(dialog).not.toContainText('EOX');
+      await expect(
+        dialog.getByRole('link', { name: 'OpenFreeMap', exact: true }),
+      ).toHaveCount(1);
       for (const link of await dialog.getByRole('link').all()) {
         await expect(link).toHaveAttribute('target', '_blank');
         await expect(link).toHaveAttribute('rel', 'noopener noreferrer');

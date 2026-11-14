@@ -164,13 +164,17 @@
           panel hides it.
         </p>
         <p>
-          Open Map layers to choose Standard (OpenStreetMap), Topographic
-          (OpenTopoMap, CC BY-SA 3.0) or Satellite (EOX Sentinel-2 cloudless
-          2025, CC BY-NC-SA 4.0, non-commercial only). Satellite Labels are on
-          by default and can be switched off. For commercial use, choose the EOX
-          2016 edition (CC BY 4.0) in Settings. Satellite imagery is a regional
-          mosaic, not live or street-level imagery; zooming beyond its native
-          level enlarges pixels.
+          The planner and navigation draw the same map, OpenFreeMap vector tiles
+          from OpenStreetMap data, with names as on the street signs. Open Map
+          layers to choose Standard, Topographic (the same map with relief
+          shading and contour lines from Terrain Tiles on AWS Open Data) or
+          Satellite (EOX Sentinel-2 cloudless 2025, CC BY-NC-SA 4.0,
+          non-commercial only). Satellite Labels are on by default and can be
+          switched off. For commercial use, choose the EOX 2016 edition (CC BY
+          4.0) in Settings. Satellite imagery is a regional mosaic, not live or
+          street-level imagery; zooming beyond its native level enlarges pixels.
+          A browser without WebGL, or without access to the map, still shows the
+          route on a plain background.
         </p>
         <p>
           Only the active layer and enabled labels request tiles. Their
@@ -722,9 +726,7 @@
             >Nominatim policy</a
           >
           ·
-          <a href="https://operations.osmfoundation.org/policies/tiles/"
-            >Tile policy</a
-          >
+          <a href="https://openfreemap.org/tos/">OpenFreeMap terms</a>
         </p>
         <p>
           Routing sends control coordinates and options to
@@ -748,34 +750,36 @@
           contain account and redistribution clauses whose applicability should
           be confirmed before scaling. Weather and, when Elevation is opened,
           the Grade coloring is chosen or Elevation here is asked for a point,
-          elevation use https://api.open-meteo.com. Map images use
-          https://tile.openstreetmap.org, https://a.tile.opentopomap.org or
-          https://tiles.maps.eox.at, including the EOX label overlay. Only the
-          active layer requests images. The navigation map requests its style,
-          fonts, icons and the vector data of the area shown from
-          https://tiles.openfreemap.org. GitHub Pages receives requests for the
-          site files. External providers receive the request IP and normal
-          browser metadata and may keep their own logs. URL fragments are not
-          sent in HTTP requests. Browser HTTP caching of ordinary map tiles
-          follows provider headers; there is no added offline storage.
+          elevation use https://api.open-meteo.com. The planner and navigation
+          maps request their style, fonts, icons and the vector data of the area
+          shown from https://tiles.openfreemap.org; Topographic adds terrain
+          images from https://s3.amazonaws.com/elevation-tiles-prod and
+          Satellite imagery from https://tiles.maps.eox.at. Only the active
+          layer requests images. GitHub Pages receives requests for the site
+          files. External providers receive the request IP and normal browser
+          metadata and may keep their own logs. URL fragments are not sent in
+          HTTP requests. Browser HTTP caching of ordinary map tiles follows
+          provider headers; there is no added offline storage.
         </p>
         <h2>Open source</h2>
         <p>
           <a href="https://github.com/t00ls-dev/route-gpx"
             >Code, full documentation and issues</a
-          >. MIT license. Leaflet uses BSD 2-Clause, MapLibre GL JS BSD 3-Clause
-          and fflate MIT; see the
+          >. MIT license. Leaflet uses BSD 2-Clause, MapLibre GL JS and
+          maplibre-contour BSD 3-Clause, MapLibre GL Leaflet ISC and fflate MIT;
+          see the
           <a href="./THIRD_PARTY_NOTICES.txt">complete third-party notice</a>.
           Map data ©
           <a href="https://www.openstreetmap.org/copyright"
             >OpenStreetMap contributors</a
           >. Built with Leaflet, OSRM, Valhalla, Nominatim and Photon. IP region
-          by ipwho.is; maps by OpenTopoMap and EOX; the navigation map by
-          MapLibre GL JS and OpenFreeMap, © OpenMapTiles. Weather data by
-          Open-Meteo (CC BY 4.0); elevation data from the Copernicus DEM GLO-90
-          via Open-Meteo. Compass headings are corrected to true north with the
-          World Magnetic Model (NOAA NCEI and BGS, public domain). Source and
-          license links appear in the respective sections above and in the
+          by ipwho.is; the map by MapLibre GL JS and OpenFreeMap, ©
+          OpenMapTiles; relief from Terrain Tiles (Mapzen) and satellite imagery
+          by EOX. Weather data by Open-Meteo (CC BY 4.0); elevation data from
+          the Copernicus DEM GLO-90 via Open-Meteo. Compass headings are
+          corrected to true north with the World Magnetic Model (NOAA NCEI and
+          BGS, public domain). Source and license links appear in the respective
+          sections above and in the
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >services and privacy details</a
@@ -849,13 +853,17 @@
           só o painel em altura total o esconde.
         </p>
         <p>
-          Abra Camadas do mapa e escolha Padrão (OpenStreetMap), Topográfico
-          (OpenTopoMap, CC BY-SA 3.0) ou Satélite (EOX Sentinel-2 cloudless
-          2025, CC BY-NC-SA 4.0, apenas uso não comercial). Os Rótulos do
-          satélite começam ligados e podem ser desligados. Para uso comercial,
-          escolha a edição EOX 2016 (CC BY 4.0) em Configurações. O satélite é
-          um mosaico regional, não uma imagem ao vivo nem em nível de rua; o
-          zoom acima do nível nativo amplia os pixels.
+          O planejador e a navegação desenham o mesmo mapa, os blocos vetoriais
+          do OpenFreeMap com dados do OpenStreetMap, com os nomes das placas das
+          ruas. Abra Camadas do mapa e escolha Padrão, Topográfico (o mesmo mapa
+          com sombreamento do relevo e curvas de nível do Terrain Tiles no AWS
+          Open Data) ou Satélite (EOX Sentinel-2 cloudless 2025, CC BY-NC-SA
+          4.0, apenas uso não comercial). Os Rótulos do satélite começam ligados
+          e podem ser desligados. Para uso comercial, escolha a edição EOX 2016
+          (CC BY 4.0) em Configurações. O satélite é um mosaico regional, não
+          uma imagem ao vivo nem em nível de rua; o zoom acima do nível nativo
+          amplia os pixels. Um navegador sem WebGL, ou sem acesso ao mapa, ainda
+          mostra a rota sobre um fundo neutro.
         </p>
         <p>
           Só a camada ativa e os rótulos habilitados requisitam tiles. Seus
@@ -1431,9 +1439,7 @@
             >Política do Nominatim</a
           >
           ·
-          <a href="https://operations.osmfoundation.org/policies/tiles/"
-            >Política de tiles</a
-          >
+          <a href="https://openfreemap.org/tos/">Termos do OpenFreeMap</a>
         </p>
         <p>
           O roteamento envia coordenadas de controle e opções a
@@ -1459,35 +1465,36 @@
           aplicação deve ser confirmada antes de ampliar o uso. O clima e,
           quando Elevação é aberta, a coloração por Inclinação é escolhida ou
           Elevação aqui é pedida para um ponto, a elevação usam
-          https://api.open-meteo.com. Imagens do mapa usam
-          https://tile.openstreetmap.org, https://a.tile.opentopomap.org ou
-          https://tiles.maps.eox.at, incluindo a sobreposição de rótulos EOX. Só
-          a camada ativa solicita imagens. O mapa da navegação pede o estilo, as
-          fontes, os ícones e os dados vetoriais da área exibida a
-          https://tiles.openfreemap.org. O GitHub Pages recebe pedidos dos
-          arquivos do site. Provedores externos recebem o IP da requisição e
-          metadados normais do navegador e podem manter logs próprios.
-          Fragmentos de URL não são enviados nas requisições HTTP. O cache HTTP
-          comum dos tiles segue os cabeçalhos dos provedores; não há
-          armazenamento offline adicional.
+          https://api.open-meteo.com. Os mapas do planejador e da navegação
+          pedem o estilo, as fontes, os ícones e os dados vetoriais da área
+          exibida a https://tiles.openfreemap.org; o Topográfico acrescenta
+          imagens de relevo de https://s3.amazonaws.com/elevation-tiles-prod e o
+          Satélite, imagens de https://tiles.maps.eox.at. Só a camada ativa
+          solicita imagens. O GitHub Pages recebe pedidos dos arquivos do site.
+          Provedores externos recebem o IP da requisição e metadados normais do
+          navegador e podem manter logs próprios. Fragmentos de URL não são
+          enviados nas requisições HTTP. O cache HTTP comum dos tiles segue os
+          cabeçalhos dos provedores; não há armazenamento offline adicional.
         </p>
         <h2>Código aberto</h2>
         <p>
           <a href="https://github.com/t00ls-dev/route-gpx"
             >Código, documentação e relatos de problemas</a
-          >. Licença MIT. Leaflet usa BSD de 2 cláusulas, MapLibre GL JS BSD de
-          3 cláusulas e fflate MIT; veja o
+          >. Licença MIT. Leaflet usa BSD de 2 cláusulas, MapLibre GL JS e
+          maplibre-contour BSD de 3 cláusulas, MapLibre GL Leaflet ISC e fflate
+          MIT; veja o
           <a href="./THIRD_PARTY_NOTICES.txt">aviso completo de terceiros</a>.
           Dados ©
           <a href="https://www.openstreetmap.org/copyright"
             >OpenStreetMap e colaboradores</a
           >. Feito com Leaflet, OSRM, Valhalla, Nominatim e Photon. Região por
-          IP pelo ipwho.is; mapas por OpenTopoMap e EOX; o mapa da navegação por
-          MapLibre GL JS e OpenFreeMap, © OpenMapTiles. Dados do tempo por
-          Open-Meteo (CC BY 4.0); dados de elevação do Copernicus DEM GLO-90 via
-          Open-Meteo. A bússola é corrigida para o norte verdadeiro com o World
-          Magnetic Model (NOAA NCEI e BGS, domínio público). Links das fontes e
-          licenças estão nas respectivas seções acima e nos
+          IP pelo ipwho.is; mapa por MapLibre GL JS e OpenFreeMap, ©
+          OpenMapTiles; relevo do Terrain Tiles (Mapzen) e satélite da EOX.
+          Dados do tempo por Open-Meteo (CC BY 4.0); dados de elevação do
+          Copernicus DEM GLO-90 via Open-Meteo. A bússola é corrigida para o
+          norte verdadeiro com o World Magnetic Model (NOAA NCEI e BGS, domínio
+          público). Links das fontes e licenças estão nas respectivas seções
+          acima e nos
           <a
             href="https://github.com/t00ls-dev/route-gpx/blob/main/docs/SERVICES.md"
             >detalhes de serviços e privacidade</a

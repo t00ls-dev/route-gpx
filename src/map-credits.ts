@@ -5,7 +5,7 @@ import {
   type BaseLayer,
   type MapCredit,
   type SatelliteVintage,
-} from './tile-layers';
+} from './basemap';
 
 /**
  * A round info button that opens a modal list of credits, shared by the

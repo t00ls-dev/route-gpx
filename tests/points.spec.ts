@@ -1,4 +1,4 @@
-import { holdMap } from './map-helpers';
+import { holdMap, mockBasemap } from './map-helpers';
 import { defaults, encodeState, encodeStateV1 } from '../src/core';
 import { readFile } from 'node:fs/promises';
 import { Fit, le, name, recordFields, semi } from './fit-fixture';
@@ -11,9 +11,7 @@ test.beforeEach(async ({ page }) => {
   await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
 });
 async function setup(page: Page) {
-  await page.route('https://tile.openstreetmap.org/**', (r) =>
-    r.fulfill({ status: 204 }),
-  );
+  await mockBasemap(page);
   await page.route('**/route/v1/driving/**', async (r) => {
     const part = new URL(r.request().url()).pathname.split('/driving/')[1];
     const coords = part.split(';').map((p) => p.split(',').map(Number));
@@ -1249,8 +1247,27 @@ test('a route saved before turn directions gets them once, keeping its geometry'
   ]);
   const xml = await readFile((await download.path())!, 'utf8');
   expect((xml.match(/<trkpt /g) || []).length).toBe(3);
-  // The saved entry now has the directions: reopening asks nothing.
-  await page.reload();
+  // The saved entry now has the directions: reopening asks nothing. Wait for
+  // the entry to be written before leaving the page.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const db = await new Promise<IDBDatabase>((resolve) => {
+          const r = indexedDB.open('route-gpx');
+          r.onsuccess = () => resolve(r.result);
+        });
+        const rows = await new Promise<unknown[]>((resolve) => {
+          const r = db.transaction('routes').objectStore('routes').getAll();
+          r.onsuccess = () => resolve(r.result);
+        });
+        db.close();
+        return JSON.stringify(rows).includes('"modifier":"left"');
+      }),
+    )
+    .toBe(true);
+  // A fresh page without the route link, which would calculate the linked
+  // route itself if opening took longer than the route-change debounce.
+  await page.goto(base);
   await page.locator('.saved-routes summary').click();
   await open();
   await page.locator('#itinerary summary').click();

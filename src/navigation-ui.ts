@@ -13,7 +13,8 @@ import { icon, iconControl, type IconName } from './icons';
 import { locationError, navigationPoint } from './location';
 import { navigationRoute } from './services';
 import { creditsDialog } from './map-credits';
-import { osmCredit } from './tile-layers';
+import { NEUTRAL_STYLE, STYLE_URL, fetchStyle, vectorCredits } from './basemap';
+import { loadMapLibre } from './maplibre-loader';
 import { maneuverIcon, maneuverText } from './maneuvers';
 import { navigationStyle } from './navigation-style';
 import {
@@ -52,20 +53,6 @@ const REROUTED_NOTICE = 4000;
 const REJOIN_MARGIN = 40;
 /** Off the route, the map never zooms out farther than this. */
 const MIN_REJOIN_ZOOM = 12;
-/** OpenFreeMap's public vector style (#140). */
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
-/** Without the style, the route and position draw on this background. */
-const NEUTRAL_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {},
-  layers: [
-    {
-      id: 'background',
-      type: 'background',
-      paint: { 'background-color': '#e9ece9' },
-    },
-  ],
-};
 type Line = Coord[][];
 const lines = (segments: Line) => ({
   type: 'Feature' as const,
@@ -91,13 +78,8 @@ function circleAround(center: Coord, radius: number) {
   };
 }
 async function loadStyle(): Promise<StyleSpecification | null> {
-  try {
-    const response = await fetch(STYLE_URL, { credentials: 'omit' });
-    if (!response.ok) return null;
-    return navigationStyle((await response.json()) as StyleSpecification);
-  } catch {
-    return null;
-  }
+  const style = await fetchStyle(STYLE_URL);
+  return style && navigationStyle(style);
 }
 /** Where the traveler sits on the map while following, as a share of its height. */
 const PIVOT = 0.7;
@@ -199,12 +181,7 @@ export function setupNavigation(deps: {
     name: 'nav-credits',
   });
   stage.append(...credits.elements);
-  credits.setCredits([
-    { text: 'MapLibre GL JS', url: 'https://maplibre.org/' },
-    { text: 'OpenFreeMap', url: 'https://openfreemap.org/' },
-    { text: '© OpenMapTiles', url: 'https://www.openmaptiles.org/' },
-    osmCredit,
-  ]);
+  credits.setCredits(vectorCredits);
   setting.checked = noticeWanted();
   setting.onchange = () => rememberNotice(setting.checked);
 
@@ -418,15 +395,7 @@ export function setupNavigation(deps: {
   }
 
   async function createMap() {
-    const [ml, style] = await Promise.all([
-      import('maplibre-gl'),
-      loadStyle(),
-      import('maplibre-gl/dist/maplibre-gl.css'),
-    ]);
-    const workerUrl = (
-      await import('maplibre-gl/dist/maplibre-gl-worker.mjs?url')
-    ).default;
-    ml.setWorkerUrl(workerUrl);
+    const [ml, style] = await Promise.all([loadMapLibre(), loadStyle()]);
     MarkerClass = ml.Marker;
     noStyle = !style;
     map = new ml.Map({

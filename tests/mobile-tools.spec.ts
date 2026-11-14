@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { holdMap } from './map-helpers';
+import { holdMap, mockBasemap, BASEMAP_STYLE } from './map-helpers';
 const base = 'http://127.0.0.1:5173/';
 const features = {
   features: [
@@ -21,9 +21,7 @@ const coords = Array.from({ length: 1000 }, (_, i) => [
 const gpx = `<gpx><trk><trkseg>${coords.map(([lat, lon]) => `<trkpt lat="${lat}" lon="${lon}"/>`).join('')}</trkseg></trk></gpx>`;
 test.beforeEach(async ({ page }) => {
   await page.route('https://**/*', (r) => r.fulfill({ status: 204 }));
-  await page.route('https://tile.openstreetmap.org/**', (r) =>
-    r.fulfill({ status: 204 }),
-  );
+  await mockBasemap(page);
   await page.route('https://ipwho.is/**', (r) => r.fulfill({ status: 503 }));
   await page.route('https://photon.komoot.io/**', (r) =>
     r.fulfill({ json: features }),
@@ -363,9 +361,11 @@ test('one-finger zoom: double tap and drag down zooms in, up zooms out, without 
   const zooms: number[] = [];
   await page.route('**/*', async (r) => {
     const url = r.request().url();
-    const tile = url.match(/tile\.openstreetmap\.org\/(\d+)\//);
+    const tile = url.match(/openfreemap\.org\/planet\/(\d+)\//);
     if (tile) zooms.push(Number(tile[1]));
     if (url.startsWith('http://127.0.0.1')) await r.continue();
+    else if (url.includes('openfreemap.org/styles/'))
+      await r.fulfill({ json: BASEMAP_STYLE });
     else await r.fulfill({ status: 204 });
   });
   await page.goto(base);
@@ -379,8 +379,8 @@ test('one-finger zoom: double tap and drag down zooms in, up zooms out, without 
       type,
       touchPoints: type === 'touchEnd' ? [] : [{ x, y: ty }],
     });
-  // Tiles removed from the map while dragging: none, as during a pinch, so
-  // the map never blinks (a view reset removes every tile until new ones load).
+  // Map layers removed while dragging: none, as during a pinch, so the map
+  // never blinks (a view reset would rebuild the vector map).
   const removedTiles = () =>
     page.evaluate(() => (window as unknown as { removed: number }).removed);
   const quickZoom = async (dy: number) => {
@@ -394,7 +394,7 @@ test('one-finger zoom: double tap and drag down zooms in, up zooms out, without 
       new MutationObserver((records) => {
         for (const record of records)
           for (const node of record.removedNodes)
-            if ((node as Element).classList?.contains('leaflet-tile'))
+            if ((node as Element).classList?.contains('leaflet-gl-layer'))
               w.removed++;
       }).observe(document.getElementById('map')!, {
         childList: true,
@@ -424,20 +424,26 @@ test('one-finger zoom: double tap and drag down zooms in, up zooms out, without 
     .poll(() => (zooms.length ? Math.min(...zooms) : Infinity))
     .toBeLessThanOrEqual(zoomedIn - 2);
   await expect(page.locator('#point-menu')).toBeHidden();
+  // Leaflet's zoom, from its animation proxy scaled by 2^(zoom - 1).
+  const zoom = () =>
+    page
+      .locator('.leaflet-proxy')
+      .evaluate(
+        (el) => Math.log2(new DOMMatrix(getComputedStyle(el).transform).a) + 1,
+      );
+  const start = await zoom();
   // Tap, then hold still: still the zoom gesture, never the point menu.
   await touch('touchStart');
   await touch('touchEnd');
   await page.waitForTimeout(80);
-  zooms.length = 0;
   await touch('touchStart');
   await page.waitForTimeout(800);
   await expect(page.locator('#point-menu')).toBeHidden();
   await touch('touchEnd');
-  await page.waitForTimeout(600);
   // Released without dragging: one level in, like a double tap.
   await expect
-    .poll(() => (zooms.length ? Math.max(...zooms) : 0))
-    .toBeGreaterThan(0);
+    .poll(async () => Math.round(await zoom()))
+    .toBe(Math.round(start) + 1);
   // A single long press still opens it.
   await touch('touchStart');
   await page.waitForTimeout(700);
