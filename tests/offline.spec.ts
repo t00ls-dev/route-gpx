@@ -174,9 +174,13 @@ test('a new deploy replaces the cached build', async ({ page, context }) => {
   await controlled(page);
   expect(await cacheKeys(page)).toEqual(['route-gpx-shell-0000000000000000']);
   await context.unroute('**/sw.js');
-  await page.evaluate(() =>
-    navigator.serviceWorker.getRegistration().then((r) => r?.update()),
-  );
+  // The new build takes over and the untouched page reloads into it.
+  await Promise.all([
+    page.waitForEvent('load'),
+    page.evaluate(() =>
+      navigator.serviceWorker.getRegistration().then((r) => r?.update()),
+    ),
+  ]);
   // Only the new build's cache is left.
   await expect
     .poll(() => cacheKeys(page))
@@ -185,6 +189,61 @@ test('a new deploy replaces the cached build', async ({ page, context }) => {
     ]);
   await page.reload();
   await expect(page.locator('#location-0')).toBeVisible();
+});
+
+test('a page shown again after a deploy reloads into the new build, once untouched', async ({
+  page,
+  context,
+}) => {
+  await mockServices(context);
+  // The page's visibility, which the test switches as a phone would when the
+  // web app goes to the background and comes back.
+  await context.addInitScript(() => {
+    const w = window as unknown as { hidden: boolean };
+    w.hidden = false;
+    Object.defineProperty(document, 'visibilityState', {
+      get: () => (w.hidden ? 'hidden' : 'visible'),
+    });
+  });
+  const show = (hidden: boolean) =>
+    page.evaluate((value) => {
+      (window as unknown as { hidden: boolean }).hidden = value;
+      document.dispatchEvent(new Event('visibilitychange'));
+    }, hidden);
+  // An older deploy controls the page first, as in the test above.
+  await context.route('**/sw.js', async (r) => {
+    const response = await r.fetch();
+    const body = (await response.text()).replace(
+      /\\"version\\":\\"[0-9a-f]{16}\\"/,
+      '\\"version\\":\\"0000000000000000\\"',
+    );
+    await r.fulfill({ response, body });
+  });
+  await controlled(page);
+  await context.unroute('**/sw.js');
+  const mark = () =>
+    page.evaluate(() => ((window as unknown as { mark?: number }).mark = 1));
+  const marked = () =>
+    page.evaluate(() => (window as unknown as { mark?: number }).mark === 1);
+  await mark();
+  // Touched since it was shown: the new build waits for the next showing.
+  await page.locator('#location-0').click();
+  await page.evaluate(() =>
+    navigator.serviceWorker.getRegistration().then((r) => r?.update()),
+  );
+  await expect
+    .poll(() => cacheKeys(page))
+    .toEqual([expect.stringMatching(/^route-gpx-shell-(?!0{16})/)]);
+  await page.waitForTimeout(500);
+  expect(await marked()).toBe(true);
+  // Shown again, untouched: it reloads into the new build, once.
+  await show(true);
+  await Promise.all([page.waitForEvent('load'), show(false)]);
+  expect(await marked()).toBe(false);
+  await expect(page.locator('#location-0')).toBeVisible();
+  await mark();
+  await page.waitForTimeout(1000);
+  expect(await marked()).toBe(true);
 });
 
 for (const width of [320, 1280])
